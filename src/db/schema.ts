@@ -41,3 +41,7 @@ export * from "./models/video_comment_medias.js";
 export * from "./models/video_comment_like.js";
 export * from "./models/video_reply_medias.js";
 export * from "./models/video_reply_like.js";
+export * from "./models/grades.js";
+export * from "./models/subjects.js";
+export * from "./models/lessons.js";
+export * from "./models/topics.js";

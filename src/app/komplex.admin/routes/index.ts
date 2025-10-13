@@ -13,9 +13,11 @@ import feedbacksRouter from "./feedbacks.route.js";
 import forumCommentsRouter from "./forum_comments.route.js";
 import forumRepliesRouter from "./forum_replies.route.js";
 import authRouter from "./auth.route.js";
+import lessonsRouter from "./lessons.route.js";
 const adminRoutes = Router();
 // should have /database but let it be like this for now
 adminRoutes.use("/database", databaseRouter);
+adminRoutes.use("/lessons", lessonsRouter);
 adminRoutes.use("/blogs", blogsRouter);
 adminRoutes.use("/exercises", exercisesRouter);
 adminRoutes.use("/grades", gradesRouter);
