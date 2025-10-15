@@ -23,6 +23,7 @@ export const getAllLessons = async () => {
         topicId: topics.id,
         topicTitle: topics.title,
         topicEnglishTitle: topics.englishTitle,
+        exerciseId: topics.exerciseId,
       })
       .from(grades)
       .leftJoin(subjects, eq(grades.id, subjects.gradeId))
@@ -83,6 +84,7 @@ export const getAllLessons = async () => {
               id: row.topicId,
               title: row.topicTitle,
               englishTitle: row.topicEnglishTitle,
+              exerciseId: row.exerciseId,
             });
           }
         }
