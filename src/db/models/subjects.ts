@@ -10,5 +10,6 @@ export const subjects = pgTable("subjects", {
   gradeId: integer("grade_id")
     .notNull()
     .references(() => grades.id),
+  orderIndex: integer("order_index"),
 });
 
