@@ -24,15 +24,15 @@ const router = Router();
 /**
  * GRADE ROUTES
  */
-router.post("/grade", createLessonGrade as any);
+router.post("/grades", createLessonGrade as any);
 
 router.patch(
-  "/grade/:id",
+  "/grades/:id",
   adminSmallUpdateRateLimiter,
   updateLessonGrade as any
 );
 router.delete(
-  "/grade/:id",
+  "/grades/:id",
   adminSmallDeleteRateLimiter,
   deleteLessonGrade as any
 );
@@ -40,15 +40,15 @@ router.delete(
 /**
  * SUBJECT ROUTES
  */
-router.post("/subject", createLessonSubject as any);
+router.post("/subjects", createLessonSubject as any);
 
 router.patch(
-  "/subject/:id",
+  "/subjects/:id",
   adminSmallUpdateRateLimiter,
   updateLessonSubject as any
 );
 router.delete(
-  "/subject/:id",
+  "/subjects/:id",
   adminSmallDeleteRateLimiter,
   deleteLessonSubject as any
 );
@@ -56,15 +56,15 @@ router.delete(
 /**
  * LESSON ROUTES
  */
-router.post("/lesson", createLessonLesson as any);
+router.post("/lessons", createLessonLesson as any);
 
 router.patch(
-  "/lesson/:id",
+  "/lessons/:id",
   adminSmallUpdateRateLimiter,
   updateLessonLesson as any
 );
 router.delete(
-  "/lesson/:id",
+  "/lessons/:id",
   adminSmallDeleteRateLimiter,
   deleteLessonLesson as any
 );
@@ -72,20 +72,20 @@ router.delete(
 /**
  * TOPIC ROUTES
  */
-router.post("/topic", createLessonTopic as any);
+router.post("/topics", createLessonTopic as any);
 
 router.put(
-  "/topic-component/:id",
+  "/topics/component/:id",
   adminSmallUpdateRateLimiter,
   updateLessonTopicComponent as any
 );
 router.patch(
-  "/topic/:id",
+  "/topics/:id",
   adminSmallUpdateRateLimiter,
   updateLessonTopic as any
 );
 router.delete(
-  "/topic/:id",
+  "/topics/:id",
   adminSmallDeleteRateLimiter,
   deleteLessonTopic as any
 );

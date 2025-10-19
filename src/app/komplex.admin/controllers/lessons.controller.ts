@@ -1,5 +1,5 @@
 import { db } from "@/db/index.js";
-import { eq } from "drizzle-orm";
+import { eq, gt, gte, lt, lte, max, not, sql } from "drizzle-orm";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { grades, lessons, subjects, topics } from "@/db/schema.js";
@@ -13,7 +13,7 @@ export const updateLessonTopicComponent = async (
     const { component, componentCode } = req.body;
     await db
       .update(topics)
-      .set({ component: component, componentCode: componentCode })  
+      .set({ component: component, componentCode: componentCode })
       .where(eq(topics.id, id));
     res.json({ message: "Lesson updated successfully" });
   } catch (error) {
@@ -27,10 +27,50 @@ export const updateLessonTopic = async (
 ) => {
   try {
     const { id } = req.params;
-    const { title, englishTitle, orderIndex } = req.body;
+    const { newName, orderIndex, insertType } = req.body;
+    const oldOrderIndex = await db
+      .select({ orderIndex: topics.orderIndex })
+      .from(topics)
+      .where(eq(topics.id, parseInt(id)));
+    if (oldOrderIndex[0].orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    if (
+      orderIndex !== undefined &&
+      insertType === "before" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(topics)
+        .set({ orderIndex: sql`${topics.orderIndex} + 1` })
+        .where(gte(topics.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(topics)
+        .set({ orderIndex: parseInt(orderIndex) })
+        .where(eq(topics.id, parseInt(id)));
+    } else if (
+      orderIndex !== undefined &&
+      insertType === "after" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(topics)
+        .set({ orderIndex: sql`${topics.orderIndex} + 1` })
+        .where(gt(topics.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(topics)
+        .set({ orderIndex: parseInt(orderIndex) + 1 })
+        .where(eq(topics.id, parseInt(id)));
+    }
+
+    // clean up
     await db
       .update(topics)
-      .set({ title, englishTitle, orderIndex })
+      .set({ orderIndex: sql`${topics.orderIndex} - 1` })
+      .where(gt(topics.orderIndex, oldOrderIndex[0].orderIndex as number));
+    await db
+      .update(topics)
+      .set({ title: newName })
       .where(eq(topics.id, parseInt(id)));
     res.json({ message: "Lesson topic updated successfully" });
   } catch (error) {
@@ -44,10 +84,50 @@ export const updateLessonGrade = async (
 ) => {
   try {
     const { id } = req.params;
-    const { grade, gradeKhmer, orderIndex } = req.body;
+    const { newName, orderIndex, insertType } = req.body;
+    const oldOrderIndex = await db
+      .select({ orderIndex: grades.orderIndex })
+      .from(grades)
+      .where(eq(grades.id, parseInt(id)));
+    if (oldOrderIndex[0].orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    if (
+      orderIndex !== undefined &&
+      insertType === "before" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(grades)
+        .set({ orderIndex: sql`${grades.orderIndex} + 1` })
+        .where(gte(grades.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(grades)
+        .set({ orderIndex: parseInt(orderIndex) })
+        .where(eq(grades.id, parseInt(id)));
+    } else if (
+      orderIndex !== undefined &&
+      insertType === "after" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(grades)
+        .set({ orderIndex: sql`${grades.orderIndex} + 1` })
+        .where(gt(grades.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(grades)
+        .set({ orderIndex: parseInt(orderIndex) + 1 })
+        .where(eq(grades.id, parseInt(id)));
+    }
+
+    // clean up
     await db
       .update(grades)
-      .set({ grade, gradeKhmer, orderIndex })
+      .set({ orderIndex: sql`${grades.orderIndex} - 1` })
+      .where(gt(grades.orderIndex, oldOrderIndex[0].orderIndex as number));
+    await db
+      .update(grades)
+      .set({ gradeKhmer: newName })
       .where(eq(grades.id, parseInt(id)));
     res.json({ message: "Lesson grade updated successfully" });
   } catch (error) {
@@ -61,11 +141,50 @@ export const updateLessonSubject = async (
 ) => {
   try {
     const { id } = req.params;
-    const { subject, title, englishTitle, icon, gradeId, orderIndex } =
-      req.body;
+    const { newName, orderIndex, insertType } = req.body;
+    const oldOrderIndex = await db
+      .select({ orderIndex: subjects.orderIndex })
+      .from(subjects)
+      .where(eq(subjects.id, parseInt(id)));
+    if (oldOrderIndex[0].orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    if (
+      orderIndex !== undefined &&
+      insertType === "before" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(subjects)
+        .set({ orderIndex: sql`${subjects.orderIndex} + 1` })
+        .where(gte(subjects.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(subjects)
+        .set({ orderIndex: parseInt(orderIndex) })
+        .where(eq(subjects.id, parseInt(id)));
+    } else if (
+      orderIndex !== undefined &&
+      insertType === "after" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(subjects)
+        .set({ orderIndex: sql`${subjects.orderIndex} + 1` })
+        .where(gt(subjects.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(subjects)
+        .set({ orderIndex: parseInt(orderIndex) + 1 })
+        .where(eq(subjects.id, parseInt(id)));
+    }
+
+    // clean up
     await db
       .update(subjects)
-      .set({ subject, title, englishTitle, icon, gradeId, orderIndex })
+      .set({ orderIndex: sql`${subjects.orderIndex} - 1` })
+      .where(gt(subjects.orderIndex, oldOrderIndex[0].orderIndex as number));
+    await db
+      .update(subjects)
+      .set({ subject: newName })
       .where(eq(subjects.id, parseInt(id)));
     res.json({ message: "Lesson subject updated successfully" });
   } catch (error) {
@@ -79,11 +198,50 @@ export const updateLessonLesson = async (
 ) => {
   try {
     const { id } = req.params;
-    const { lesson, title, englishTitle, icon, subjectId, orderIndex } =
-      req.body;
+    const { newName, orderIndex, insertType } = req.body;
+    const oldOrderIndex = await db
+      .select({ orderIndex: lessons.orderIndex })
+      .from(lessons)
+      .where(eq(lessons.id, parseInt(id)));
+    if (oldOrderIndex[0].orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    if (
+      orderIndex !== undefined &&
+      insertType === "before" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(lessons)
+        .set({ orderIndex: sql`${lessons.orderIndex} + 1` })
+        .where(gte(lessons.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(lessons)
+        .set({ orderIndex: parseInt(orderIndex) })
+        .where(eq(lessons.id, parseInt(id)));
+    } else if (
+      orderIndex !== undefined &&
+      insertType === "after" &&
+      oldOrderIndex[0].orderIndex !== null
+    ) {
+      await db
+        .update(lessons)
+        .set({ orderIndex: sql`${lessons.orderIndex} + 1` })
+        .where(gt(lessons.orderIndex, parseInt(orderIndex)));
+      await db
+        .update(lessons)
+        .set({ orderIndex: parseInt(orderIndex) + 1 })
+        .where(eq(lessons.id, parseInt(id)));
+    }
+
+    // clean up
     await db
       .update(lessons)
-      .set({ lesson, title, englishTitle, icon, subjectId, orderIndex })
+      .set({ orderIndex: sql`${lessons.orderIndex} - 1` })
+      .where(gt(lessons.orderIndex, oldOrderIndex[0].orderIndex as number));
+    await db
+      .update(lessons)
+      .set({ lesson: newName })
       .where(eq(lessons.id, parseInt(id)));
     res.json({ message: "Lesson lesson updated successfully" });
   } catch (error) {
