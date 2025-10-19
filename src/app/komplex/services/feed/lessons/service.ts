@@ -10,26 +10,35 @@ export const getAllLessons = async () => {
         gradeId: grades.id,
         grade: grades.grade,
         gradeKhmer: grades.gradeKhmer,
+        gradeOrderIndex: grades.orderIndex,
         subjectId: subjects.id,
         subject: subjects.subject,
         subjectTitle: subjects.title,
         englishTitle: subjects.englishTitle,
         subjectIcon: subjects.icon,
+        subjectOrderIndex: subjects.orderIndex,
         lessonId: lessons.id,
         lesson: lessons.lesson,
         lessonTitle: lessons.title,
         lessonEnglishTitle: lessons.englishTitle,
         lessonIcon: lessons.icon,
+        lessonOrderIndex: lessons.orderIndex,
         topicId: topics.id,
         topicTitle: topics.title,
         topicEnglishTitle: topics.englishTitle,
         exerciseId: topics.exerciseId,
+        topicOrderIndex: topics.orderIndex,
       })
       .from(grades)
       .leftJoin(subjects, eq(grades.id, subjects.gradeId))
       .leftJoin(lessons, eq(subjects.id, lessons.subjectId))
       .leftJoin(topics, eq(lessons.id, topics.lessonId))
-      .orderBy(grades.id, subjects.id, lessons.id, topics.id);
+      .orderBy(
+        grades.orderIndex,
+        subjects.orderIndex,
+        lessons.orderIndex,
+        topics.orderIndex
+      );
 
     // Structure the data according to the required format
     const structuredData: any[] = [];
@@ -43,6 +52,7 @@ export const getAllLessons = async () => {
           grade: row.grade,
           gradeKhmer: row.gradeKhmer,
           content: new Map(),
+          orderIndex: row.gradeOrderIndex,
         });
       }
 
@@ -56,6 +66,7 @@ export const getAllLessons = async () => {
           title: row.subjectTitle,
           englishTitle: row.englishTitle,
           icon: row.subjectIcon,
+          orderIndex: row.subjectOrderIndex,
           lessons: new Map(),
         });
       }
@@ -72,6 +83,7 @@ export const getAllLessons = async () => {
             englishTitle: row.lessonEnglishTitle,
             icon: row.lessonIcon,
             topics: [],
+            orderIndex: row.lessonOrderIndex,
           });
         }
 
@@ -85,6 +97,7 @@ export const getAllLessons = async () => {
               title: row.topicTitle,
               englishTitle: row.topicEnglishTitle,
               exerciseId: row.exerciseId,
+              orderIndex: row.topicOrderIndex,
             });
           }
         }
@@ -108,6 +121,7 @@ export const getAllLessons = async () => {
           title: subjectData.title,
           englishTitle: subjectData.englishTitle,
           icon: subjectData.icon,
+          orderIndex: subjectData.orderIndex,
           lessons: lessonsArray,
         });
       });
@@ -116,6 +130,7 @@ export const getAllLessons = async () => {
         id: gradeData.id,
         grade: gradeData.grade,
         gradeKhmer: gradeData.gradeKhmer,
+        orderIndex: gradeData.orderIndex,
         content: contentArray,
       });
     });
