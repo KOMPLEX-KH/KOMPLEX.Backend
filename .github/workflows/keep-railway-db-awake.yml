@@ -2,7 +2,7 @@ name: Keep Railway DB Awake
 
 on:
     schedule:
-        - cron: "*/1 * * * *" # runs every 10 minutes
+        - cron: "*/5 * * * *" # runs every 10 minutes
     workflow_dispatch: # lets you manually trigger it too
 
 jobs:
@@ -10,26 +10,10 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Install PostgreSQL client
-              run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-            - name: Ping Railway database
-              env:
-                  PGHOST: ${{ secrets.DB_HOST }}
-                  PGPORT: ${{ secrets.DB_PORT }}
-                  PGUSER: ${{ secrets.DB_USER }}
-                  PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-                  PGDATABASE: ${{ secrets.DB_NAME }}
-              run: |
-                  echo "Pinging Railway DB..."
-                  psql -c "SELECT 1;" --set ON_ERROR_STOP=on
-                  echo "✅ Database ping successful."
-
-
             - name: Ping backend URL
               env:
-                BACKEND_URL: ${{ secrets.BACKEND_URL }}
+                  BACKEND_URL: ${{ secrets.BACKEND_URL }}
               run: |
-                echo "Pinging backend..."
-                curl -I --silent --show-error --max-time 10 "$BACKEND_URL" || echo "⚠️ Backend ping failed"
-                echo "✅ Backend ping done."
+                  echo "Pinging backend..."
+                  curl -I --silent --show-error --max-time 10 "$BACKEND_URL" || echo "⚠️ Backend ping failed"
+                  echo "✅ Backend ping done."

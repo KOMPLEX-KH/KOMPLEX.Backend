@@ -59,7 +59,7 @@ router.delete("/lessons/:id", adminSmallDeleteRateLimiter, deleteLesson as any);
 router.post("/topics", createTopic as any);
 
 router.put(
-  "/topics/component/:id",
+  "/topics/:id",
   adminSmallUpdateRateLimiter,
   updateTopicComponent as any
 );

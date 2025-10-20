@@ -8,6 +8,8 @@ import routes from "./app/komplex/routes/index.js";
 import adminRoutes from "./app/komplex.admin/routes/index.js";
 import { globalRateLimiter } from "./middleware/redisLimiter.js";
 import { seedDb, seedSearch } from "./seed/seedFunction.js";
+import { db } from "./db/index.js";
+import { sql } from "drizzle-orm";
 dotenv.config();
 
 const app = express();
@@ -61,8 +63,14 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
 
 app.use(globalRateLimiter);
-app.get("/ping", (req, res) => {
-  res.status(200).send("pong");
+app.get("/ping", async (req, res) => {
+  try {
+    await db.execute(sql`SELECT 1`);
+    res.status(200).send("pong");
+  } catch (err) {
+    console.error("Ping failed:", (err as Error).message);
+    res.status(500).send("ping failed");
+  }
 });
 
 app.use("/api/", routes);
@@ -70,11 +78,11 @@ app.use("/api/admin", adminRoutes);
 
 // seedDb
 
-app.get("/seedDb", seedDb)
+app.get("/seedDb", seedDb);
 
 // seedSearch
 
-app.get("/seedSearch", seedSearch)
+app.get("/seedSearch", seedSearch);
 
 // connection
 
