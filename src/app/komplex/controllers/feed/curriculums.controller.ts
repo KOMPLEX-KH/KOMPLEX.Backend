@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import * as lessonsService from "@/app/komplex/services/feed/lessons/service.js";
-import * as topicService from "@/app/komplex/services/feed/lessons/[id]/service.js";
+import * as curriculumsService from "@/app/komplex/services/feed/curriculums/service.js";
+import * as topicService from "@/app/komplex/services/feed/curriculums/[id]/service.js";
 
-export const getLessons = async (req: Request, res: Response) => {
+export const getCurriculums = async (req: Request, res: Response) => {
   try {
-    const result = await lessonsService.getAllLessons();
+    const result = await curriculumsService.getAllCurriculums();
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({

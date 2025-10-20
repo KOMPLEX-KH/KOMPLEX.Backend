@@ -15,9 +15,9 @@ export const topics = pgTable("topics", {
   englishTitle: text("english_title"),
   component: jsonb("component"),
   componentCode: text("component_code"),
-  exerciseId: integer("exercise_id").references(() => exercises.id),
+  exerciseId: integer("exercise_id").references(() => exercises.id, { onDelete: "cascade" }),
   lessonId: integer("lesson_id")
     .notNull()
-    .references(() => lessons.id),
+    .references(() => lessons.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index"),
 });

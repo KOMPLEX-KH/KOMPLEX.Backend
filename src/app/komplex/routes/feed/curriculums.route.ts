@@ -1,12 +1,12 @@
 import { Router } from "express";
 import {
-  getLessons,
+  getCurriculums,
   getTopic,
-} from "../../controllers/feed/lessons.controller.js";
+} from "../../controllers/feed/curriculums.controller.js";
 
 const router = Router();
 
-router.get("/", getLessons);
+router.get("/", getCurriculums);
 router.get("/:id", getTopic);
 
 export default router;
