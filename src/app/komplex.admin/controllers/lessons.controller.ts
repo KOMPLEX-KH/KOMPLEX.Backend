@@ -141,7 +141,7 @@ export const updateLessonSubject = async (
 ) => {
   try {
     const { id } = req.params;
-    const { newName, orderIndex, insertType } = req.body;
+    const { newName, orderIndex, insertType, icon } = req.body;
     const oldOrderIndex = await db
       .select({ orderIndex: subjects.orderIndex })
       .from(subjects)
@@ -182,9 +182,15 @@ export const updateLessonSubject = async (
       .update(subjects)
       .set({ orderIndex: sql`${subjects.orderIndex} - 1` })
       .where(gt(subjects.orderIndex, oldOrderIndex[0].orderIndex as number));
+
+    const updateData: any = { title: newName };
+    if (icon !== undefined) {
+      updateData.icon = icon;
+    }
+
     await db
       .update(subjects)
-      .set({ subject: newName })
+      .set(updateData)
       .where(eq(subjects.id, parseInt(id)));
     res.json({ message: "Lesson subject updated successfully" });
   } catch (error) {
@@ -198,7 +204,7 @@ export const updateLessonLesson = async (
 ) => {
   try {
     const { id } = req.params;
-    const { newName, orderIndex, insertType } = req.body;
+    const { newName, orderIndex, insertType, icon } = req.body;
     const oldOrderIndex = await db
       .select({ orderIndex: lessons.orderIndex })
       .from(lessons)
@@ -239,9 +245,15 @@ export const updateLessonLesson = async (
       .update(lessons)
       .set({ orderIndex: sql`${lessons.orderIndex} - 1` })
       .where(gt(lessons.orderIndex, oldOrderIndex[0].orderIndex as number));
+
+    const updateData: any = { title: newName };
+    if (icon !== undefined) {
+      updateData.icon = icon;
+    }
+
     await db
       .update(lessons)
-      .set({ lesson: newName })
+      .set(updateData)
       .where(eq(lessons.id, parseInt(id)));
     res.json({ message: "Lesson lesson updated successfully" });
   } catch (error) {
@@ -255,6 +267,17 @@ export const deleteLessonTopic = async (
 ) => {
   try {
     const { id } = req.params;
+    const [oldOrderIndex] = await db
+      .select({ orderIndex: topics.orderIndex })
+      .from(topics)
+      .where(eq(topics.id, parseInt(id)));
+    if (oldOrderIndex.orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    await db
+      .update(topics)
+      .set({ orderIndex: sql`${topics.orderIndex} - 1` })
+      .where(gt(topics.orderIndex, oldOrderIndex.orderIndex as number));
     await db.delete(topics).where(eq(topics.id, parseInt(id)));
     res.json({ message: "Lesson topic deleted successfully" });
   } catch (error) {
@@ -268,6 +291,17 @@ export const deleteLessonGrade = async (
 ) => {
   try {
     const { id } = req.params;
+    const [oldOrderIndex] = await db
+      .select({ orderIndex: grades.orderIndex })
+      .from(grades)
+      .where(eq(grades.id, parseInt(id)));
+    if (oldOrderIndex.orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    await db
+      .update(grades)
+      .set({ orderIndex: sql`${grades.orderIndex} - 1` })
+      .where(gt(grades.orderIndex, oldOrderIndex.orderIndex as number));
     await db.delete(grades).where(eq(grades.id, parseInt(id)));
     res.json({ message: "Lesson grade deleted successfully" });
   } catch (error) {
@@ -281,6 +315,17 @@ export const deleteLessonSubject = async (
 ) => {
   try {
     const { id } = req.params;
+    const [oldOrderIndex] = await db
+      .select({ orderIndex: subjects.orderIndex })
+      .from(subjects)
+      .where(eq(subjects.id, parseInt(id)));
+    if (oldOrderIndex.orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    await db
+      .update(subjects)
+      .set({ orderIndex: sql`${subjects.orderIndex} - 1` })
+      .where(gt(subjects.orderIndex, oldOrderIndex.orderIndex as number));
     await db.delete(subjects).where(eq(subjects.id, parseInt(id)));
     res.json({ message: "Lesson subject deleted successfully" });
   } catch (error) {
@@ -293,6 +338,17 @@ export const deleteLessonLesson = async (
 ) => {
   try {
     const { id } = req.params;
+    const [oldOrderIndex] = await db
+      .select({ orderIndex: lessons.orderIndex })
+      .from(lessons)
+      .where(eq(lessons.id, parseInt(id)));
+    if (oldOrderIndex.orderIndex === null) {
+      return res.status(400).json({ error: "Old order index not found" });
+    }
+    await db
+      .update(lessons)
+      .set({ orderIndex: sql`${lessons.orderIndex} - 1` })
+      .where(gt(lessons.orderIndex, oldOrderIndex.orderIndex as number));
     await db.delete(lessons).where(eq(lessons.id, parseInt(id)));
     res.json({ message: "Lesson lesson deleted successfully" });
   } catch (error) {
@@ -305,22 +361,36 @@ export const createLessonTopic = async (
   res: Response
 ) => {
   try {
-    const {
+    const { title, lessonId, orderIndex, insertType, exerciseId } = req.body;
+    let finalOrderIndex = orderIndex;
+
+    if (orderIndex !== undefined && insertType === "before") {
+      await db
+        .update(topics)
+        .set({ orderIndex: sql`${topics.orderIndex} + 1` })
+        .where(gte(topics.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex);
+    } else if (orderIndex !== undefined && insertType === "after") {
+      await db
+        .update(topics)
+        .set({ orderIndex: sql`${topics.orderIndex} + 1` })
+        .where(gt(topics.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex) + 1;
+    }
+
+    const topicData: any = {
       title,
-      englishTitle,
-      component,
-      componentCode,
       lessonId,
-      orderIndex,
-    } = req.body;
-    await db.insert(topics).values({
-      title,
-      englishTitle,
-      component,
-      componentCode,
-      lessonId,
-      orderIndex,
-    });
+      component: "[]",
+      componentCode: "",
+      orderIndex: finalOrderIndex,
+    };
+
+    if (exerciseId !== undefined) {
+      topicData.exerciseId = exerciseId;
+    }
+
+    await db.insert(topics).values(topicData);
     res.json({ message: "Lesson topic created successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to create lesson topic" + error });
@@ -331,8 +401,26 @@ export const createLessonGrade = async (
   res: Response
 ) => {
   try {
-    const { grade, gradeKhmer, orderIndex } = req.body;
-    await db.insert(grades).values({ grade, gradeKhmer, orderIndex });
+    const { gradeKhmer, orderIndex, insertType } = req.body;
+    let finalOrderIndex = orderIndex;
+
+    if (orderIndex !== undefined && insertType === "before") {
+      await db
+        .update(grades)
+        .set({ orderIndex: sql`${grades.orderIndex} + 1` })
+        .where(gte(grades.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex);
+    } else if (orderIndex !== undefined && insertType === "after") {
+      await db
+        .update(grades)
+        .set({ orderIndex: sql`${grades.orderIndex} + 1` })
+        .where(gt(grades.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex) + 1;
+    }
+
+    await db
+      .insert(grades)
+      .values({ gradeKhmer: gradeKhmer, orderIndex: finalOrderIndex });
     res.json({ message: "Lesson grade created successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to create lesson grade" + error });
@@ -343,11 +431,29 @@ export const createLessonSubject = async (
   res: Response
 ) => {
   try {
-    const { subject, title, englishTitle, icon, gradeId, orderIndex } =
-      req.body;
-    await db
-      .insert(subjects)
-      .values({ subject, title, englishTitle, icon, gradeId, orderIndex });
+    const { title, icon, gradeId, orderIndex, insertType } = req.body;
+    let finalOrderIndex = orderIndex;
+
+    if (orderIndex !== undefined && insertType === "before") {
+      await db
+        .update(subjects)
+        .set({ orderIndex: sql`${subjects.orderIndex} + 1` })
+        .where(gte(subjects.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex);
+    } else if (orderIndex !== undefined && insertType === "after") {
+      await db
+        .update(subjects)
+        .set({ orderIndex: sql`${subjects.orderIndex} + 1` })
+        .where(gt(subjects.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex) + 1;
+    }
+
+    await db.insert(subjects).values({
+      title,
+      icon,
+      gradeId,
+      orderIndex: finalOrderIndex,
+    });
     res.json({ message: "Lesson subject created successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to create lesson subject" + error });
@@ -359,11 +465,29 @@ export const createLessonLesson = async (
   res: Response
 ) => {
   try {
-    const { lesson, title, englishTitle, icon, subjectId, orderIndex } =
-      req.body;
-    await db
-      .insert(lessons)
-      .values({ lesson, title, englishTitle, icon, subjectId, orderIndex });
+    const { title, icon, subjectId, orderIndex, insertType } = req.body;
+    let finalOrderIndex = orderIndex;
+
+    if (orderIndex !== undefined && insertType === "before") {
+      await db
+        .update(lessons)
+        .set({ orderIndex: sql`${lessons.orderIndex} + 1` })
+        .where(gte(lessons.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex);
+    } else if (orderIndex !== undefined && insertType === "after") {
+      await db
+        .update(lessons)
+        .set({ orderIndex: sql`${lessons.orderIndex} + 1` })
+        .where(gt(lessons.orderIndex, parseInt(orderIndex)));
+      finalOrderIndex = parseInt(orderIndex) + 1;
+    }
+
+    await db.insert(lessons).values({
+      title,
+      icon,
+      subjectId,
+      orderIndex: finalOrderIndex,
+    });
     res.json({ message: "Lesson lesson created successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to create lesson lesson" + error });
