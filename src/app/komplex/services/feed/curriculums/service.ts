@@ -2,7 +2,7 @@ import { db } from "@/db/index.js";
 import { eq } from "drizzle-orm";
 import { grades, lessons, subjects, topics } from "@/db/schema.js";
 
-export const getAllLessons = async () => {
+export const getAllCurriculums = async () => {
   try {
     // Fetch all data with proper joins
     const allData = await db
@@ -137,6 +137,6 @@ export const getAllLessons = async () => {
 
     return { data: structuredData };
   } catch (error) {
-    throw new Error(`Error fetching lessons: ${(error as Error).message}`);
+    throw new Error(`Error fetching curriculums: ${(error as Error).message}`);
   }
 };

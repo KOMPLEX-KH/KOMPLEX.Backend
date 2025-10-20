@@ -10,10 +10,10 @@ import forumRepliesRouter from "./forum-replies.route.js";
 import videoCommentsRouter from "./video-comments.route.js";
 import videoLikesRouter from "./video-likes.route.js";
 import videoRepliesRouter from "./video-replies.route.js";
-import lessonsRouter from "./lessons.route.js";
+import curriculumsRouter from "./curriculums.route.js";
 
 const router = Router();
-router.use("/lessons", lessonsRouter);
+router.use("/curriculums", curriculumsRouter);
 router.use("/blogs", blogsRouter);
 
 router.use("/forums", forumsRouter);
