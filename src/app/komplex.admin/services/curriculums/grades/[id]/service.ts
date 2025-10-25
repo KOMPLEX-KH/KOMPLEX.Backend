@@ -53,7 +53,7 @@ export const updateGrade = async (
         .where(gt(grades.orderIndex, oldOrderIndex[0].orderIndex as number));
       await db
         .update(grades)
-        .set({ gradeKhmer: newName })
+        .set({ name: newName })
         .where(eq(grades.id, id));
     } catch (error) {
       throw new Error(`Failed to update grade: ${(error as Error).message}`);

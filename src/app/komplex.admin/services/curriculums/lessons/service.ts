@@ -3,7 +3,7 @@ import { eq, gt, gte, sql } from "drizzle-orm";
 import { lessons } from "@/db/schema.js";
 
 export const createLesson = async (
-  title: string,
+  name: string,
   icon: string,
   subjectId: number,
   orderIndex: number,
@@ -27,7 +27,7 @@ export const createLesson = async (
     }
 
     await db.insert(lessons).values({
-      title,
+      name,
       icon,
       subjectId,
       orderIndex: finalOrderIndex,
@@ -36,4 +36,3 @@ export const createLesson = async (
     throw new Error(`Failed to create lesson: ${(error as Error).message}`);
   }
 };
-

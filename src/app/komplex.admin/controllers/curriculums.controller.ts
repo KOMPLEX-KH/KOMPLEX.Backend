@@ -9,6 +9,24 @@ import * as lessonByIdService from "@/app/komplex.admin/services/curriculums/les
 import * as topicService from "@/app/komplex.admin/services/curriculums/topic/service.js";
 import * as topicByIdService from "@/app/komplex.admin/services/curriculums/topic/[id]/service.js";
 import * as topicComponentService from "@/app/komplex.admin/services/curriculums/topic/[id]/service.js";
+import * as dashboardService from "@/app/komplex.admin/services/curriculums/dashboard/service.js";
+
+export const getDashboardData = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const data = await dashboardService.getDashboardData();
+    res.status(200).json({ data: data, isSuccess: true });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        error: "Failed to get dashboard data" + error,
+        isSuccess: false,
+      });
+  }
+};
 
 export const updateTopicComponent = async (
   req: AuthenticatedRequest,

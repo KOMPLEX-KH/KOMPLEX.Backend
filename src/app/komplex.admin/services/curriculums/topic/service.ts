@@ -3,7 +3,7 @@ import { eq, gt, gte, sql } from "drizzle-orm";
 import { topics } from "@/db/schema.js";
 
 export const createTopic = async (
-  title: string,
+  name: string,
   lessonId: number,
   orderIndex: number,
   insertType?: string,
@@ -27,8 +27,8 @@ export const createTopic = async (
     }
 
     const topicData: any = {
-      title,
-      lessonId,
+      name,
+      lessonId, 
       component: "[]",
       componentCode: "",
       orderIndex: finalOrderIndex,
@@ -43,4 +43,3 @@ export const createTopic = async (
     throw new Error(`Failed to create topic: ${(error as Error).message}`);
   }
 };
-

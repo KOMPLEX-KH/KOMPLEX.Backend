@@ -53,7 +53,7 @@ export const updateSubject = async (
         .set({ orderIndex: sql`${subjects.orderIndex} - 1` })
         .where(gt(subjects.orderIndex, oldOrderIndex[0].orderIndex as number));
   
-      const updateData: any = { title: newName };
+      const updateData: any = { name: newName };
       if (icon !== undefined) {
         updateData.icon = icon;
       }
