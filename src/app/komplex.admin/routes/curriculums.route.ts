@@ -13,6 +13,7 @@ import {
   createSubject,
   createTopic,
   createLesson,
+  getDashboardData,
 } from "../controllers/curriculums.controller.js";
 import {
   adminSmallDeleteRateLimiter,
@@ -20,6 +21,8 @@ import {
 } from "@/middleware/redisLimiter.js";
 
 const router = Router();
+
+router.get("/dashboard", getDashboardData as any);
 
 /**
  * GRADE ROUTES

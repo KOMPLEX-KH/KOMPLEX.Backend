@@ -3,9 +3,7 @@ import { grades } from "./grades.js";
 
 export const subjects = pgTable("subjects", {
   id: serial("id").primaryKey(),
-  subject: text("subject"),
-  title: text("title"),
-  englishTitle: text("english_title"),
+  name: text("name"),
   icon: text("icon"),
   gradeId: integer("grade_id")
     .notNull()

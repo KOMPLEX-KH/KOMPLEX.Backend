@@ -10,12 +10,16 @@ import databaseRouter from "./database.route.js";
 import videosRouter from "./videos.route.js";
 import dashboardRouter from "./dashborad.route.js";
 import feedbacksRouter from "./feedbacks.route.js";
-import forumCommentsRouter from "./forum_comments.route.js";
-import forumRepliesRouter from "./forum_replies.route.js";
+import forumCommentsRouter from "./forum-comments.route.js";
+import forumRepliesRouter from "./forum-replies.route.js";
 import authRouter from "./auth.route.js";
 import curriculumRouter from "./curriculums.route.js";
+import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
 const adminRoutes = Router();
-// should have /database but let it be like this for now
+adminRoutes.use("/auth", authRouter);
+
+adminRoutes.use(verifyFirebaseTokenAdmin as any);
+
 adminRoutes.use("/database", databaseRouter);
 adminRoutes.use("/curriculums", curriculumRouter);
 adminRoutes.use("/blogs", blogsRouter);
@@ -30,5 +34,4 @@ adminRoutes.use("/dashboard", dashboardRouter);
 adminRoutes.use("/feedbacks", feedbacksRouter);
 adminRoutes.use("/forum_comments", forumCommentsRouter);
 adminRoutes.use("/forum_replies", forumRepliesRouter);
-adminRoutes.use("/auth", authRouter)
 export default adminRoutes;

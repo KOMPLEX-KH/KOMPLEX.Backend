@@ -6,7 +6,7 @@ import {
   postForumComment,
   unlikeForumComment,
   updateForumComment,
-} from "../controllers/forum_comments.controller.js";
+} from "../controllers/forum-comments.controller.js";
 import { uploadImages } from "../../../middleware/upload.js";
 import { adminBigPostRateLimiter, adminBigUpdateRateLimiter, adminSmallDeleteRateLimiter, adminSmallPostRateLimiter } from "@/middleware/redisLimiter.js";
 const router = Router();

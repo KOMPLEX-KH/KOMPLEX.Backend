@@ -1,23 +1,18 @@
 import { Router } from "express";
 import {
-	createExercise,
-	deleteExercise,
-	getExercise,
-	getExerciseDashboard,
-	getExercises,
-	updateExercise,
+  createExercise,
+  deleteExercise,
+  getExercise,
+  getExerciseDashboard,
+  getExercises,
+  updateExercise,
 } from "../controllers/exercises.controller.js";
 import {
-	adminBigPostRateLimiter,
-	adminBigDeleteRateLimiter,
-	adminBigUpdateRateLimiter,
-	adminGetBigContentRateLimiter,
   adminGetSmallContentRateLimiter,
   adminSmallPostRateLimiter,
   adminSmallUpdateRateLimiter,
   adminSmallDeleteRateLimiter,
-} from "@/middleware/redisLimiter.js"; // Adjust path if needed
-
+} from "@/middleware/redisLimiter.js";
 const router = Router();
 
 router.get("/", adminGetSmallContentRateLimiter, getExercises);

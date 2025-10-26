@@ -8,24 +8,18 @@ export const getAllCurriculums = async () => {
     const allData = await db
       .select({
         gradeId: grades.id,
-        grade: grades.grade,
-        gradeKhmer: grades.gradeKhmer,
+        gradeName: grades.name,
         gradeOrderIndex: grades.orderIndex,
         subjectId: subjects.id,
-        subject: subjects.subject,
-        subjectTitle: subjects.title,
-        englishTitle: subjects.englishTitle,
+        subjectName: subjects.name,
         subjectIcon: subjects.icon,
         subjectOrderIndex: subjects.orderIndex,
         lessonId: lessons.id,
-        lesson: lessons.lesson,
-        lessonTitle: lessons.title,
-        lessonEnglishTitle: lessons.englishTitle,
+        lessonName: lessons.name,
         lessonIcon: lessons.icon,
         lessonOrderIndex: lessons.orderIndex,
         topicId: topics.id,
-        topicTitle: topics.title,
-        topicEnglishTitle: topics.englishTitle,
+        topicName: topics.name,
         exerciseId: topics.exerciseId,
         topicOrderIndex: topics.orderIndex,
       })
@@ -49,9 +43,8 @@ export const getAllCurriculums = async () => {
       if (!gradeMap.has(row.gradeId)) {
         gradeMap.set(row.gradeId, {
           id: row.gradeId,
-          grade: row.grade,
-          gradeKhmer: row.gradeKhmer,
-          content: new Map(),
+          name: row.gradeName,
+          subjects: new Map(),
           orderIndex: row.gradeOrderIndex,
         });
       }
@@ -59,12 +52,10 @@ export const getAllCurriculums = async () => {
       const gradeData = gradeMap.get(row.gradeId);
 
       // Initialize subject if not exists
-      if (row.subjectId && !gradeData.content.has(row.subjectId)) {
-        gradeData.content.set(row.subjectId, {
+      if (row.subjectId && !gradeData.subjects.has(row.subjectId)) {
+        gradeData.subjects.set(row.subjectId, {
           id: row.subjectId,
-          subject: row.subject,
-          title: row.subjectTitle,
-          englishTitle: row.englishTitle,
+          name: row.subjectName,
           icon: row.subjectIcon,
           orderIndex: row.subjectOrderIndex,
           lessons: new Map(),
@@ -72,15 +63,13 @@ export const getAllCurriculums = async () => {
       }
 
       if (row.subjectId) {
-        const subjectData = gradeData.content.get(row.subjectId);
+        const subjectData = gradeData.subjects.get(row.subjectId);
 
         // Initialize lesson if not exists
         if (row.lessonId && !subjectData.lessons.has(row.lessonId)) {
           subjectData.lessons.set(row.lessonId, {
             id: row.lessonId,
-            lesson: row.lesson,
-            title: row.lessonTitle,
-            englishTitle: row.lessonEnglishTitle,
+            name: row.lessonName,
             icon: row.lessonIcon,
             topics: [],
             orderIndex: row.lessonOrderIndex,
@@ -94,8 +83,7 @@ export const getAllCurriculums = async () => {
           if (row.topicId) {
             lessonData.topics.push({
               id: row.topicId,
-              title: row.topicTitle,
-              englishTitle: row.topicEnglishTitle,
+              name: row.topicName,
               exerciseId: row.exerciseId,
               orderIndex: row.topicOrderIndex,
             });
@@ -106,20 +94,18 @@ export const getAllCurriculums = async () => {
 
     // Convert maps to arrays and structure final response
     gradeMap.forEach((gradeData: any) => {
-      const contentArray: any[] = [];
+      const subjectsArray: any[] = [];
 
-      gradeData.content.forEach((subjectData: any) => {
+      gradeData.subjects.forEach((subjectData: any) => {
         const lessonsArray: any[] = [];
 
         subjectData.lessons.forEach((lessonData: any) => {
           lessonsArray.push(lessonData);
         });
 
-        contentArray.push({
+        subjectsArray.push({
           id: subjectData.id,
-          subject: subjectData.subject,
-          title: subjectData.title,
-          englishTitle: subjectData.englishTitle,
+          name: subjectData.name,
           icon: subjectData.icon,
           orderIndex: subjectData.orderIndex,
           lessons: lessonsArray,
@@ -128,10 +114,9 @@ export const getAllCurriculums = async () => {
 
       structuredData.push({
         id: gradeData.id,
-        grade: gradeData.grade,
-        gradeKhmer: gradeData.gradeKhmer,
+        name: gradeData.name,
         orderIndex: gradeData.orderIndex,
-        content: contentArray,
+        subjects: subjectsArray,
       });
     });
 

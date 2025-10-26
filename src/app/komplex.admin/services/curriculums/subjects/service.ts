@@ -3,7 +3,7 @@ import { eq, gt, gte, sql } from "drizzle-orm";
 import { subjects } from "@/db/schema.js";
 
 export const createSubject = async (
-  title: string,
+  name: string,
   icon: string,
   gradeId: number,
   orderIndex: number,
@@ -27,7 +27,7 @@ export const createSubject = async (
     }
 
     await db.insert(subjects).values({
-      title,
+      name,
       icon,
       gradeId,
       orderIndex: finalOrderIndex,
@@ -36,5 +36,3 @@ export const createSubject = async (
     throw new Error(`Failed to create subject: ${(error as Error).message}`);
   }
 };
-
-
