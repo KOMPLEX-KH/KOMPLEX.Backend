@@ -1,8 +1,13 @@
 import { db } from "@/db/index.js";
 import { isNotNull, isNull, sql } from "drizzle-orm";
 import { grades, subjects, lessons, topics } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const getDashboardData = async () => {
+  const cached = await redis.get("curriculums:dashboard");
+  if (cached) {
+    return { data: JSON.parse(cached) };
+  }
   const numberOfGrades = await db
     .select({ count: sql<number>`count(*)` })
     .from(grades);
@@ -22,5 +27,8 @@ export const getDashboardData = async () => {
     numberOfLessons: numberOfLessons[0]?.count || 0,
     numberOfTopics: numberOfTopics[0]?.count || 0,
   };
-  return data;
+  await redis.set("curriculums:dashboard", JSON.stringify(data), {
+    EX: 60 * 60 * 24,
+  });
+  return { data: data };
 };

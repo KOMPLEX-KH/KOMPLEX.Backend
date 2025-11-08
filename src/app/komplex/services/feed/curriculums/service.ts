@@ -1,10 +1,14 @@
 import { db } from "@/db/index.js";
 import { eq } from "drizzle-orm";
 import { grades, lessons, subjects, topics } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const getAllCurriculums = async () => {
   try {
-    // Fetch all data with proper joins
+    const cached = await redis.get("curriculums");
+    if (cached) {
+      return { data: JSON.parse(cached) };
+    }
     const allData = await db
       .select({
         gradeId: grades.id,
@@ -118,6 +122,10 @@ export const getAllCurriculums = async () => {
         orderIndex: gradeData.orderIndex,
         subjects: subjectsArray,
       });
+    });
+
+    await redis.set("curriculums", JSON.stringify(structuredData), {
+      EX: 60 * 60 * 24,
     });
 
     return { data: structuredData };
