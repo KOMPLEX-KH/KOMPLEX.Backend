@@ -1,6 +1,6 @@
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { exercises } from "@/db/schema.js";
+import { exercises, grades } from "@/db/schema.js";
 
 export const getGrades = async () => {
   try {
@@ -11,12 +11,11 @@ export const getGrades = async () => {
     }
     const result = await db
       .select({
-        grade: exercises.grade,
+        grade: grades.name,
       })
-      .from(exercises);
-    const grades = [...new Set(result.map((item) => item.grade))];
-    await redis.set(cacheKey, JSON.stringify(grades), { EX: 60 * 60 * 24 });
-    return grades;
+      .from(grades);
+    await redis.set(cacheKey, JSON.stringify(result), { EX: 60 * 60 * 24 });
+    return result;
   } catch (error) {
     throw new Error(`Failed to get grades: ${(error as Error).message}`);
   }
