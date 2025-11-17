@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   callAiAndWriteToHistory,
   getMyAiHistoryController,
+  getAiTopicResponseController,
 } from "../../controllers/me/ai.controller.js";
 import { aiRateLimiter } from "@/middleware/redisLimiter.js";
 const router = Router();
@@ -19,4 +20,11 @@ router.get(
   verifyFirebaseToken as any,
   getMyAiHistoryController as any
 );
+
+router.get(
+  "/topics/:id",
+  aiRateLimiter,
+  verifyFirebaseToken as any,
+  getAiTopicResponseController as any
+)
 export default router;

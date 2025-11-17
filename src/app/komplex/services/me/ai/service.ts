@@ -3,10 +3,11 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { userAIHistory } from "@/db/schema.js";
 import { eq, desc, asc } from "drizzle-orm";
 import axios from "axios";
+import { cleanKomplexResponse } from "../../../../../utils/cleanKomplexResponse.js";
 
 export const callAiAndWriteToHistory = async (
   prompt: string,
-  language: string,
+  responseType: string,
   userId: number
 ) => {
   try {
@@ -25,14 +26,15 @@ export const callAiAndWriteToHistory = async (
         .from(userAIHistory)
         .where(eq(userAIHistory.userId, Number(userId)))
         .orderBy(desc(userAIHistory.createdAt))
-        .limit(5)
+        .limit(3)
         .then((res) => res.map((r) => r.prompt).join("\n"));
     }
+    console.log("requesting to dara", `${process.env.DARA_ENDPOINT}/gemini`);
     const response = await axios.post(
-      `${process.env.FAST_API_KEY}`,
+      `${process.env.DARA_ENDPOINT}/gemini`,
       {
-        input: prompt,
-        language,
+        prompt,
+        responseType,
         previousContext,
       },
       {
@@ -43,7 +45,7 @@ export const callAiAndWriteToHistory = async (
       }
     );
     const result = response.data;
-    const aiResult = result.result;
+    const aiResult = cleanKomplexResponse(result.result ?? "", responseType);
     if (aiResult) {
       const newHistory = await db
         .insert(userAIHistory)
@@ -51,12 +53,14 @@ export const callAiAndWriteToHistory = async (
           userId: Number(userId),
           prompt: prompt,
           aiResult: aiResult,
+          responseType: responseType as "normal" | "komplex",
         })
         .returning();
       const newCacheData = await db
         .select({
           prompt: userAIHistory.prompt,
           aiResult: userAIHistory.aiResult,
+          responseType: userAIHistory.responseType,
         })
         .from(userAIHistory)
         .where(eq(userAIHistory.userId, Number(userId)))
@@ -69,7 +73,7 @@ export const callAiAndWriteToHistory = async (
         { EX: 60 * 60 * 24 }
       );
     }
-    return { prompt, data: aiResult };
+    return { prompt, responseType, data: aiResult };
   } catch (error) {
     throw new Error((error as Error).message);
   }
