@@ -6,8 +6,10 @@ import {
   getAiTopicResponseController,
 } from "../../controllers/me/ai.controller.js";
 import { aiRateLimiter } from "@/middleware/redisLimiter.js";
+import { getAiTopicHistoryController } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
+// general ai
 router.post(
   "/",
   verifyFirebaseToken as any,
@@ -21,10 +23,18 @@ router.get(
   getMyAiHistoryController as any
 );
 
-router.get(
+// ai trained per topic
+
+router.post(
   "/topics/:id",
   aiRateLimiter,
   verifyFirebaseToken as any,
   getAiTopicResponseController as any
+)
+router.get(
+  "/topics/:id",
+  aiRateLimiter,
+  verifyFirebaseToken as any,
+  getAiTopicHistoryController as any
 )
 export default router;

@@ -1,10 +1,10 @@
-import { desc, eq } from "drizzle-orm";
-
+import { desc, eq, and } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { topics } from "@/db/models/topics.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import axios from "axios";
-import { cleanKomplexResponse } from "../../../../../../utils/cleanKomplexResponse.js";
+import { cleanKomplexResponse } from "../../../../../../../utils/cleanKomplexResponse.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const getAiTopicResponse = async (
   prompt: string,
@@ -55,6 +55,49 @@ export const getAiTopicResponse = async (
       responseType: responseType as "normal" | "komplex",
     });
     return { prompt, responseType, data: aiResult };
+  } catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
+
+export const getAiTopicHistory = async (
+  userId: number,
+  topicId: string,
+  page?: number,
+  limit?: number,
+  offset?: number
+) => {
+  try {
+    // const cacheKey = `aiTopicHistory:${userId}:page:${page ?? 1}`;
+    // await redis.del(cacheKey);
+    // const cached = await redis.get(cacheKey);
+    // const parseData = cached ? JSON.parse(cached) : null;
+    // if (parseData) {
+    //   return {
+    //     data: parseData.slice((limit ?? 20) - parseData.length),
+    //     hasMore: parseData.length === (limit ?? 20),
+    //   };
+    // }
+    const history = await db
+      .select()
+      .from(userAITopicHistory)
+      .where(
+        and(
+          eq(userAITopicHistory.userId, Number(userId)),
+          eq(userAITopicHistory.topicId, Number(topicId))
+        )
+      )
+      .orderBy(desc(userAITopicHistory.createdAt))
+      .limit(limit ?? 20)
+      .offset(((page ?? 1) - 1) * (limit ?? 20));
+    const reversedHistory = history.reverse();
+    // await redis.set(cacheKey, JSON.stringify(reversedHistory), {
+    //   EX: 60 * 60 * 24,
+    // });
+    return {
+      data: reversedHistory,
+      hasMore: history.length === (limit ?? 20),
+    };
   } catch (error) {
     throw new Error((error as Error).message);
   }

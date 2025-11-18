@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as aiService from "@/app/komplex/services/me/ai/service.js";
-import * as aiServiceById from "@/app/komplex/services/me/ai/[id]/service.js";
+import * as aiServiceById from "@/app/komplex/services/me/ai/topics/[id]/service.js";
 
 export const callAiAndWriteToHistory = async (
   req: AuthenticatedRequest,
@@ -82,6 +82,29 @@ export const getAiTopicResponseController = async (
       responseType,
       Number(userId),
       id
+    );
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const getAiTopicHistoryController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const { page, limit } = req.query;
+    const result = await aiServiceById.getAiTopicHistory(
+      Number(userId),
+      id,
+      Number(page),
+      Number(limit)
     );
     return res.status(200).json(result);
   } catch (error) {
