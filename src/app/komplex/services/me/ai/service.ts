@@ -46,8 +46,9 @@ export const callAiAndWriteToHistory = async (
     );
     const result = response.data;
     const aiResult = cleanKomplexResponse(result.result ?? "", responseType);
+    let newHistory;
     if (aiResult) {
-      const newHistory = await db
+      newHistory = await db
         .insert(userAIHistory)
         .values({
           userId: Number(userId),
@@ -73,7 +74,14 @@ export const callAiAndWriteToHistory = async (
         { EX: 60 * 60 * 24 }
       );
     }
-    return { prompt, responseType, data: aiResult };
+    return {
+      prompt,
+      responseType,
+      data: {
+        aiResult,
+        id: newHistory?.[0]?.id,
+      },
+    };
   } catch (error) {
     throw new Error((error as Error).message);
   }

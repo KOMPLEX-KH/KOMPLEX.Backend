@@ -6,7 +6,7 @@ import axios from "axios";
 import { cleanKomplexResponse } from "../../../../../../../utils/cleanKomplexResponse.js";
 import { redis } from "@/db/redis/redisConfig.js";
 
-export const getAiTopicResponse = async (
+export const callAiTopicAndWriteToTopicHistory = async (
   prompt: string,
   responseType: string,
   userId: number,
@@ -47,14 +47,25 @@ export const getAiTopicResponse = async (
     );
     const result = response.data;
     const aiResult = cleanKomplexResponse(result.result ?? "", responseType);
-    await db.insert(userAITopicHistory).values({
-      userId,
-      topicId: Number(id),
+    const lastResponse = await db
+      .insert(userAITopicHistory)
+      .values({
+        userId,
+        topicId: Number(id),
+        prompt,
+        aiResult,
+        rating: null,
+        responseType: responseType as "normal" | "komplex",
+      })
+      .returning();
+    return {
       prompt,
-      aiResult,
-      responseType: responseType as "normal" | "komplex",
-    });
-    return { prompt, responseType, data: aiResult };
+      responseType,
+      data: {
+        aiResult,
+        id: lastResponse[0].id,
+      },
+    };
   } catch (error) {
     throw new Error((error as Error).message);
   }

@@ -9,6 +9,8 @@ export const userAITopicHistory = pgTable("user_ai_topic_history", {
   topicId: integer("topic_id").references(() => topics.id),
   prompt: text("prompt"),
   aiResult: text("ai_result"),
+  rating: integer("rating"),
+  ratingFeedback: text("rating_feedback"),
   responseType: responseTypeEnum("response_type").default("normal"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
