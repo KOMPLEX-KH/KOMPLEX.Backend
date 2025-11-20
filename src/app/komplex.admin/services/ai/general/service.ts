@@ -4,7 +4,7 @@ import { userAIHistory } from "@/db/schema.js";
 export const getGeneralAiResponses = async () => {
   try {
     const result = await db.select().from(userAIHistory);
-    return result;
+    return {data: result};
   } catch (error) {
     throw new Error((error as Error).message);
   }

@@ -4,12 +4,14 @@ import {
   getTopicAiResponsesController,
   getGeneralAiDashboardController,
   getTopicAiDashboardController,
+  getAiDashboardController,
 } from "../controllers/ai.controller.js";
 
 const router = Router();
 
 router.get("/general", getGeneralAiResponsesController as any);
 router.get("/topics", getTopicAiResponsesController as any);
+router.get("/dashboard", getAiDashboardController as any);
 router.get("/general/dashboard", getGeneralAiDashboardController as any);
 router.get("/topics/dashboard", getTopicAiDashboardController as any);
 
