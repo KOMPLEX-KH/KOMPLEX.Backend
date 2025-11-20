@@ -15,6 +15,7 @@ import forumRepliesRouter from "./forum-replies.route.js";
 import authRouter from "./auth.route.js";
 import curriculumRouter from "./curriculums.route.js";
 import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
+import aiRouter from "./ai.route.js";
 const adminRoutes = Router();
 adminRoutes.use("/auth", authRouter);
 
@@ -23,6 +24,7 @@ adminRoutes.use(verifyFirebaseTokenAdmin as any);
 adminRoutes.use("/database", databaseRouter);
 adminRoutes.use("/curriculums", curriculumRouter);
 adminRoutes.use("/blogs", blogsRouter);
+adminRoutes.use("/ai", aiRouter);
 adminRoutes.use("/exercises", exercisesRouter);
 adminRoutes.use("/grades", gradesRouter);
 adminRoutes.use("/subjects", subjectsRouter);
