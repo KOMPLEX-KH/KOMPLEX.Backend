@@ -1,6 +1,6 @@
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { exercises } from "@/db/schema.js";
+import { exercises, subjects } from "@/db/schema.js";
 
 export const getSubjects = async () => {
   try {
@@ -11,12 +11,11 @@ export const getSubjects = async () => {
     }
     const result = await db
       .select({
-        subject: exercises.subject,
+        subject: subjects.name,
       })
-      .from(exercises);
-    const subjects = [...new Set(result.map((item) => item.subject))];
-    await redis.set(cacheKey, JSON.stringify(subjects), { EX: 60 * 60 * 24 });
-    return subjects;
+      .from(subjects);
+    await redis.set(cacheKey, JSON.stringify(result), { EX: 60 * 60 * 24 });
+    return result;
   } catch (error) {
     throw new Error(`Failed to get subjects: ${(error as Error).message}`);
   }

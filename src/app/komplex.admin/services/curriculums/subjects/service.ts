@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { subjects } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const createSubject = async (
   name: string,
@@ -32,6 +33,9 @@ export const createSubject = async (
       gradeId,
       orderIndex: finalOrderIndex,
     });
+    await redis.del("allSubjects"); 
+    await redis.del("curriculums");
+    await redis.del("curriculums:dashboard");
   } catch (error) {
     throw new Error(`Failed to create subject: ${(error as Error).message}`);
   }

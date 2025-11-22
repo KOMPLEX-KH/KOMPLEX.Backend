@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { lessons } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const updateLesson = async (
   id: number,
@@ -59,6 +60,8 @@ export const updateLesson = async (
     }
 
     await db.update(lessons).set(updateData).where(eq(lessons.id, id));
+    await redis.del("curriculums");
+    await redis.del("curriculums:dashboard");
   } catch (error) {
     throw new Error(`Failed to update lesson: ${(error as Error).message}`);
   }
@@ -80,6 +83,8 @@ export const deleteLesson = async (id: number) => {
       .set({ orderIndex: sql`${lessons.orderIndex} - 1` })
       .where(gt(lessons.orderIndex, oldOrderIndex.orderIndex as number));
     await db.delete(lessons).where(eq(lessons.id, id));
+    await redis.del("curriculums");
+    await redis.del("curriculums:dashboard");
   } catch (error) {
     throw new Error(`Failed to delete lesson: ${(error as Error).message}`);
   }

@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { lessons } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const createLesson = async (
   name: string,
@@ -32,6 +33,8 @@ export const createLesson = async (
       subjectId,
       orderIndex: finalOrderIndex,
     });
+    await redis.del("curriculums");
+    await redis.del("curriculums:dashboard");
   } catch (error) {
     throw new Error(`Failed to create lesson: ${(error as Error).message}`);
   }

@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { topics } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const createTopic = async (
   name: string,
@@ -39,6 +40,7 @@ export const createTopic = async (
     }
 
     await db.insert(topics).values(topicData);
+    await redis.del("curriculums:dashboard");
   } catch (error) {
     throw new Error(`Failed to create topic: ${(error as Error).message}`);
   }
