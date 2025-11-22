@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { subjects } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const updateSubject = async (
     id: number,
@@ -59,6 +60,9 @@ export const updateSubject = async (
       }
   
       await db.update(subjects).set(updateData).where(eq(subjects.id, id));
+      await redis.del("allSubjects");
+      await redis.del("curriculums");
+      await redis.del("curriculums:dashboard"); 
     } catch (error) {
       throw new Error(`Failed to update subject: ${(error as Error).message}`);
     }
@@ -80,6 +84,9 @@ export const updateSubject = async (
         .set({ orderIndex: sql`${subjects.orderIndex} - 1` })
         .where(gt(subjects.orderIndex, oldOrderIndex.orderIndex as number));
       await db.delete(subjects).where(eq(subjects.id, id));
+      await redis.del("curriculums");
+      await redis.del("allSubjects");
+      await redis.del("curriculums:dashboard");
     } catch (error) {
       throw new Error(`Failed to delete subject: ${(error as Error).message}`);
     }
