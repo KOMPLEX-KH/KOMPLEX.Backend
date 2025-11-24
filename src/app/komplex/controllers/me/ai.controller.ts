@@ -32,7 +32,7 @@ export const callAiAndWriteToHistory = async (
   }
 };
 
-export const getMyAiHistoryController = async (
+export const getAllAiTabNames = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
@@ -40,17 +40,39 @@ export const getMyAiHistoryController = async (
     const userId = req.user.userId;
     const { page, limit } = req.query;
 
-    const result = await aiService.getAiHistory(
+    const result = await aiService.getAllAiTabNames(
       Number(userId),
       Number(page),
       Number(limit)
     );
-
-    return res.status(200).json(result);
-  } catch (error) {
+}
+catch (error) {
     return res.status(500).json({
       success: false,
       error: (error as Error).message,
     });
   }
 };
+
+// export const getMyAiHistoryController = async (
+//   req: AuthenticatedRequest,
+//   res: Response
+// ) => {
+//   try {
+//     const userId = req.user.userId;
+//     const { page, limit } = req.query;
+
+//     const result = await aiService.getAiHistory(
+//       Number(userId),
+//       Number(page),
+//       Number(limit)
+//     );
+
+//     return res.status(200).json(result);
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       error: (error as Error).message,
+//     });
+//   }
+// };
