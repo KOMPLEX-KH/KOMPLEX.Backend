@@ -11,11 +11,11 @@ import {
 } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
-router.get("/tab", verifyFirebaseToken as any, aiRateLimiter, getAllAiTabNames as any);
-router.get("/:tabId", verifyFirebaseToken as any, aiRateLimiter, getAiHistoryBasedOnTab as any);
-router.get("/topics/:topicId", verifyFirebaseToken as any, aiRateLimiter, getAiHistoryBasedOnTopic as any);
-router.post("/:tabId", verifyFirebaseToken as any, aiRateLimiter, callAiGeneral as any);
-router.post("/", verifyFirebaseToken as any, aiRateLimiter, callAiFirstTime as any);
-router.post("/:topicId", verifyFirebaseToken as any, aiRateLimiter, callAiTopic as any);
+router.get("/tab", aiRateLimiter, getAllAiTabNames as any);
+router.get("/:tabId/tab", aiRateLimiter, getAiHistoryBasedOnTab as any);
+router.get("/:topicId/topic", aiRateLimiter, getAiHistoryBasedOnTopic as any);
+router.post("/:tabId/tab", aiRateLimiter, callAiGeneral as any);
+router.post("/tab", aiRateLimiter, callAiFirstTime as any);
+router.post("/:topicId/topic", aiRateLimiter, callAiTopic as any);
 
 export default router;

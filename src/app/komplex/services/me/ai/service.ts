@@ -1,10 +1,11 @@
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { userAIHistory } from "@/db/schema.js";
+import { topics, userAIHistory } from "@/db/schema.js";
 import { eq, desc, asc, and } from "drizzle-orm";
 import axios from "axios";
 import { aiTabs } from "@/db/models/ai_tabs.js";
 import { InferenceClient } from "@huggingface/inference";
+import { userAIHistoryTabSummary } from "@/db/models/user_ai_history_tab_summary.js";
 
 export const callAiGeneralService = async (prompt: string, language: string, userId: number, tabId: number) => {
 	try {
@@ -17,16 +18,13 @@ export const callAiGeneralService = async (prompt: string, language: string, use
 		} else {
 			previousContext = await db
 				.select({
-					prompt: userAIHistory.prompt,
-					aiResult: userAIHistory.aiResult,
-					tabName: aiTabs.tabName,
+					summaryText: userAIHistoryTabSummary.summaryText,
 				})
-				.from(userAIHistory)
-				.innerJoin(aiTabs, eq(userAIHistory.tabId, aiTabs.id))
-				.where(and(eq(userAIHistory.userId, Number(userId)), eq(userAIHistory.tabId, tabId)))
-				.orderBy(desc(userAIHistory.createdAt))
-				.limit(5)
-				.then((res) => res.map((r) => r.prompt).join("\n"));
+				.from(userAIHistoryTabSummary)
+				.where(
+					and(eq(userAIHistoryTabSummary.userId, Number(userId)), eq(userAIHistoryTabSummary.tabId, tabId))
+				);
+			await redis.set(cacheKey, JSON.stringify(previousContext), { EX: 60 * 60 * 24 });
 		}
 		const response = await axios.post(
 			`${process.env.FAST_API_KEY}`,
@@ -45,31 +43,29 @@ export const callAiGeneralService = async (prompt: string, language: string, use
 		const result = response.data;
 		const aiResult = result.result;
 		if (aiResult) {
-			const newHistory = await db
-				.insert(userAIHistory)
-				.values({
-					userId: Number(userId),
-					prompt: prompt,
-					aiResult: aiResult,
-					tabId: tabId,
-				})
-				.returning();
-
-			if (cacheData) {
-				const updatedCache = [...cacheData, { prompt, aiResult }];
-				await redis.set(cacheKey, JSON.stringify(updatedCache), { EX: 60 * 60 * 24 });
-			} else {
-				const newCacheData = await db
-					.select({
-						prompt: userAIHistory.prompt,
-						aiResult: userAIHistory.aiResult,
+			await db.insert(userAIHistory).values({
+				userId: Number(userId),
+				prompt: prompt,
+				aiResult: aiResult,
+				tabId: tabId,
+				topicId: null,
+			});
+			const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabId}`;
+			const currentCountRaw = await redis.get(summarizeCounterCacheKey);
+			const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
+			if (currentCount >= 5) {
+				const summaryText = await summarize(aiResult);
+				await db
+					.update(userAIHistoryTabSummary)
+					.set({
+						userId: Number(userId),
+						summaryText: summaryText.summary || aiResult,
+						tabId: tabId,
 					})
-					.from(userAIHistory)
-					.where(eq(userAIHistory.userId, Number(userId)))
-					.orderBy(desc(userAIHistory.createdAt))
-					.limit(4)
-					.then((res) => res.map((r) => r.prompt).join("\n"));
-				await redis.set(cacheKey, JSON.stringify([...newCacheData, ...newHistory]), { EX: 60 * 60 * 24 });
+					.returning();
+				await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
+			} else {
+				await redis.set(summarizeCounterCacheKey, (currentCount + 1).toString(), { EX: 60 * 60 * 24 * 3 });
 			}
 		}
 		return { prompt, data: aiResult };
@@ -78,9 +74,84 @@ export const callAiGeneralService = async (prompt: string, language: string, use
 	}
 };
 
+export const callAiTopicService = async (prompt: string, language: string, userId: number, topicId: number) => {
+	try {
+		const cacheKey = `previousContext:${userId}:topicId:${topicId}`;
+		const cacheRaw = await redis.get(cacheKey);
+		const cacheData = cacheRaw ? JSON.parse(cacheRaw) : null;
+		let previousContext = null;
+
+		if (Array.isArray(cacheData) && cacheData.length >= 5) {
+			previousContext = cacheData;
+		} else {
+			previousContext = await db
+				.select({ summaryText: userAIHistoryTabSummary.summaryText })
+				.from(userAIHistoryTabSummary)
+				.where(
+					and(
+						eq(userAIHistoryTabSummary.userId, Number(userId)),
+						eq(userAIHistoryTabSummary.topicId, topicId)
+					)
+				);
+			await redis.set(cacheKey, JSON.stringify(previousContext), { EX: 60 * 60 * 24 });
+		}
+
+		const response = await axios.post(
+			`${process.env.FAST_API_KEY}`,
+			{
+				input: prompt,
+				language,
+				previousContext,
+			},
+			{
+				headers: {
+					"Content-Type": "application/json",
+					"x-api-key": process.env.INTERNAL_API_KEY,
+				},
+			}
+		);
+
+		const result = response.data;
+		const aiResult = result.result;
+
+		if (aiResult) {
+			await db.insert(userAIHistory).values({
+				userId: Number(userId),
+				prompt,
+				aiResult,
+				tabId: null,
+				topicId,
+			});
+			const summarizeCounterCacheKey = `summarizeCounter:${userId}:topicId:${topicId}`;
+			const currentCountRaw = await redis.get(summarizeCounterCacheKey);
+			const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
+			if (currentCount >= 5) {
+				const summaryText = await summarize(aiResult);
+				await db
+					.update(userAIHistoryTabSummary)
+					.set({
+						userId: Number(userId),
+						summaryText: summaryText.summary || aiResult,
+						tabId: null,
+						topicId,
+					})
+					.returning();
+				await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
+			} else {
+				await redis.set(summarizeCounterCacheKey, (currentCount + 1).toString(), { EX: 60 * 60 * 24 * 3 });
+			}
+		}
+
+		return { prompt, data: aiResult };
+	} catch (error) {
+		throw new Error((error as Error).message);
+	}
+};
+
 export const callAiFirstTimeService = async (prompt: string, language: string, userId: number) => {
 	try {
-		const tabId = await createNewTab(userId, prompt);
+		const tabIdAndTabName = await createNewTab(userId, prompt);
+		console.log("Created new tab:", tabIdAndTabName);
 		const response = await axios.post(
 			`${process.env.FAST_API_KEY}`,
 			{
@@ -98,90 +169,22 @@ export const callAiFirstTimeService = async (prompt: string, language: string, u
 		const result = response.data;
 		const aiResult = result.result;
 		if (aiResult) {
-			const newHistory = await db
-				.insert(userAIHistory)
-				.values({
-					userId: Number(userId),
-					prompt: prompt,
-					aiResult: aiResult,
-					tabId: tabId,
-				})
-				.returning();
-			const cacheKey = `previousContext:${userId}:tabId:${tabId}`;
-			await redis.set(cacheKey, JSON.stringify(newHistory), { EX: 60 * 60 * 24 });
-		}
-		return { prompt, data: aiResult };
-	} catch (error) {
-		throw new Error((error as Error).message);
-	}
-};
-
-export const callAiTopicService = async (prompt: string, language: string, userId: number, topicId: number, tabId: number) => {
-	try {
-		const cacheKey = `previousContext:${userId}:topicId:${topicId}`;
-		const cacheRaw = await redis.get(cacheKey);
-		const cacheData = cacheRaw ? JSON.parse(cacheRaw) : null;
-		let previousContext = null;
-		if (Array.isArray(cacheData) && cacheData.length >= 5) {
-			previousContext = cacheData;
-		} else {
-			previousContext = await db
-				.select({
-					prompt: userAIHistory.prompt,
-					aiResult: userAIHistory.aiResult,
-					topicName: aiTabs.tabName,
-				})
-				.from(userAIHistory)
-				.innerJoin(aiTabs, eq(userAIHistory.tabId, aiTabs.id))
-				.where(and(eq(userAIHistory.userId, Number(userId)), eq(userAIHistory.topicId, topicId)))
-				.orderBy(desc(userAIHistory.createdAt))
-				.limit(5)
-				.then((res) => res.map((r) => r.prompt).join("\n"));
-		}
-		const response = await axios.post(
-			`${process.env.FAST_API_KEY}`,
-			{
-				input: prompt,
-				language,
-				previousContext,
-			},
-			{
-				headers: {
-					"Content-Type": "application/json",
-					"x-api-key": process.env.INTERNAL_API_KEY,
-				},
-			}
-		);
-		const result = response.data;
-		const aiResult = result.result;
-		if (aiResult) {
-			const newHistory = await db
-				.insert(userAIHistory)
-				.values({
-					userId: Number(userId),
-					prompt: prompt,
-					aiResult: aiResult,
-					tabId: tabId,
-					topicId: topicId,
-				})
-				.returning();
-
-			if (cacheData) {
-				const updatedCache = [...cacheData, { prompt, aiResult }];
-				await redis.set(cacheKey, JSON.stringify(updatedCache), { EX: 60 * 60 * 24 });
-			} else {
-				const newCacheData = await db
-					.select({
-						prompt: userAIHistory.prompt,
-						aiResult: userAIHistory.aiResult,
-					})
-					.from(userAIHistory)
-					.where(eq(userAIHistory.userId, Number(userId)))
-					.orderBy(desc(userAIHistory.createdAt))
-					.limit(4)
-					.then((res) => res.map((r) => r.prompt).join("\n"));
-				await redis.set(cacheKey, JSON.stringify([...newCacheData, ...newHistory]), { EX: 60 * 60 * 24 });
-			}
+			await db.insert(userAIHistory).values({
+				userId: Number(userId),
+				prompt: prompt,
+				aiResult: aiResult,
+				tabId: tabIdAndTabName.tabId,
+				topicId: null,
+			});
+			await db.insert(userAIHistoryTabSummary).values({
+				userId: Number(userId),
+				summaryText: tabIdAndTabName.tabName || aiResult,
+				tabId: tabIdAndTabName.tabId,
+			});
+			const cacheKey = `previousContext:${userId}:tabId:${tabIdAndTabName.tabId}`;
+			await redis.set(cacheKey, JSON.stringify(aiResult), { EX: 60 * 60 * 24 });
+			const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
+			await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
 		}
 		return { prompt, data: aiResult };
 	} catch (error) {
@@ -246,7 +249,12 @@ export const getAiHistoryBasedOnTabService = async (userId: number, tabId: numbe
 	}
 };
 
-export const getAiHistoryBasedOnTopicService = async (userId: number, topicId: number, page?: number, limit?: number) => {
+export const getAiHistoryBasedOnTopicService = async (
+	userId: number,
+	topicId: number,
+	page?: number,
+	limit?: number
+) => {
 	try {
 		const cacheKey = `aiHistory:${userId}:topicId:${topicId}:page:${page ?? 1}`;
 		const cached = await redis.get(cacheKey);
@@ -276,27 +284,14 @@ export const getAiHistoryBasedOnTopicService = async (userId: number, topicId: n
 
 const createNewTab = async (userId: number, tabName: string) => {
 	try {
-		let tabNameTrimmed = tabName.slice(0, 100);
-		if (!detectNoneEnglish(tabNameTrimmed)) {
-			const hgKey = process.env.HUGGING_FACE_SECRET_KEY!;
-			const client = new InferenceClient(hgKey);
-
-			const output = await client.summarization({
-				model: "facebook/bart-large-cnn",
-				inputs: tabNameTrimmed,
-				provider: "hf-inference",
-			});
-			if (output && Array.isArray(output) && output.length > 0 && output[0].summary_text) {
-				tabNameTrimmed = output[0].summary_text;
-			}
-		}
+		const summarizedTabName = await summarize(tabName);
 		const [newTab] = await db
-			.insert(aiTabs)
-			.values({
-				userId: Number(userId),
-				tabName: tabNameTrimmed,
-			})
-			.returning({ id: aiTabs.id });
+		.insert(aiTabs)
+		.values({
+			userId: Number(userId),
+			tabName: summarizedTabName.summary || summarizedTabName,
+		})
+		.returning({ id: aiTabs.id });
 		const cacheKey = `aiTabs:${userId}:page:1`;
 		const cached = await redis.get(cacheKey);
 		const parseData = cached ? JSON.parse(cached) : null;
@@ -304,45 +299,27 @@ const createNewTab = async (userId: number, tabName: string) => {
 			const updatedCache = [newTab, ...parseData];
 			await redis.set(cacheKey, JSON.stringify(updatedCache), { EX: 60 * 60 * 24 });
 		}
-		return newTab.id;
+		return { tabId: newTab.id, tabName: summarizedTabName.summary || summarizedTabName };
 	} catch (error) {
 		throw new Error((error as Error).message);
 	}
 };
 
-const detectNoneEnglish = (text: string) => {
-	const nonEnglishRegex = /[^\x00-\x7F]/;
-	return nonEnglishRegex.test(text);
+const summarize = async (text: string) => {
+	if (text.length < 20) {
+		return { summary: text };
+	}
+	const response = await axios.post(
+		`${process.env.SUMMARY_API_URL}`,
+		{
+			text: text,
+		},
+		{
+			headers: {
+				"Content-Type": "application/json",
+				"x-api-key": process.env.INTERNAL_API_KEY,
+			},
+		}
+	);
+	return response.data;
 };
-//   offset?: number
-// ) => {
-//   try {
-//     const cacheKey = `aiHistory:${userId}:page:${page ?? 1}`;
-//     await redis.del(cacheKey);
-//     const cached = await redis.get(cacheKey);
-//     const parseData = cached ? JSON.parse(cached) : null;
-//     if (parseData) {
-//       return {
-//         data: parseData.slice((limit ?? 20) - parseData.length),
-//         hasMore: parseData.length === (limit ?? 20),
-//       };
-//     }
-//     const history = await db
-//       .select()
-//       .from(userAIHistory)
-//       .where(eq(userAIHistory.userId, Number(userId)))
-//       .orderBy(desc(userAIHistory.createdAt))
-//       .limit(limit ?? 20)
-//       .offset(((page ?? 1) - 1) * (limit ?? 20));
-//     const reversedHistory = history.reverse();
-//     await redis.set(cacheKey, JSON.stringify(reversedHistory), {
-//       EX: 60 * 60 * 24,
-//     });
-//     return {
-//       data: reversedHistory,
-//       hasMore: history.length === (limit ?? 20),
-//     };
-//   } catch (error) {
-//     throw new Error((error as Error).message);
-//   }
-// };

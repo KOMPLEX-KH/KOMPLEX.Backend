@@ -5,7 +5,8 @@ import * as aiService from "@/app/komplex/services/me/ai/service.js";
 export const callAiGeneral = async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const userId = req.user.userId;
-		const { prompt, language, tabId } = req.body;
+    const { tabId } = req.params;
+		const { prompt, language } = req.body;
 
 		if (!prompt) {
 			return res.status(400).json({
@@ -26,35 +27,30 @@ export const callAiGeneral = async (req: AuthenticatedRequest, res: Response) =>
 };
 
 export const callAiTopic = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user.userId;
-    const { prompt, tabId, language, topicId } = req.body;
-    if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        message: "Prompt is required",
-      });
-    }
-    const result = await aiService.callAiTopicService(
-      prompt,
-      language,
-      Number(userId),
-      Number(tabId),
-      Number(topicId)
-    );
-    return res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
-  }
+	try {
+		const userId = req.user.userId;
+		const { prompt, language } = req.body;
+		const { topicId } = req.params;
+		if (!prompt) {
+			return res.status(400).json({
+				success: false,
+				message: "Prompt is required",
+			});
+		}
+		const result = await aiService.callAiTopicService(prompt, language, Number(userId), Number(topicId));
+		return res.status(200).json(result);
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			error: (error as Error).message,
+		});
+	}
 };
 
 export const callAiFirstTime = async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const userId = req.user.userId;
-		const { prompt, language } = req.query;
+		const { prompt, language } = req.body;
 
 		const result = await aiService.callAiFirstTimeService(String(prompt), String(language), Number(userId));
 		return res.status(200).json(result);
@@ -66,68 +62,58 @@ export const callAiFirstTime = async (req: AuthenticatedRequest, res: Response) 
 	}
 };
 
-export const getAllAiTabNames = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const userId = req.user.userId;
-    const {page, limit} = req.query;
+export const getAllAiTabNames = async (req: AuthenticatedRequest, res: Response) => {
+	try {
+		const userId = req.user.userId;
+		const { page, limit } = req.query;
 
-    const result = await aiService.getAllAiTabNamesService(
-      Number(userId),
-      Number(page),
-      Number(limit)
-    );
-    return res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
-  }
+		const result = await aiService.getAllAiTabNamesService(Number(userId), Number(page), Number(limit));
+		return res.status(200).json(result);
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			error: (error as Error).message,
+		});
+	}
 };
 
-export const getAiHistoryBasedOnTab = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const userId = req.user.userId;
-    const { tabId, page, limit } = req.query;
-    const result = await aiService.getAiHistoryBasedOnTabService(
-      Number(userId),
-      Number(tabId),
-      Number(page),
-      Number(limit)
-    );
-    return res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
-  }
+export const getAiHistoryBasedOnTab = async (req: AuthenticatedRequest, res: Response) => {
+	try {
+		const userId = req.user.userId;
+		const { tabId } = req.params;
+		const { page, limit } = req.query;
+
+		const result = await aiService.getAiHistoryBasedOnTabService(
+			Number(userId),
+			Number(tabId),
+			Number(page),
+			Number(limit)
+		);
+		return res.status(200).json(result);
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			error: (error as Error).message,
+		});
+	}
 };
 
-export const getAiHistoryBasedOnTopic = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const userId = req.user.userId;
-    const { topicId, page, limit } = req.query;
-    const result = await aiService.getAiHistoryBasedOnTopicService(
-      Number(userId),
-      Number(topicId),
-      Number(page),
-      Number(limit)
-    );
-    return res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
-  }
+export const getAiHistoryBasedOnTopic = async (req: AuthenticatedRequest, res: Response) => {
+	try {
+		const userId = req.user.userId;
+		const { topicId } = req.params;
+		const { page, limit } = req.query;
+		const result = await aiService.getAiHistoryBasedOnTopicService(
+			Number(userId),
+			Number(topicId),
+			Number(page),
+			Number(limit)
+		);
+		return res.status(200).json(result);
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			error: (error as Error).message,
+		});
+	}
 };
