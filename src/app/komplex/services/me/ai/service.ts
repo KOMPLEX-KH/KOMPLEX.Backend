@@ -303,7 +303,7 @@ const createNewTab = async (userId: number, tabName: string) => {
 };
 
 const summarize = async (text: string) => {
-	if (text.length < 20) {
+	if ([...text].length < 50) {
 		return { summary: text };
 	}
 	const response = await axios.post(
