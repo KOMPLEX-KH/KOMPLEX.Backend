@@ -7,7 +7,7 @@ import { aiTabs } from "@/db/models/ai_tabs.js";
 import { InferenceClient } from "@huggingface/inference";
 import { userAIHistoryTabSummary } from "@/db/models/user_ai_history_tab_summary.js";
 
-export const callAiGeneralService = async (prompt: string, language: string, userId: number, tabId: number) => {
+export const callAiGeneralService = async (prompt: string, userId: number, tabId: number) => {
 	try {
 		const cacheKey = `previousContext:${userId}:tabId:${tabId}`;
 		const cacheRaw = await redis.get(cacheKey);
@@ -30,7 +30,6 @@ export const callAiGeneralService = async (prompt: string, language: string, use
 			`${process.env.FAST_API_KEY}`,
 			{
 				input: prompt,
-				language,
 				previousContext,
 			},
 			{
@@ -74,7 +73,7 @@ export const callAiGeneralService = async (prompt: string, language: string, use
 	}
 };
 
-export const callAiTopicService = async (prompt: string, language: string, userId: number, topicId: number) => {
+export const callAiTopicService = async (prompt: string, userId: number, topicId: number) => {
 	try {
 		const cacheKey = `previousContext:${userId}:topicId:${topicId}`;
 		const cacheRaw = await redis.get(cacheKey);
@@ -100,7 +99,6 @@ export const callAiTopicService = async (prompt: string, language: string, userI
 			`${process.env.FAST_API_KEY}`,
 			{
 				input: prompt,
-				language,
 				previousContext,
 			},
 			{
@@ -148,7 +146,7 @@ export const callAiTopicService = async (prompt: string, language: string, userI
 	}
 };
 
-export const callAiFirstTimeService = async (prompt: string, language: string, userId: number) => {
+export const callAiFirstTimeService = async (prompt: string, userId: number) => {
 	try {
 		const tabIdAndTabName = await createNewTab(userId, prompt);
 		console.log("Created new tab:", tabIdAndTabName);
@@ -156,7 +154,6 @@ export const callAiFirstTimeService = async (prompt: string, language: string, u
 			`${process.env.FAST_API_KEY}`,
 			{
 				input: prompt,
-				language,
 				previousContext: "",
 			},
 			{
@@ -286,12 +283,12 @@ const createNewTab = async (userId: number, tabName: string) => {
 	try {
 		const summarizedTabName = await summarize(tabName);
 		const [newTab] = await db
-		.insert(aiTabs)
-		.values({
-			userId: Number(userId),
-			tabName: summarizedTabName.summary || summarizedTabName,
-		})
-		.returning({ id: aiTabs.id });
+			.insert(aiTabs)
+			.values({
+				userId: Number(userId),
+				tabName: summarizedTabName.summary || summarizedTabName,
+			})
+			.returning({ id: aiTabs.id });
 		const cacheKey = `aiTabs:${userId}:page:1`;
 		const cached = await redis.get(cacheKey);
 		const parseData = cached ? JSON.parse(cached) : null;

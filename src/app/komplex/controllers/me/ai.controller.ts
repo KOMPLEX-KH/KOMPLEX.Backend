@@ -5,7 +5,7 @@ import * as aiService from "@/app/komplex/services/me/ai/service.js";
 export const callAiGeneral = async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const userId = req.user.userId;
-    const { tabId } = req.params;
+		const { tabId } = req.params;
 		const { prompt, language } = req.body;
 
 		if (!prompt) {
@@ -15,7 +15,7 @@ export const callAiGeneral = async (req: AuthenticatedRequest, res: Response) =>
 			});
 		}
 
-		const result = await aiService.callAiGeneralService(prompt, language, Number(userId), Number(tabId));
+		const result = await aiService.callAiGeneralService(prompt, Number(userId), Number(tabId));
 
 		return res.status(200).json(result);
 	} catch (error) {
@@ -37,7 +37,7 @@ export const callAiTopic = async (req: AuthenticatedRequest, res: Response) => {
 				message: "Prompt is required",
 			});
 		}
-		const result = await aiService.callAiTopicService(prompt, language, Number(userId), Number(topicId));
+		const result = await aiService.callAiTopicService(prompt, Number(userId), Number(topicId));
 		return res.status(200).json(result);
 	} catch (error) {
 		return res.status(500).json({
@@ -52,7 +52,7 @@ export const callAiFirstTime = async (req: AuthenticatedRequest, res: Response) 
 		const userId = req.user.userId;
 		const { prompt, language } = req.body;
 
-		const result = await aiService.callAiFirstTimeService(String(prompt), String(language), Number(userId));
+		const result = await aiService.callAiFirstTimeService(String(prompt), Number(userId));
 		return res.status(200).json(result);
 	} catch (error) {
 		return res.status(500).json({
