@@ -3,8 +3,7 @@ import { db } from "@/db/index.js";
 import { topics } from "@/db/models/topics.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import axios from "axios";
-import { cleanKomplexResponse } from "../../../../../../../utils/cleanKomplexResponse.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 
 export const callAiTopicAndWriteToTopicHistory = async (
   prompt: string,
@@ -73,7 +72,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
 
 export const getAiTopicHistory = async (
   userId: number,
-  topicId: string,
+  topicId: number,
   page?: number,
   limit?: number,
   offset?: number
