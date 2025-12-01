@@ -7,6 +7,8 @@ export const redis = createClient({
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   socket: {
+    keepAlive: true,
+    reconnectStrategy: () => 1000,
     host: process.env.REDIS_HOST,
     port: Number(process.env.REDIS_PORT) || 19180,
   },

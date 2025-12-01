@@ -131,14 +131,14 @@ export const updateForum = async (id: string, body: any, files: any, userId: num
 			})),
 	};
 
-	const meilisearchData = {
-		id: forumWithMedia.id,
-		title: forumWithMedia.title,
-		description: forumWithMedia.description,
-		type: forumWithMedia.type,
-		topic: forumWithMedia.topic,
-	};
-	await meilisearch.index("forums").addDocuments([meilisearchData]);
+	// const meilisearchData = {
+	// 	id: forumWithMedia.id,
+	// 	title: forumWithMedia.title,
+	// 	description: forumWithMedia.description,
+	// 	type: forumWithMedia.type,
+	// 	topic: forumWithMedia.topic,
+	// };
+	// await meilisearch.index("forums").addDocuments([meilisearchData]);
 	await redis.set(`forums:${id}`, JSON.stringify(forumWithMedia), {
 		EX: 600,
 	});
@@ -208,7 +208,7 @@ export const deleteForum = async (id: string, userId: number) => {
 	}
 	await redis.del(`dashboardData:${userId}`);
 
-	await meilisearch.index("forums").deleteDocument(String(id));
+	// await meilisearch.index("forums").deleteDocument(String(id));
 
 	return {
 		data: {

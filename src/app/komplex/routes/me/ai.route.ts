@@ -2,20 +2,60 @@ import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { Router } from "express";
 import { aiRateLimiter } from "@/middleware/redisLimiter.js";
 import {
-	callAiFirstTime,
-	callAiGeneral,
-	callAiTopic,
-	getAiHistoryBasedOnTab,
-	getAiHistoryBasedOnTopic,
-	getAllAiTabNames,
+  callAiGeneralFirstTime,
+  callAiTopic,
+  getAiGeneralHistoryBasedOnTab,
+  getAiGeneralHistoryBasedOnTopic,
+  getAllAiGeneralTabNames,
+  callAiGeneralAndWriteToHistory,
+  getAllAiTopicNames,
 } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
-router.get("/tab", verifyFirebaseToken as any, aiRateLimiter, getAllAiTabNames as any);
-router.get("/tab/:tabId", verifyFirebaseToken as any, aiRateLimiter, getAiHistoryBasedOnTab as any);
-router.get("/topic/:topicId", verifyFirebaseToken as any, aiRateLimiter, getAiHistoryBasedOnTopic as any);
-router.post("/tab/:tabId", verifyFirebaseToken as any, aiRateLimiter, callAiGeneral as any);
-router.post("/tab", verifyFirebaseToken as any, aiRateLimiter, callAiFirstTime as any);
-router.post("/topic/:topicId", verifyFirebaseToken as any, aiRateLimiter, callAiTopic as any);
+// ai general
+router.get(
+  "/general/tabs",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  getAllAiGeneralTabNames as any
+);
+router.get(
+  "/general/tabs/:tabId",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  getAiGeneralHistoryBasedOnTab as any
+);
+router.post(
+  "/general/tabs/:tabId",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  callAiGeneralAndWriteToHistory as any
+);
+router.post(
+  "/general/tabs",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  callAiGeneralFirstTime as any
+);
+
+// ai topic
+router.get(
+  "/topics",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  getAllAiTopicNames as any
+);
+router.get(
+  "/topics/:topicId",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  getAiGeneralHistoryBasedOnTopic as any
+);
+router.post(
+  "/topics/:topicId",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  callAiTopic as any
+);
 
 export default router;
