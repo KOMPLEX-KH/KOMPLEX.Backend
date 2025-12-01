@@ -57,7 +57,7 @@ export const callAiGeneralService = async (
       const currentCountRaw = await redis.get(summarizeCounterCacheKey);
       const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
       if (currentCount >= 5) {
-        const summaryText = await summarize(aiResult);
+        const summaryText = await summarize(aiResult, "summary");
         await db
           .update(aiTabs)
           .set({
@@ -128,7 +128,6 @@ export const callAiFirstTimeService = async (
   }
 };
 
-
 export const getAiHistoryByTabService = async (
   userId: number,
   tabId: number,
@@ -169,7 +168,7 @@ export const getAiHistoryByTabService = async (
 
 const createNewTab = async (userId: number, tabName: string) => {
   try {
-    const summarizedTabName = await summarize(tabName);
+    const summarizedTabName = await summarize(tabName, "title");
     const [newTab] = await db
       .insert(aiTabs)
       .values({
@@ -196,14 +195,15 @@ const createNewTab = async (userId: number, tabName: string) => {
   }
 };
 
-const summarize = async (text: string) => {
+const summarize = async (text: string, outputType: "title" | "summary") => {
   if ([...text].length < 50) {
     return { summary: text };
   }
   const response = await axios.post(
     `${process.env.SUMMARY_API_URL}`,
     {
-      text: text,
+      text,
+      outputType,
     },
     {
       headers: {
