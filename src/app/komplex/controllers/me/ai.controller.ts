@@ -72,12 +72,22 @@ export const callAiGeneralFirstTime = async (
     const userId = req.user.userId;
     const { prompt, responseType } = req.body;
 
+    if (!prompt || !responseType) {
+      return res.status(400).json({
+        success: false,
+        message: "Prompt and response type are required",
+      });
+    }
     const result = await aiGeneralServiceById.callAiFirstTimeService(
-      String(prompt),
+      prompt,
       responseType,
       Number(userId)
     );
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: true,
+      message: "AI general first time called successfully",
+      data: result,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

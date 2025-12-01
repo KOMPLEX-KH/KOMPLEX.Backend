@@ -4,7 +4,6 @@ import { userAIHistory } from "@/db/models/user_ai_history.js";
 import { eq, desc, asc, and } from "drizzle-orm";
 import axios from "axios";
 import { aiTabs } from "@/db/models/ai_tabs.js";
-import { userAIHistoryTabSummary } from "@/db/models/user_ai_history_tab_summary.js";
 
 export const callAiGeneralService = async (
   prompt: string,
@@ -60,13 +59,11 @@ export const callAiGeneralService = async (
       if (currentCount >= 5) {
         const summaryText = await summarize(aiResult);
         await db
-          .update(userAIHistoryTabSummary)
+          .update(aiTabs)
           .set({
-            userId: Number(userId),
-            summaryText: summaryText.summary || aiResult,
-            tabId: tabId,
+            tabSummary: summaryText.summary || aiResult,
           })
-          .returning();
+          .where(eq(aiTabs.id, tabId));
         await redis.set(summarizeCounterCacheKey, "0", {
           EX: 60 * 60 * 24 * 3,
         });
