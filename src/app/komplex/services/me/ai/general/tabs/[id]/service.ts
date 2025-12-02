@@ -1,9 +1,10 @@
+import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { userAIHistory } from "@/db/models/user_ai_history.js";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import axios from "axios";
-import { aiTabs } from "@/db/models/ai_tabs.js";
+import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 
 export const callAiGeneralService = async (
   prompt: string,
@@ -21,10 +22,12 @@ export const callAiGeneralService = async (
     } else {
       previousContext = await db
         .select({
-          tabSummary: aiTabs.tabSummary,
+          tabSummary: userAiTabs.tabSummary,
         })
-        .from(aiTabs)
-        .where(and(eq(aiTabs.userId, Number(userId)), eq(aiTabs.id, tabId)));
+        .from(userAiTabs)
+        .where(
+          and(eq(userAiTabs.userId, Number(userId)), eq(userAiTabs.id, tabId))
+        );
       previousContext = previousContext[0].tabSummary;
       await redis.set(cacheKey, JSON.stringify(previousContext), {
         EX: 60 * 60 * 24,
@@ -59,11 +62,11 @@ export const callAiGeneralService = async (
       if (currentCount >= 5) {
         const summaryText = await summarize(aiResult, "summary");
         await db
-          .update(aiTabs)
+          .update(userAiTabs)
           .set({
             tabSummary: summaryText.summary || aiResult,
           })
-          .where(eq(aiTabs.id, tabId));
+          .where(eq(userAiTabs.id, tabId));
         await redis.set(summarizeCounterCacheKey, "0", {
           EX: 60 * 60 * 24 * 3,
         });
@@ -89,7 +92,7 @@ export const callAiFirstTimeService = async (
   try {
     const tabIdAndTabName = await createNewTab(userId, prompt);
     const response = await axios.post(
-      `${process.env.FAST_API_KEY}`,
+      `${process.env.AI_URL_LOCAL}/gemini`,
       {
         prompt,
         responseType,
@@ -112,17 +115,22 @@ export const callAiFirstTimeService = async (
         tabId: tabIdAndTabName.tabId,
       });
       await db
-        .update(aiTabs)
+        .update(userAiTabs)
         .set({
           tabSummary: tabIdAndTabName.tabName,
         })
-        .where(eq(aiTabs.id, tabIdAndTabName.tabId));
+        .where(eq(userAiTabs.id, tabIdAndTabName.tabId));
       const cacheKey = `previousContext:${userId}:tabId:${tabIdAndTabName.tabId}`;
       await redis.set(cacheKey, JSON.stringify(aiResult), { EX: 60 * 60 * 24 });
       const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
       await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
     }
-    return { prompt, data: aiResult };
+    return {
+      prompt,
+      data: aiResult,
+      id: tabIdAndTabName.tabId,
+      name: tabIdAndTabName.tabName,
+    };
   } catch (error) {
     throw new Error((error as Error).message);
   }
@@ -147,6 +155,7 @@ export const getAiHistoryByTabService = async (
       .select({
         prompt: userAIHistory.prompt,
         aiResult: userAIHistory.aiResult,
+        responseType: userAIHistory.responseType,
       })
       .from(userAIHistory)
       .limit(limit ?? 20)
@@ -158,8 +167,16 @@ export const getAiHistoryByTabService = async (
     await redis.set(cacheKey, JSON.stringify(history), {
       EX: 60 * 60 * 24,
     });
+    const cleanedHistory = history.map((h) => ({
+      prompt: h.prompt,
+      aiResult: cleanKomplexResponse(
+        h.aiResult ?? "",
+        h.responseType === "komplex" ? "komplex" : "normal"
+      ),
+      responseType: h.responseType,
+    }));
     return {
-      data: history,
+      data: cleanedHistory,
     };
   } catch (error) {
     throw new Error((error as Error).message);
@@ -170,13 +187,13 @@ const createNewTab = async (userId: number, tabName: string) => {
   try {
     const summarizedTabName = await summarize(tabName, "title");
     const [newTab] = await db
-      .insert(aiTabs)
+      .insert(userAiTabs)
       .values({
         userId: Number(userId),
         tabName: summarizedTabName.summary || summarizedTabName,
         tabSummary: summarizedTabName.summary || summarizedTabName,
       })
-      .returning({ id: aiTabs.id });
+      .returning({ id: userAiTabs.id });
     const cacheKey = `aiTabs:${userId}:page:1`;
     const cached = await redis.get(cacheKey);
     const parseData = cached ? JSON.parse(cached) : null;
@@ -200,7 +217,7 @@ const summarize = async (text: string, outputType: "title" | "summary") => {
     return { summary: text };
   }
   const response = await axios.post(
-    `${process.env.SUMMARY_API_URL}`,
+    `${process.env.AI_URL_LOCAL}/summarize`,
     {
       text,
       outputType,

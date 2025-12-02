@@ -6,14 +6,18 @@ export const getAllAiTopicNamesService = async (userId: number) => {
   try {
     const result = await db
       .select({
-        topicId: userAITopicHistory.topicId,
-        topicName: topics.name,
+        id: userAITopicHistory.topicId,
+        name: topics.name,
       })
       .from(userAITopicHistory)
       .innerJoin(topics, eq(userAITopicHistory.topicId, topics.id))
       .where(eq(userAITopicHistory.userId, userId))
       .orderBy(asc(userAITopicHistory.updatedAt));
-    return result;
+    const uniqueTopicIds = new Set(result.map((r) => r.id));
+    return Array.from(uniqueTopicIds).map((id) => ({
+      id,
+      name: result.find((r) => r.id === id)?.name,
+    }));
   } catch (error) {
     throw new Error((error as Error).message);
   }

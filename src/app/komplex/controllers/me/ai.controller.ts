@@ -127,7 +127,11 @@ export const getAllAiTopicNames = async (
     const result = await getAllAiTopicNamesService.getAllAiTopicNamesService(
       Number(userId)
     );
-    return res.status(200).json(result);
+    return res.status(200).json({
+      data: result,
+      success: true,
+      message: "AI topic names fetched successfully",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -189,7 +193,7 @@ export const getAiTopicResponse = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
+    const { topicId } = req.params;
     const { prompt } = req.body;
     const { responseType } = req.body;
     if (!prompt) {
@@ -208,7 +212,7 @@ export const getAiTopicResponse = async (
       prompt,
       responseType,
       Number(userId),
-      id
+      topicId
     );
     return res.status(200).json(result);
   } catch (error) {
@@ -225,13 +229,14 @@ export const getAiTopicHistoryController = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
-    const { page, limit } = req.query;
+    const { topicId } = req.params;
+    const { page, limit, offset } = req.query;
     const result = await aiTopicServiceById.getAiTopicHistory(
       Number(userId),
-      id,
+      Number(topicId),
       Number(page),
-      Number(limit)
+      Number(limit),
+      Number(offset)
     );
     return res.status(200).json(result);
   } catch (error) {

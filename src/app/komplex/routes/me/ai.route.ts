@@ -9,6 +9,7 @@ import {
   getAllAiGeneralTabNames,
   callAiGeneralAndWriteToHistory,
   getAllAiTopicNames,
+  getAiTopicHistoryController,
 } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
@@ -49,7 +50,7 @@ router.get(
   "/topics/:topicId",
   verifyFirebaseToken as any,
   aiRateLimiter,
-  getAiGeneralHistoryBasedOnTopic as any
+  getAiTopicHistoryController as any
 );
 router.post(
   "/topics/:topicId",

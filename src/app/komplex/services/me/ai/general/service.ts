@@ -1,5 +1,5 @@
 import { db } from "@/db/index.js";
-import { aiTabs } from "@/db/models/ai_tabs.js";
+import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { asc, eq } from "drizzle-orm";
 
@@ -18,10 +18,10 @@ export const getAllAiTabNamesService = async (
       };
     }
     const tabs = await db
-      .select({ id: aiTabs.id, tabName: aiTabs.tabName })
-      .from(aiTabs)
-      .where(eq(aiTabs.userId, Number(userId)))
-      .orderBy(asc(aiTabs.updatedAt))
+      .select({ id: userAiTabs.id, name: userAiTabs.tabName })
+      .from(userAiTabs)
+      .where(eq(userAiTabs.userId, Number(userId)))
+      .orderBy(asc(userAiTabs.updatedAt))
       .limit(limit ?? 20)
       .offset(((page ?? 1) - 1) * (limit ?? 20));
     await redis.set(cacheKey, JSON.stringify(tabs), {
