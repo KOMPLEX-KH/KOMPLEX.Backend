@@ -10,6 +10,8 @@ import {
   callAiGeneralAndWriteToHistory,
   getAllAiTopicNames,
   getAiTopicHistoryController,
+  rateAiTopicResponseController,
+  rateAiGeneralResponseController,
 } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
@@ -57,6 +59,21 @@ router.post(
   verifyFirebaseToken as any,
   aiRateLimiter,
   callAiTopic as any
+);
+
+// rating
+router.post(
+  "/topics/rating/:id",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  rateAiTopicResponseController as any
+);
+
+router.post(
+  "/general/rating/:id",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  rateAiGeneralResponseController as any
 );
 
 export default router;

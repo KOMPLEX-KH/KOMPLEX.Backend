@@ -92,6 +92,9 @@ export const callAiTopicAndWriteToTopicHistory = async (
         EX: 60 * 60 * 24 * 3,
       });
     }
+    // to change when pages is really implemented
+    const cacheKey = `aiTopicHistory:${userId}:topicId:${id}:page:1`;
+    await redis.del(cacheKey);
     return {
       prompt,
       responseType,
@@ -111,7 +114,9 @@ export const getAiTopicHistory = async (
   offset?: number
 ) => {
   try {
-    const cacheKey = `aiTopicHistory:${userId}:page:${page ?? 1}`;
+    const cacheKey = `aiTopicHistory:${userId}:topicId:${topicId}:page:${
+      page ?? 1
+    }`;
     const cached = await redis.get(cacheKey);
     const parseData = cached ? JSON.parse(cached) : null;
     if (parseData) {
