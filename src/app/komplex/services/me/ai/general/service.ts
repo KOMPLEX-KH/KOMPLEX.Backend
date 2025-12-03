@@ -46,47 +46,46 @@ export const callAiFirstTimeService = async (
 ) => {
   try {
     const tabIdAndTabName = await createNewTab(userId, prompt);
-    const response = await axios.post(
-      `${process.env.DARA_ENDPOINT}/gemini`,
-      {
-        prompt,
-        responseType,
-        previousContext: "",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.INTERNAL_API_KEY,
-        },
-      }
-    );
-    const result = response.data;
-    const aiResult = result.result;
-    if (aiResult) {
-      await db.insert(userAIHistory).values({
-        userId: Number(userId),
-        prompt: prompt,
-        aiResult: cleanKomplexResponse(
-          aiResult,
-          responseType as "normal" | "komplex"
-        ),
-        tabId: tabIdAndTabName.tabId,
-        responseType: responseType as "normal" | "komplex",
-      });
-      await db
-        .update(userAiTabs)
-        .set({
-          tabSummary: tabIdAndTabName.tabName,
-        })
-        .where(eq(userAiTabs.id, tabIdAndTabName.tabId));
-      const cacheKey = `previousContext:${userId}:tabId:${tabIdAndTabName.tabId}`;
-      await redis.set(cacheKey, JSON.stringify(aiResult), { EX: 60 * 60 * 24 });
-      const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
-      await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
-    }
+    // const response = await axios.post(
+    //   `${process.env.DARA_ENDPOINT}/gemini`,
+    //   {
+    //     prompt,
+    //     responseType,
+    //     previousContext: "",
+    //   },
+    //   {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       "x-api-key": process.env.INTERNAL_API_KEY,
+    //     },
+    //   }
+    // );
+    // const result = response.data;
+    // const aiResult = result.result;
+    // if (aiResult) {
+    //   await db.insert(userAIHistory).values({
+    //     userId: Number(userId),
+    //     prompt: prompt,
+    //     aiResult: cleanKomplexResponse(
+    //       aiResult,
+    //       responseType as "normal" | "komplex"
+    //     ),
+    //     tabId: tabIdAndTabName.tabId,
+    //     responseType: responseType as "normal" | "komplex",
+    //   });
+    //   await db
+    //     .update(userAiTabs)
+    //     .set({
+    //       tabSummary: tabIdAndTabName.tabName,
+    //     })
+    //     .where(eq(userAiTabs.id, tabIdAndTabName.tabId));
+    //   const cacheKey = `previousContext:${userId}:tabId:${tabIdAndTabName.tabId}`;
+    //   await redis.set(cacheKey, JSON.stringify(aiResult), { EX: 60 * 60 * 24 });
+    //   const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
+    //   await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
+    // }
     return {
       prompt,
-      aiResult,
       responseType,
       id: tabIdAndTabName.tabId,
       name: tabIdAndTabName.tabName,
