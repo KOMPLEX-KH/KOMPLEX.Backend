@@ -3,7 +3,8 @@ import { db } from "@/db/index.js";
 import { topics } from "@/db/models/topics.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import axios from "axios";
-import { cleanKomplexResponse } from "../../../../../../../utils/cleanKomplexResponse.js";
+import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
+import { summarize } from "../../general/service.js";
 import { redis } from "@/db/redis/redisConfig.js";
 
 export const callAiTopicAndWriteToTopicHistory = async (
@@ -23,12 +24,22 @@ export const callAiTopicAndWriteToTopicHistory = async (
     }
 
     const previousContext = await db
-      .select()
+      .select({
+        prompt: userAITopicHistory.prompt,
+        aiResult: userAITopicHistory.aiResult,
+        summary: userAITopicHistory.summary,
+      })
       .from(userAITopicHistory)
       .where(eq(userAITopicHistory.topicId, Number(id)))
       .orderBy(desc(userAITopicHistory.createdAt))
-      .limit(5)
-      .then((res) => res.map((r) => r.prompt).join("\n"));
+      .limit(3)
+      .then((res) => {
+        const historyContext = res
+          .map((r) => r.summary || `${r.prompt}\n${r.aiResult}`)
+          .join("\n");
+
+        return topicContent + historyContext;
+      });
 
     const response = await axios.post(
       `${process.env.DARA_ENDPOINT}/topic/gemini`,
@@ -47,7 +58,8 @@ export const callAiTopicAndWriteToTopicHistory = async (
     );
     const result = response.data;
     const aiResult = cleanKomplexResponse(result.result ?? "", responseType);
-    const lastResponse = await db
+
+    const [lastResponse] = await db
       .insert(userAITopicHistory)
       .values({
         userId,
@@ -58,13 +70,36 @@ export const callAiTopicAndWriteToTopicHistory = async (
         responseType: responseType as "normal" | "komplex",
       })
       .returning();
+
+    const summarizeCounterCacheKey = `summarizeCounter:topic:${userId}:topicId:${id}`;
+    const currentCountRaw = await redis.get(summarizeCounterCacheKey);
+    const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
+
+    if (currentCount >= 5) {
+      const summaryResult = await summarize(aiResult, "summary");
+      const summary = summaryResult.summary || aiResult;
+
+      await db
+        .update(userAITopicHistory)
+        .set({ summary })
+        .where(eq(userAITopicHistory.id, lastResponse.id));
+
+      await redis.set(summarizeCounterCacheKey, "0", {
+        EX: 60 * 60 * 24 * 3,
+      });
+    } else {
+      await redis.set(summarizeCounterCacheKey, (currentCount + 1).toString(), {
+        EX: 60 * 60 * 24 * 3,
+      });
+    }
+    // to change when pages is really implemented
+    const cacheKey = `aiTopicHistory:${userId}:topicId:${id}:page:1`;
+    await redis.del(cacheKey);
     return {
       prompt,
       responseType,
-      data: {
-        aiResult,
-        id: lastResponse[0].id,
-      },
+      aiResult,
+      id: lastResponse.id,
     };
   } catch (error) {
     throw new Error((error as Error).message);
@@ -73,22 +108,23 @@ export const callAiTopicAndWriteToTopicHistory = async (
 
 export const getAiTopicHistory = async (
   userId: number,
-  topicId: string,
+  topicId: number,
   page?: number,
   limit?: number,
   offset?: number
 ) => {
   try {
-    // const cacheKey = `aiTopicHistory:${userId}:page:${page ?? 1}`;
-    // await redis.del(cacheKey);
-    // const cached = await redis.get(cacheKey);
-    // const parseData = cached ? JSON.parse(cached) : null;
-    // if (parseData) {
-    //   return {
-    //     data: parseData.slice((limit ?? 20) - parseData.length),
-    //     hasMore: parseData.length === (limit ?? 20),
-    //   };
-    // }
+    const cacheKey = `aiTopicHistory:${userId}:topicId:${topicId}:page:${
+      page ?? 1
+    }`;
+    const cached = await redis.get(cacheKey);
+    const parseData = cached ? JSON.parse(cached) : null;
+    if (parseData) {
+      return {
+        data: parseData,
+        hasMore: parseData.length === (limit ?? 20),
+      };
+    }
     const history = await db
       .select()
       .from(userAITopicHistory)
@@ -102,9 +138,9 @@ export const getAiTopicHistory = async (
       .limit(limit ?? 20)
       .offset(((page ?? 1) - 1) * (limit ?? 20));
     const reversedHistory = history.reverse();
-    // await redis.set(cacheKey, JSON.stringify(reversedHistory), {
-    //   EX: 60 * 60 * 24,
-    // });
+    await redis.set(cacheKey, JSON.stringify(reversedHistory), {
+      EX: 60 * 60 * 24,
+    });
     return {
       data: reversedHistory,
       hasMore: history.length === (limit ?? 20),
