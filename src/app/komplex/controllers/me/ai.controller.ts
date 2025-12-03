@@ -1,12 +1,11 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import * as getAllAiTabNamesService from "@/app/komplex/services/me/ai/general/service.js";
 import * as getAllAiTopicNamesService from "@/app/komplex/services/me/ai/topics/service.js";
 import * as aiTopicServiceById from "@/app/komplex/services/me/ai/topics/[id]/service.js";
 import * as aiGeneralRatingService from "@/app/komplex/services/me/ai/general/tabs/[id]/rating/service.js";
 import * as aiGeneralServiceById from "@/app/komplex/services/me/ai/general/tabs/[id]/service.js";
 import * as aiTopicRatingService from "@/app/komplex/services/me/ai/topics/[id]/rating/service.js";
-
+import * as aiGeneralService from "@/app/komplex/services/me/ai/general/service.js";
 export const callAiGeneralAndWriteToHistory = async (
   req: AuthenticatedRequest,
   res: Response
@@ -29,7 +28,11 @@ export const callAiGeneralAndWriteToHistory = async (
       Number(tabId)
     );
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: true,
+      message: "AI general called successfully",
+      data: result,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -55,7 +58,11 @@ export const callAiTopic = async (req: AuthenticatedRequest, res: Response) => {
       Number(userId),
       topicId
     );
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: true,
+      message: "AI topic called successfully",
+      data: result,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -78,7 +85,7 @@ export const callAiGeneralFirstTime = async (
         message: "Prompt and response type are required",
       });
     }
-    const result = await aiGeneralServiceById.callAiFirstTimeService(
+    const result = await aiGeneralService.callAiFirstTimeService(
       prompt,
       responseType,
       Number(userId)
@@ -104,7 +111,7 @@ export const getAllAiGeneralTabNames = async (
     const userId = req.user.userId;
     const { page, limit } = req.query;
 
-    const result = await getAllAiTabNamesService.getAllAiTabNamesService(
+    const result = await aiGeneralService.getAllAiTabNamesService(
       Number(userId),
       Number(page),
       Number(limit)

@@ -2,9 +2,10 @@ import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { userAIHistory } from "@/db/models/user_ai_history.js";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, asc } from "drizzle-orm";
 import axios from "axios";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
+import { summarize } from "../../service.js";
 
 export const callAiGeneralService = async (
   prompt: string,
@@ -34,7 +35,7 @@ export const callAiGeneralService = async (
       });
     }
     const response = await axios.post(
-      `${process.env.FAST_API_KEY}`,
+      `${process.env.AI_URL_LOCAL}/gemini`,
       {
         prompt,
         responseType,
@@ -53,7 +54,11 @@ export const callAiGeneralService = async (
       await db.insert(userAIHistory).values({
         userId: Number(userId),
         prompt: prompt,
-        aiResult: aiResult,
+        aiResult: cleanKomplexResponse(
+          aiResult,
+          responseType as "normal" | "komplex"
+        ),
+        responseType: responseType as "normal" | "komplex",
         tabId: tabId,
       });
       const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabId}`;
@@ -78,59 +83,7 @@ export const callAiGeneralService = async (
         );
       }
     }
-    return { prompt, data: aiResult };
-  } catch (error) {
-    throw new Error((error as Error).message);
-  }
-};
-
-export const callAiFirstTimeService = async (
-  prompt: string,
-  responseType: string,
-  userId: number
-) => {
-  try {
-    const tabIdAndTabName = await createNewTab(userId, prompt);
-    const response = await axios.post(
-      `${process.env.AI_URL_LOCAL}/gemini`,
-      {
-        prompt,
-        responseType,
-        previousContext: "",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.INTERNAL_API_KEY,
-        },
-      }
-    );
-    const result = response.data;
-    const aiResult = result.result;
-    if (aiResult) {
-      await db.insert(userAIHistory).values({
-        userId: Number(userId),
-        prompt: prompt,
-        aiResult: aiResult,
-        tabId: tabIdAndTabName.tabId,
-      });
-      await db
-        .update(userAiTabs)
-        .set({
-          tabSummary: tabIdAndTabName.tabName,
-        })
-        .where(eq(userAiTabs.id, tabIdAndTabName.tabId));
-      const cacheKey = `previousContext:${userId}:tabId:${tabIdAndTabName.tabId}`;
-      await redis.set(cacheKey, JSON.stringify(aiResult), { EX: 60 * 60 * 24 });
-      const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
-      await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
-    }
-    return {
-      prompt,
-      data: aiResult,
-      id: tabIdAndTabName.tabId,
-      name: tabIdAndTabName.tabName,
-    };
+    return { prompt, aiResult, responseType };
   } catch (error) {
     throw new Error((error as Error).message);
   }
@@ -163,7 +116,7 @@ export const getAiHistoryByTabService = async (
       .where(
         and(eq(userAIHistory.tabId, tabId), eq(userAIHistory.userId, userId))
       )
-      .orderBy(desc(userAIHistory.updatedAt));
+      .orderBy(asc(userAIHistory.updatedAt));
     await redis.set(cacheKey, JSON.stringify(history), {
       EX: 60 * 60 * 24,
     });
@@ -181,53 +134,4 @@ export const getAiHistoryByTabService = async (
   } catch (error) {
     throw new Error((error as Error).message);
   }
-};
-
-const createNewTab = async (userId: number, tabName: string) => {
-  try {
-    const summarizedTabName = await summarize(tabName, "title");
-    const [newTab] = await db
-      .insert(userAiTabs)
-      .values({
-        userId: Number(userId),
-        tabName: summarizedTabName.summary || summarizedTabName,
-        tabSummary: summarizedTabName.summary || summarizedTabName,
-      })
-      .returning({ id: userAiTabs.id });
-    const cacheKey = `aiTabs:${userId}:page:1`;
-    const cached = await redis.get(cacheKey);
-    const parseData = cached ? JSON.parse(cached) : null;
-    if (parseData) {
-      const updatedCache = [newTab, ...parseData];
-      await redis.set(cacheKey, JSON.stringify(updatedCache), {
-        EX: 60 * 60 * 24,
-      });
-    }
-    return {
-      tabId: newTab.id,
-      tabName: summarizedTabName.summary || summarizedTabName,
-    };
-  } catch (error) {
-    throw new Error((error as Error).message);
-  }
-};
-
-const summarize = async (text: string, outputType: "title" | "summary") => {
-  if ([...text].length < 50) {
-    return { summary: text };
-  }
-  const response = await axios.post(
-    `${process.env.AI_URL_LOCAL}/summarize`,
-    {
-      text,
-      outputType,
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.INTERNAL_API_KEY,
-      },
-    }
-  );
-  return response.data;
 };

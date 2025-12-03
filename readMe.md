@@ -2,7 +2,7 @@
 
 ## 🌟 About Komplex
 
-**KOMPLEX** is an open-source STEM learning platform specifically designed for high school students in Cambodia. Our mission is to democratize quality education by providing free, interactive lessons and resources that align with the national curriculum.
+**KOMPLEX** is aSTEM learning platform specifically designed for high school students in Cambodia. Our mission is to democratize quality education by providing free, interactive lessons and resources that align with the national curriculum.
 
 ### The Problem We're Solving
 

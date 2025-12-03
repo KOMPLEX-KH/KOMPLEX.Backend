@@ -30,7 +30,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
       .then((res) => res.map((r) => r.prompt).join("\n"));
 
     const response = await axios.post(
-      `${process.env.DARA_ENDPOINT}/topic/gemini`,
+      `${process.env.AI_URL_LOCAL}/topic/gemini`,
       {
         prompt,
         topicContent,
@@ -60,10 +60,8 @@ export const callAiTopicAndWriteToTopicHistory = async (
     return {
       prompt,
       responseType,
-      data: {
-        aiResult,
-        id: lastResponse[0].id,
-      },
+      aiResult,
+      id: lastResponse[0].id,
     };
   } catch (error) {
     throw new Error((error as Error).message);
