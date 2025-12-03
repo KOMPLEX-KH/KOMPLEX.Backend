@@ -71,14 +71,18 @@ export const callAiGeneralService = async (
       result.result,
       responseType as "normal" | "komplex"
     );
+    let lastResponse;
     if (aiResult) {
-      await db.insert(userAIHistory).values({
-        userId: Number(userId),
-        prompt: prompt,
-        aiResult: aiResult,
-        responseType: responseType as "normal" | "komplex",
-        tabId: tabId,
-      });
+      lastResponse = await db
+        .insert(userAIHistory)
+        .values({
+          userId: Number(userId),
+          prompt: prompt,
+          aiResult: aiResult,
+          responseType: responseType as "normal" | "komplex",
+          tabId: tabId,
+        })
+        .returning();
       const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabId}`;
       const currentCountRaw = await redis.get(summarizeCounterCacheKey);
       const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
@@ -101,7 +105,7 @@ export const callAiGeneralService = async (
         );
       }
     }
-    return { prompt, aiResult, responseType };
+    return { prompt, aiResult, responseType, id: lastResponse?.[0]?.id };
   } catch (error) {
     throw new Error((error as Error).message);
   }
