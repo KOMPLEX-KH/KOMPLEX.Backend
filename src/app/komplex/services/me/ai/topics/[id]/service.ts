@@ -116,7 +116,7 @@ export const getAiTopicHistory = async (
     const parseData = cached ? JSON.parse(cached) : null;
     if (parseData) {
       return {
-        data: parseData.slice((limit ?? 20) - parseData.length),
+        data: parseData,
         hasMore: parseData.length === (limit ?? 20),
       };
     }
