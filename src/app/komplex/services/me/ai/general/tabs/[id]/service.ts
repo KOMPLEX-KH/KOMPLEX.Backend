@@ -53,7 +53,7 @@ export const callAiGeneralService = async (
       });
     }
     const response = await axios.post(
-      `${process.env.AI_URL_LOCAL}/gemini`,
+      `${process.env.DARA_ENDPOINT}/gemini`,
       {
         prompt,
         responseType,

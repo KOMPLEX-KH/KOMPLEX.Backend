@@ -47,7 +47,7 @@ export const callAiFirstTimeService = async (
   try {
     const tabIdAndTabName = await createNewTab(userId, prompt);
     const response = await axios.post(
-      `${process.env.AI_URL_LOCAL}/gemini`,
+      `${process.env.DARA_ENDPOINT}/gemini`,
       {
         prompt,
         responseType,
@@ -98,13 +98,13 @@ export const callAiFirstTimeService = async (
 
 const createNewTab = async (userId: number, tabName: string) => {
   try {
-    const summarizedTabName = await summarize(tabName, "title");
+    // const summarizedTabName = await summarize(tabName, "title");
     const [newTab] = await db
       .insert(userAiTabs)
       .values({
         userId: Number(userId),
-        tabName: summarizedTabName.summary || summarizedTabName,
-        tabSummary: summarizedTabName.summary || summarizedTabName,
+        tabName: tabName, // not  using summarized because not good enough
+        tabSummary: tabName,
       })
       .returning({ id: userAiTabs.id });
 
@@ -115,16 +115,21 @@ const createNewTab = async (userId: number, tabName: string) => {
 
     return {
       tabId: newTab.id,
-      tabName: summarizedTabName.summary || summarizedTabName,
+      tabName: tabName,
     };
   } catch (error) {
     throw new Error((error as Error).message);
   }
 };
 
-export const summarize = async (text: string, outputType: "title" | "summary") => {
+// only use for tab summary for now
+
+export const summarize = async (
+  text: string,
+  outputType: "title" | "summary"
+) => {
   const response = await axios.post(
-    `${process.env.AI_URL_LOCAL}/summarize`,
+    `${process.env.DARA_ENDPOINT}/summarize`,
     {
       text,
       outputType,

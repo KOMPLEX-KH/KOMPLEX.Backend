@@ -42,7 +42,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
       });
 
     const response = await axios.post(
-      `${process.env.AI_URL_LOCAL}/topic/gemini`,
+      `${process.env.DARA_ENDPOINT}/topic/gemini`,
       {
         prompt,
         topicContent,
