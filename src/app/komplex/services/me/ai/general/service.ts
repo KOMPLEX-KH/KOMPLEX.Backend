@@ -123,9 +123,6 @@ const createNewTab = async (userId: number, tabName: string) => {
 };
 
 export const summarize = async (text: string, outputType: "title" | "summary") => {
-  if ([...text].length < 50) {
-    return { summary: text };
-  }
   const response = await axios.post(
     `${process.env.AI_URL_LOCAL}/summarize`,
     {

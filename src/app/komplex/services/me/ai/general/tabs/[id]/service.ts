@@ -18,10 +18,11 @@ export const callAiGeneralService = async (
     const cacheRaw = await redis.get(cacheKey);
     const cacheData = cacheRaw ? JSON.parse(cacheRaw) : null;
     let previousContext = null;
+    let summary;
     if (Array.isArray(cacheData) && cacheData.length >= 5) {
       previousContext = cacheData;
     } else {
-      previousContext = await db
+      summary = await db
         .select({
           tabSummary: userAiTabs.tabSummary,
         })
@@ -29,7 +30,24 @@ export const callAiGeneralService = async (
         .where(
           and(eq(userAiTabs.userId, Number(userId)), eq(userAiTabs.id, tabId))
         );
-      previousContext = previousContext[0].tabSummary;
+      previousContext = await db
+        .select({
+          prompt: userAIHistory.prompt,
+          aiResult: userAIHistory.aiResult,
+        })
+        .from(userAIHistory)
+        .where(
+          and(
+            eq(userAIHistory.tabId, tabId),
+            eq(userAIHistory.userId, Number(userId))
+          )
+        )
+        .orderBy(desc(userAIHistory.updatedAt))
+        .limit(3);
+      previousContext =
+        summary[0].tabSummary +
+        previousContext.map((p) => p.prompt).join("\n") +
+        previousContext.map((p) => p.aiResult).join("\n");
       await redis.set(cacheKey, JSON.stringify(previousContext), {
         EX: 60 * 60 * 24,
       });
@@ -49,15 +67,15 @@ export const callAiGeneralService = async (
       }
     );
     const result = response.data;
-    const aiResult = result.result;
+    const aiResult = cleanKomplexResponse(
+      result.result,
+      responseType as "normal" | "komplex"
+    );
     if (aiResult) {
       await db.insert(userAIHistory).values({
         userId: Number(userId),
         prompt: prompt,
-        aiResult: cleanKomplexResponse(
-          aiResult,
-          responseType as "normal" | "komplex"
-        ),
+        aiResult: aiResult,
         responseType: responseType as "normal" | "komplex",
         tabId: tabId,
       });
