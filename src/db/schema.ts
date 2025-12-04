@@ -1,4 +1,5 @@
 export * from "./models/media_type.js";
+export * from "./models/library.js";
 export * from "./models/users.js";
 export * from "./models/followers.js";
 export * from "./models/blogs.js";
