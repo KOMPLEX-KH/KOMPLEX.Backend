@@ -65,7 +65,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
       .values({
         userId,
         topicId: Number(id),
-        prompt: prompt,
+        prompt,
         aiResult,
         rating: null,
         responseType: responseType as "normal" | "komplex",
