@@ -45,7 +45,10 @@ export const callAiFirstTimeService = async (
   userId: number
 ) => {
   try {
-    const tabIdAndTabName = await createNewTab(userId, prompt);
+    const tabIdAndTabName = await createNewTab(
+      userId,
+      prompt.charAt(0).toUpperCase()
+    );
     // const response = await axios.post(
     //   `${process.env.DARA_ENDPOINT}/gemini`,
     //   {
