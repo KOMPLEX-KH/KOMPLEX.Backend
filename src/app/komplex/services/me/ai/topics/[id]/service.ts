@@ -4,7 +4,7 @@ import { topics } from "@/db/models/topics.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
-import { summarize } from "../../general/service.js";
+// import { summarize } from "../../general/service.js";
 import { redis } from "@/db/redis/redisConfig.js";
 
 export const callAiTopicAndWriteToTopicHistory = async (
@@ -35,7 +35,8 @@ export const callAiTopicAndWriteToTopicHistory = async (
       .limit(3)
       .then((res) => {
         const historyContext = res
-          .map((r) => r.summary || `${r.prompt}\n${r.aiResult}`)
+          // .map((r) => r.summary || `${r.prompt}\n${r.aiResult}`)
+          .map((r) => `${r.prompt}\n${r.aiResult}`)
           .join("\n");
 
         return topicContent + historyContext;
@@ -71,27 +72,27 @@ export const callAiTopicAndWriteToTopicHistory = async (
       })
       .returning();
 
-    const summarizeCounterCacheKey = `summarizeCounter:topic:${userId}:topicId:${id}`;
-    const currentCountRaw = await redis.get(summarizeCounterCacheKey);
-    const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
+    // const summarizeCounterCacheKey = `summarizeCounter:topic:${userId}:topicId:${id}`;
+    // const currentCountRaw = await redis.get(summarizeCounterCacheKey);
+    // const currentCount = currentCountRaw ? parseInt(currentCountRaw, 10) : 0;
 
-    if (currentCount >= 5) {
-      const summaryResult = await summarize(aiResult, "summary");
-      const summary = summaryResult.summary || aiResult;
+    // if (currentCount >= 5) {
+    //   const summaryResult = await summarize(aiResult, "summary");
+    //   const summary = summaryResult.summary || aiResult;
 
-      await db
-        .update(userAITopicHistory)
-        .set({ summary })
-        .where(eq(userAITopicHistory.id, lastResponse.id));
+    //   await db
+    //     .update(userAITopicHistory)
+    //     .set({ summary })
+    //     .where(eq(userAITopicHistory.id, lastResponse.id));
 
-      await redis.set(summarizeCounterCacheKey, "0", {
-        EX: 60 * 60 * 24 * 3,
-      });
-    } else {
-      await redis.set(summarizeCounterCacheKey, (currentCount + 1).toString(), {
-        EX: 60 * 60 * 24 * 3,
-      });
-    }
+    //   await redis.set(summarizeCounterCacheKey, "0", {
+    //     EX: 60 * 60 * 24 * 3,
+    //   });
+    // } else {
+    //   await redis.set(summarizeCounterCacheKey, (currentCount + 1).toString(), {
+    //     EX: 60 * 60 * 24 * 3,
+    //   });
+    // }
     // to change when pages is really implemented
     const cacheKey = `aiTopicHistory:${userId}:topicId:${id}:page:1`;
     await redis.del(cacheKey);
