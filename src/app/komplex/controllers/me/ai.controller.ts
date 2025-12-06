@@ -295,3 +295,77 @@ export const rateAiTopicResponseController = async (
     });
   }
 };
+
+export const deleteAiGeneralTabController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.user;
+    const result = await aiGeneralServiceById.deleteAiGeneralTab(
+      Number(userId),
+      Number(id)
+    );
+    return res.status(200).json({
+      success: true,
+      message: "AI general tab deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const editAiGeneralTabController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.user;
+    const { tabName } = req.body;
+    const result = await aiGeneralServiceById.editAiGeneralTab(
+      Number(userId),
+      Number(id),
+      tabName
+    );
+    return res.status(200).json({
+      success: true,
+      message: "AI general tab edited successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const deleteAiTopicTabController = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.user;
+    const result = await aiTopicServiceById.deleteAiTopicTab(
+      Number(userId),
+      Number(id)
+    );
+    return res.status(200).json({
+      success: true,
+      message: "AI topic tab deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: (error as Error).message,
+    });
+  }
+};

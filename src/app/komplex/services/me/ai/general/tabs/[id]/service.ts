@@ -5,6 +5,7 @@ import { userAIHistory } from "@/db/models/user_ai_history.js";
 import { eq, desc, and, asc } from "drizzle-orm";
 import axios from "axios";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
+import { userAITopicHistory } from "@/db/schema.js";
 // import { summarize } from "../../service.js";
 
 export const callAiGeneralService = async (
@@ -153,6 +154,37 @@ export const getAiHistoryByTabService = async (
     return {
       data: cleanedHistory,
     };
+  } catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
+
+export const deleteAiGeneralTab = async (userId: number, tabId: number) => {
+  try {
+    const response = await db
+      .delete(userAIHistory)
+      .where(
+        and(eq(userAIHistory.userId, userId), eq(userAIHistory.tabId, tabId))
+      )
+      .returning();
+    return { data: response };
+  } catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
+
+export const editAiGeneralTab = async (
+  userId: number,
+  tabId: number,
+  tabName: string
+) => {
+  try {
+    const response = await db
+      .update(userAiTabs)
+      .set({ tabName })
+      .where(and(eq(userAiTabs.userId, userId), eq(userAiTabs.id, tabId)))
+      .returning();
+    return { data: response };
   } catch (error) {
     throw new Error((error as Error).message);
   }

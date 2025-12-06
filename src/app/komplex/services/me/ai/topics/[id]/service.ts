@@ -150,3 +150,20 @@ export const getAiTopicHistory = async (
     throw new Error((error as Error).message);
   }
 };
+
+export const deleteAiTopicTab = async (userId: number, topicId: number) => {
+  try {
+    const response = await db
+      .delete(userAITopicHistory)
+      .where(
+        and(
+          eq(userAITopicHistory.userId, userId),
+          eq(userAITopicHistory.topicId, topicId)
+        )
+      )
+      .returning();
+    return { data: response };
+  } catch (error) {
+    throw new Error((error as Error).message);
+  }
+};
