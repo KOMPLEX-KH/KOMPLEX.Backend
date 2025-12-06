@@ -12,6 +12,9 @@ import {
   getAiTopicHistoryController,
   rateAiTopicResponseController,
   rateAiGeneralResponseController,
+  editAiGeneralTabController,
+  deleteAiGeneralTabController,
+  deleteAiTopicTabController,
 } from "../../controllers/me/ai.controller.js";
 const router = Router();
 
@@ -40,7 +43,18 @@ router.post(
   aiRateLimiter,
   callAiGeneralFirstTime as any
 );
-
+router.delete(
+  "/general/tabs/:id",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  deleteAiGeneralTabController as any
+);
+router.put(
+  "/general/tabs/:id",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  editAiGeneralTabController as any
+);
 // ai topic
 router.get(
   "/topics",
@@ -59,6 +73,12 @@ router.post(
   verifyFirebaseToken as any,
   aiRateLimiter,
   callAiTopic as any
+);
+router.delete(
+  "/topics/:id",
+  verifyFirebaseToken as any,
+  aiRateLimiter,
+  deleteAiTopicTabController as any
 );
 
 // rating
