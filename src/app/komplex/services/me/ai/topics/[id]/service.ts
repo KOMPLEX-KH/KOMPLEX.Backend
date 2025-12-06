@@ -162,6 +162,7 @@ export const deleteAiTopicTab = async (userId: number, topicId: number) => {
         )
       )
       .returning();
+    await redis.flushAll(); // TO CHANGE
     return { data: response };
   } catch (error) {
     throw new Error((error as Error).message);

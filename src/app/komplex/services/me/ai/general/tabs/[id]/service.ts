@@ -168,7 +168,7 @@ export const deleteAiGeneralTab = async (userId: number, tabId: number) => {
       )
       .returning();
     await db.delete(userAiTabs).where(eq(userAiTabs.id, tabId));
-    await redis.del(`aiHistory:${userId}:tabId:${tabId}`);
+    await redis.flushAll() // TO CHANGE
     return { data: response };
   } catch (error) {
     throw new Error((error as Error).message);
@@ -186,6 +186,7 @@ export const editAiGeneralTab = async (
       .set({ tabName })
       .where(and(eq(userAiTabs.userId, userId), eq(userAiTabs.id, tabId)))
       .returning();
+      await redis.flushAll() // TO CHANGE
     return { data: response };
   } catch (error) {
     throw new Error((error as Error).message);
