@@ -167,6 +167,8 @@ export const deleteAiGeneralTab = async (userId: number, tabId: number) => {
         and(eq(userAIHistory.userId, userId), eq(userAIHistory.tabId, tabId))
       )
       .returning();
+    await db.delete(userAiTabs).where(eq(userAiTabs.id, tabId));
+    await redis.del(`aiHistory:${userId}:tabId:${tabId}`);
     return { data: response };
   } catch (error) {
     throw new Error((error as Error).message);
