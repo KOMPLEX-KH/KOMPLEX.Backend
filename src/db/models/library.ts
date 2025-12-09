@@ -4,17 +4,23 @@ import {
   date,
   timestamp,
   serial,
-  boolean
+  boolean,
+  
+  integer
 } from "drizzle-orm/pg-core";
+import { subjects } from "./subjects.js";
+import { grades } from "./grades.js";
+import { lessons } from "./lessons.js";
 
 
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   author: text("author"),
-  lesson: text('lesson'),
+  gradeId: integer("grade_id").references(() => grades.id),
+  lessonId: integer("lesson_id").references(() => lessons.id),
   isRecommended: boolean('is_Recommended').notNull().default(false),
-  category: text('category'),
+  subjectId: integer("category_id").references(() => subjects.id),
   publishedDate: date("published_date"),
   description: text("description"),
   pdfUrl: text("pdf_url"),

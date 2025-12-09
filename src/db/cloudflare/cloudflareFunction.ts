@@ -12,6 +12,24 @@ export const uploadImageToCloudflare = async (
 ): Promise<string> => {
   await r2.send(
     new PutObjectCommand({
+      Bucket: "komplex-assets/books/",
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+
+  return `${process.env.R2_PHOTO_PUBLIC_URL}/${key}`;
+};
+
+// upload pdf book
+export const uploadPdfToCloudflare = async (
+  key: string,
+  body: Buffer,
+  contentType: string
+): Promise<string> => {
+  await r2.send(
+    new PutObjectCommand({
       Bucket: "komplex-image",
       Key: key,
       Body: body,

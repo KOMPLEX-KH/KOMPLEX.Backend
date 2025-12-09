@@ -11,10 +11,13 @@ import videoCommentsRouter from "./video-comments.route.js";
 import videoLikesRouter from "./video-likes.route.js";
 import videoRepliesRouter from "./video-replies.route.js";
 import curriculumsRouter from "./curriculums.route.js";
+import libraryRouter from "./library.route.js";
 
 const router = Router();
 router.use("/curriculums", curriculumsRouter);
 router.use("/blogs", blogsRouter);
+
+router.use("/librarys", libraryRouter);
 
 router.use("/forums", forumsRouter);
 router.use("/forum-comments", forumCommentsRouter);
