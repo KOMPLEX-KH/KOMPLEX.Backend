@@ -58,9 +58,14 @@ export const getSignedUrlFromCloudflare = async (
   fileType: string,
   userId: number
 ): Promise<{ signedUrl: string; key: string }> => {
-  const bucket = imageMimeTypes.includes(fileType)
-    ? "komplex-image"
-    : "komplex-video";
+  let bucket;
+  if (fileType === "application/pdf") {
+    bucket = "komplex-assets/books"; // to change but works for now
+  } else {
+    bucket = imageMimeTypes.includes(fileType)
+      ? "komplex-image"
+      : "komplex-video";
+  }
 
   const safeFileName = fileName
     .replace(/\s+/g, "_")
