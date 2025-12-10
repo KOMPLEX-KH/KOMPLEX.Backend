@@ -1,14 +1,15 @@
-import { pgTable, integer, timestamp, serial, text } from "drizzle-orm/pg-core";
-import { users } from "../schema.js";
-import { userAiTabs } from "./user_ai_tabs.js";
+import { text, pgTable, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { users } from "./users.js";
+import { topics } from "./topics.js";
 import { responseTypeEnum } from "./response_type.js";
 
-export const userAIHistory = pgTable("user_ai_history", {
+export const userAITopicHistory = pgTable("user_ai_topic_history", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
-  aiResult: text("ai_result"),
+  topicId: integer("topic_id").references(() => topics.id),
   prompt: text("prompt"),
-  tabId: integer("tab_id").references(() => userAiTabs.id),
+  aiResult: text("ai_result"),
+  summary: text("summary"),
   rating: integer("rating"),
   ratingFeedback: text("rating_feedback"),
   responseType: responseTypeEnum("response_type").default("normal"),

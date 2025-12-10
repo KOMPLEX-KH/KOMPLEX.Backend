@@ -195,7 +195,7 @@ export const postForum = async (body: any, files: any, userId: number) => {
 		})),
 	};
 	const redisKey = `forums:${newForum.id}`;
-	await meilisearch.index("forums").addDocuments([forumWithMedia]);
+	// await meilisearch.index("forums").addDocuments([forumWithMedia]);
 
 	await redis.set(redisKey, JSON.stringify(forumWithMedia), { EX: 600 });
 	await redis.del(`dashboardData:${userId}`);

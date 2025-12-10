@@ -4,8 +4,8 @@ import crypto from "crypto";
 import { imageMimeTypes } from "../../utils/imageMimeTypes.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// Upload an image
-export const uploadImageToCloudflare = async (
+// Upload an pdf book
+export const uploadPdfToCloudflare = async (
   key: string,
   body: Buffer,
   contentType: string
@@ -18,12 +18,11 @@ export const uploadImageToCloudflare = async (
       ContentType: contentType,
     })
   );
-
-  return `${process.env.R2_PHOTO_PUBLIC_URL}/${key}`;
+  return `${process.env.R2_ASSET_PUBLIC_URL}/${key}`;
 };
 
-// upload pdf book
-export const uploadPdfToCloudflare = async (
+// upload image
+export const uploadImageToCloudflare = async (
   key: string,
   body: Buffer,
   contentType: string
@@ -76,9 +75,14 @@ export const getSignedUrlFromCloudflare = async (
   fileType: string,
   userId: number
 ): Promise<{ signedUrl: string; key: string }> => {
-  const bucket = imageMimeTypes.includes(fileType)
-    ? "komplex-image"
-    : "komplex-video";
+  let bucket;
+  if (fileType === "application/pdf") {
+    bucket = "komplex-assets/books";
+  } else {
+    bucket = imageMimeTypes.includes(fileType)
+      ? "komplex-image"
+      : "komplex-video";
+  }
 
   const safeFileName = fileName
     .replace(/\s+/g, "_")

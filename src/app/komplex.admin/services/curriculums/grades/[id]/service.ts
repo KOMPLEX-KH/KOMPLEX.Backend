@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { grades } from "@/db/schema.js";
+import { redis } from "@/db/redis/redisConfig.js";
 
 export const updateGrade = async (
     id: number,
@@ -55,6 +56,9 @@ export const updateGrade = async (
         .update(grades)
         .set({ name: newName })
         .where(eq(grades.id, id));
+        await redis.del("curriculums");
+        await redis.del("curriculums:dashboard");
+        await redis.del("allGrades");
     } catch (error) {
       throw new Error(`Failed to update grade: ${(error as Error).message}`);
     }
@@ -76,6 +80,9 @@ export const updateGrade = async (
         .set({ orderIndex: sql`${grades.orderIndex} - 1` })
         .where(gt(grades.orderIndex, oldOrderIndex.orderIndex as number));
       await db.delete(grades).where(eq(grades.id, id));
+      await redis.del("curriculums");
+      await redis.del("curriculums:dashboard");
+      await redis.del("allGrades");
     } catch (error) {
       throw new Error(`Failed to delete grade: ${(error as Error).message}`);
     }
