@@ -71,14 +71,9 @@ export const getSignedUrlFromCloudflare = async (
     .replace(/\s+/g, "_")
     .replace(/[^\p{L}\p{N}._-]+/gu, "_"); // replace spaces with _
 
-  const newFileName =
-    bucket +
-    "/" +
-    (fileType === "application/pdf" ? "books" : "") +
-    "/" +
-    safeFileName;
-
-  const key = `${userId}/${newFileName}-${crypto.randomUUID()}`;
+  const key = `${
+    bucket === "komplex-assets" ? "books" : userId
+  }/${safeFileName}-${crypto.randomUUID()}`;
 
   const command = await new PutObjectCommand({
     Bucket: bucket,
