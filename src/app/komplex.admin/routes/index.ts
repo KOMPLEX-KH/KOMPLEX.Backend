@@ -1,6 +1,7 @@
 import { Router } from "express";
 import blogsRouter from "./blogs.route.js";
 import libraryRouter from "./library.route.js";
+import uploadRouter from "./upload.route.js";
 import exercisesRouter from "./exercises.route.js";
 import followersRouter from "./followers.route.js";
 import forumsRouter from "./forums.route.js";
@@ -37,4 +38,5 @@ adminRoutes.use("/feedbacks", feedbacksRouter);
 adminRoutes.use("/forum_comments", forumCommentsRouter);
 adminRoutes.use("/forum_replies", forumRepliesRouter);
 adminRoutes.use("/library", libraryRouter);
+adminRoutes.use("/upload", uploadRouter);
 export default adminRoutes;

@@ -11,10 +11,10 @@ import {
 
 const router = Router();
 
-router.post("/books", adminSmallPostRateLimiter, createBookController);
-router.put("/books/:id", adminSmallUpdateRateLimiter, updateBookController);
-router.delete("/books/:id", adminSmallDeleteRateLimiter, deleteBookController);
-router.get("/books", adminGetSmallContentRateLimiter, adminGetAllBooksController);
-router.get("/books/:id", adminGetSmallContentRateLimiter, adminGetBookByIdController);
+router.post("/books", createBookController);
+router.put("/books/:id", updateBookController);
+router.delete("/books/:id", deleteBookController);
+router.get("/books", adminGetAllBooksController);
+router.get("/books/:id", adminGetBookByIdController);
 
 export default router;

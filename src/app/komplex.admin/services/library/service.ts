@@ -14,7 +14,7 @@ export const createBook = async(
     lessonId: number,
     isRecommended: boolean,
     subjectId: number,
-    publishedDate: Date,
+    publishedDate: string | Date, // Change type
     description: string,
     pdfUrl: string,
     imageUrl: string,
@@ -27,7 +27,7 @@ export const createBook = async(
             lessonId,
             isRecommended,
             subjectId,
-            publishedDate: publishedDate.toISOString().split('T')[0],
+            publishedDate: typeof publishedDate === 'string' ? publishedDate : publishedDate.toISOString().split('T')[0],
             description,
             pdfUrl,
             imageUrl
@@ -36,6 +36,7 @@ export const createBook = async(
 
         return { data: result[0] };
     }catch(err){
+        console.error('Database error creating book:', err); // Add logging
         throw new Error(`Failed to create book: ${(err as Error).message}`);
     }
 }
@@ -61,7 +62,7 @@ export const updateBook = async (
             lessonId, 
             isRecommended, 
             subjectId, 
-            publishedDate: publishedDate ? publishedDate.toISOString().split('T')[0] : undefined, 
+            publishedDate: publishedDate ? (typeof publishedDate === 'string' ? publishedDate : publishedDate.toISOString().split('T')[0]) : undefined,
             description, 
             pdfUrl, 
             imageUrl, 

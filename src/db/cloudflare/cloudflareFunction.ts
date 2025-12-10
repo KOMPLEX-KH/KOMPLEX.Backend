@@ -12,7 +12,7 @@ export const uploadPdfToCloudflare = async (
 ): Promise<string> => {
   await r2.send(
     new PutObjectCommand({
-      Bucket: "komplex-assets/books/",
+      Bucket: "komplex-assets",
       Key: key,
       Body: body,
       ContentType: contentType,
@@ -77,7 +77,7 @@ export const getSignedUrlFromCloudflare = async (
 ): Promise<{ signedUrl: string; key: string }> => {
   let bucket;
   if (fileType === "application/pdf") {
-    bucket = "komplex-assets/books";
+    bucket = "komplex-assets"; // to change but works for now
   } else {
     bucket = imageMimeTypes.includes(fileType)
       ? "komplex-image"
@@ -88,7 +88,9 @@ export const getSignedUrlFromCloudflare = async (
     .replace(/\s+/g, "_")
     .replace(/[^\p{L}\p{N}._-]+/gu, "_"); // replace spaces with _
 
-  const key = `${userId}/${safeFileName}-${crypto.randomUUID()}`;
+  const key = `${
+    bucket === "komplex-assets" ? "books" : userId
+  }/${safeFileName}-${crypto.randomUUID()}`;
 
   const command = await new PutObjectCommand({
     Bucket: bucket,
