@@ -33,13 +33,13 @@ export const handleSignup = async (
         uid,
         firstName,
         lastName,
-        dateOfBirth,
+        dateOfBirth: null,
         isAdmin: false,
         isSocial: false,
         isVerified: false,
-        phone,
+        phone: null,
         profileImage,
-        profileImageKey,
+        profileImageKey: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -110,4 +110,3 @@ export const handleSocialLogIn = async (
     return res.status(500).json({ message: "Internal server error" + error });
   }
 };
-
