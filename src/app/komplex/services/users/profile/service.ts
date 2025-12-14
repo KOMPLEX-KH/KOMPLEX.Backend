@@ -1,12 +1,10 @@
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import {
-  blogs,
   forumLikes,
   followers,
   forums,
   users,
-  userSavedBlogs,
   userSavedVideos,
   videos,
   videoLikes,
@@ -37,11 +35,6 @@ export const getUserProfile = async (userId: number) => {
       .where(eq(followers.userId, userId));
 
     // number of saves that other user save their blogs
-    const numberOfBlogsSaved = await db
-      .select({ count: count() })
-      .from(userSavedBlogs)
-      .leftJoin(blogs, eq(userSavedBlogs.blogId, blogs.id))
-      .where(eq(blogs.userId, userId));
 
     // number of forums likes that other user like their forums
     const numberOfForumLikes = await db
@@ -65,7 +58,6 @@ export const getUserProfile = async (userId: number) => {
       .where(eq(videos.userId, userId));
 
     const totalLikesAndSaves =
-      numberOfBlogsSaved[0].count +
       numberOfForumLikes[0].count +
       numberOfVideosSaved[0].count +
       numberOfLikedVideos[0].count;

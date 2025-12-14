@@ -1,5 +1,4 @@
 import { Router } from "express";
-import blogsRouter from "./blogs.route.js";
 import forumsRouter from "./forums.route.js";
 import forumCommentsRouter from "./forum-comments.route.js";
 import forumRepliesRouter from "./forum-replies.route.js";
@@ -24,8 +23,6 @@ router.get(
   verifyFirebaseToken as any,
   getUserContentDashboardController as any
 ); // GET /me/dashboard - my dashboard
-
-router.use("/blogs", blogsRouter);
 
 router.use("/forums", forumsRouter);
 router.use("/forum-comments", forumCommentsRouter);

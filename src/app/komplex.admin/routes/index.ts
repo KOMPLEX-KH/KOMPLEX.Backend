@@ -1,5 +1,5 @@
 import { Router } from "express";
-import blogsRouter from "./blogs.route.js";
+import blogsRouter from "./news.route.js";
 import exercisesRouter from "./exercises.route.js";
 import followersRouter from "./followers.route.js";
 import forumsRouter from "./forums.route.js";
