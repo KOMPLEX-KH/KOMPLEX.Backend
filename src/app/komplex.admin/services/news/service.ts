@@ -2,6 +2,9 @@ import { db } from "@/db/index.js";
 import { news, users, userSavedNews } from "@/db/schema.js";
 import { and, eq } from "drizzle-orm";
 import { newsMedia } from "@/db/models/news_medias.js";
+import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
+import { redis } from "@/db/redis/redisConfig.js";
+import crypto from "crypto";
 
 export const getAllNews = async (type?: string, topic?: string) => {
   try {
@@ -73,46 +76,99 @@ export const getAllNews = async (type?: string, topic?: string) => {
   }
 };
 
-export const postNews = async (
-  userId: number,
-  title: string,
-  description: string,
-  type?: string,
-  topic?: string,
-  publicUrl?: string,
-  mediaType?: "image" | "video"
-) => {
-  try {
-    if (!userId || !title || !description) {
-      throw new Error("Missing required fields");
-    }
+export const postNews = async (body: any, files: any, userId: number) => {
+  const { title, description, type, topic } = body;
 
-    const newNews = await db
-      .insert(news)
-      .values({
-        userId: Number(userId),
-        title,
-        description,
-        type,
-        topic,
-        viewCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    if (publicUrl) {
-      await db.insert(newsMedia).values({
-        newsId: newNews[0].id,
-        url: publicUrl,
-        mediaType: mediaType,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
-    return newNews[0];
-  } catch (error) {
-    throw new Error(`Failed to create news: ${(error as Error).message}`);
+  if (!userId || !title || !description) {
+    throw new Error("Missing required fields");
   }
+
+  // Insert news
+  const [newNews] = await db
+    .insert(news)
+    .values({
+      userId: Number(userId),
+      title,
+      description,
+      type,
+      topic,
+      viewCount: 0,
+      likeCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  // Insert news media if uploaded
+  let newNewsMedia: any[] = [];
+  if (files) {
+    for (const file of files as Express.Multer.File[]) {
+      try {
+        const uniqueKey = `${newNews.id}-${crypto.randomUUID()}-${
+          file.originalname
+        }`;
+        const url = await uploadImageToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        const [media] = await db
+          .insert(newsMedia)
+          .values({
+            newsId: newNews.id,
+            url: url,
+            urlForDeletion: uniqueKey,
+            mediaType: file.mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newNewsMedia.push(media);
+      } catch (error) {
+        console.error("Error uploading file or saving media:", error);
+      }
+    }
+  }
+
+  const [userData] = await db
+    .select({
+      firstName: users.firstName,
+      lastName: users.lastName,
+      profileImage: users.profileImage,
+    })
+    .from(users)
+    .where(eq(users.id, Number(userId)));
+
+  const newsWithMedia = {
+    id: newNews.id,
+    userId: newNews.userId,
+    title: newNews.title,
+    description: newNews.description,
+    type: newNews.type,
+    topic: newNews.topic,
+    viewCount: newNews.viewCount,
+    likeCount: newNews.likeCount,
+    createdAt: newNews.createdAt,
+    updatedAt: newNews.updatedAt,
+    username: userData.firstName + " " + userData.lastName,
+    profileImage: userData.profileImage,
+    isSaved: false,
+    media: newNewsMedia.map((m) => ({
+      url: m.url,
+      type: m.mediaType,
+    })),
+  };
+
+  const redisKey = `news:${newNews.id}`;
+  await redis.set(redisKey, JSON.stringify(newsWithMedia), { EX: 600 });
+  await redis.del(`dashboardData:${userId}`);
+  // Delete all user news cache keys for this user regardless of type or topic
+  const myNewsKeys: string[] = await redis.keys(
+    `myNews:${userId}:type:*:topic:*`
+  );
+  if (myNewsKeys.length > 0) {
+    await redis.del(myNewsKeys);
+  }
+
+  return { data: { success: true, newNews, newNewsMedia } };
 };

@@ -8,19 +8,19 @@ export const postNewsController = async (
   res: Response
 ) => {
   try {
-    const { userId, title, description, type, topic, publicUrl, mediaType } =
-      req.body;
+    const userId = req.user.userId;
     const result = await newsService.postNews(
-      userId,
-      title,
-      description,
-      type,
-      topic,
-      publicUrl,
-      mediaType
+      req.body,
+      req.files,
+      Number(userId)
     );
     return res.status(201).json(result);
   } catch (error) {
+    if ((error as Error).message === "Missing required fields") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
+    }
     return res
       .status(500)
       .json({ success: false, error: (error as Error).message });

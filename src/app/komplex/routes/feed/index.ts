@@ -1,6 +1,6 @@
 // Feed routes - public content discovery
 import { Router } from "express";
-import blogsRouter from "./news.route.js";
+import newsRouter from "./news.route.js";
 import forumsRouter from "./forums.route.js";
 import videosRouter from "./videos.route.js";
 import exercisesRouter from "./exercises.route.js";
@@ -14,7 +14,7 @@ import curriculumsRouter from "./curriculums.route.js";
 
 const router = Router();
 router.use("/curriculums", curriculumsRouter);
-router.use("/blogs", blogsRouter);
+router.use("/news", newsRouter);
 
 router.use("/forums", forumsRouter);
 router.use("/forum-comments", forumCommentsRouter);

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import blogsRouter from "./news.route.js";
+import newsRouter from "./news.route.js";
 import exercisesRouter from "./exercises.route.js";
 import followersRouter from "./followers.route.js";
 import forumsRouter from "./forums.route.js";
@@ -23,7 +23,7 @@ adminRoutes.use(verifyFirebaseTokenAdmin as any);
 
 adminRoutes.use("/database", databaseRouter);
 adminRoutes.use("/curriculums", curriculumRouter);
-adminRoutes.use("/blogs", blogsRouter);
+adminRoutes.use("/news", newsRouter);
 adminRoutes.use("/ai", aiRouter);
 adminRoutes.use("/exercises", exercisesRouter);
 adminRoutes.use("/grades", gradesRouter);

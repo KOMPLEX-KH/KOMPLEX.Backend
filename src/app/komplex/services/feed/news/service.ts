@@ -25,26 +25,38 @@ export const getAllNews = async (
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
 
-    const followedUsersNewsId = await db
-      .select({ id: news.id, userId: news.userId })
-      .from(news)
-      .where(
-        inArray(
-          news.userId,
-          db
-            .select({ followedId: followers.followedId })
-            .from(followers)
-            .where(eq(followers.userId, Number(userId)))
-        )
-      )
-      .orderBy(
-        desc(
-          sql`CASE WHEN DATE(${news.updatedAt}) = CURRENT_DATE THEN 1 ELSE 0 END`
-        ),
-        desc(news.likeCount),
-        desc(news.updatedAt)
-      )
-      .limit(5);
+    // Only fetch followed users' news if userId is provided
+    let followedUsersNewsId: { id: number; userId: number | null }[] = [];
+    if (userId && Number(userId) > 0) {
+      // First, get the list of followed user IDs
+      const followedIds = await db
+        .select({ followedId: followers.followedId })
+        .from(followers)
+        .where(eq(followers.userId, Number(userId)));
+
+      // Only query if there are followed users
+      if (followedIds.length > 0) {
+        // Filter out null values and ensure we have valid IDs
+        const validFollowedIds = followedIds
+          .map((f) => f.followedId)
+          .filter((id): id is number => id !== null && id !== undefined);
+
+        if (validFollowedIds.length > 0) {
+          followedUsersNewsId = await db
+            .select({ id: news.id, userId: news.userId })
+            .from(news)
+            .where(inArray(news.userId, validFollowedIds))
+            .orderBy(
+              desc(
+                sql`CASE WHEN DATE(${news.updatedAt}) = CURRENT_DATE THEN 1 ELSE 0 END`
+              ),
+              desc(news.likeCount),
+              desc(news.updatedAt)
+            )
+            .limit(5);
+        }
+      }
+    }
 
     // 1️⃣ Fetch filtered news IDs from DB (including your own news) might change to other user's news only in the future
     const newsIds = await db
@@ -170,15 +182,20 @@ export const getAllNews = async (
         id: news.id,
         viewCount: news.viewCount,
         likeCount: news.likeCount,
-        isSaved: sql`CASE WHEN ${userSavedNews.newsId} IS NOT NULL THEN true ELSE false END`,
+        isSaved:
+          userId && Number(userId) > 0
+            ? sql`CASE WHEN ${userSavedNews.newsId} IS NOT NULL THEN true ELSE false END`
+            : sql`false`,
       })
       .from(news)
       .leftJoin(
         userSavedNews,
-        and(
-          eq(userSavedNews.newsId, news.id),
-          eq(userSavedNews.userId, Number(userId))
-        )
+        userId && Number(userId) > 0
+          ? and(
+              eq(userSavedNews.newsId, news.id),
+              eq(userSavedNews.userId, Number(userId))
+            )
+          : undefined
       )
       .where(
         inArray(
