@@ -44,7 +44,7 @@ export const handleSignup = async (
         updatedAt: new Date(),
       })
       .returning();
-    return res.status(200).json(user[0]);
+    return res.status(200).json(user);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error", error });
@@ -104,7 +104,7 @@ export const handleSocialLogIn = async (
       provider,
       createdAt: new Date(),
     });
-    return res.status(200).json(user[0]);
+    return res.status(200).json(user);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" + error });

@@ -13,6 +13,7 @@ import aiRouter from "./ai.route.js";
 import { getUserContentDashboardController } from "../../controllers/me/dashboard.controller.js";
 import { getCurrentUser } from "../../controllers/me/.controller.js";
 import { verifyFirebaseToken } from "../../../../middleware/auth.js";
+import lastAccessedRouter from "./last-accessed.route.js";
 
 const router = Router();
 
@@ -40,5 +41,7 @@ router.use("/follow", followRouter); // empty for now
 router.use("/feedback", feedbackRouter);
 
 router.use("/ai", aiRouter);
+
+router.use("/last-accessed", lastAccessedRouter);
 
 export default router;

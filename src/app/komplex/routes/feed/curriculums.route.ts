@@ -1,3 +1,4 @@
+import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { Router } from "express";
 import {
   getCurriculums,
@@ -6,7 +7,7 @@ import {
 
 const router = Router();
 
-router.get("/", getCurriculums);
-router.get("/:id", getTopic);
+router.get("/", verifyFirebaseTokenOptional as any, getCurriculums as any);
+router.get("/:id", verifyFirebaseTokenOptional as any, getTopic as any);
 
 export default router;

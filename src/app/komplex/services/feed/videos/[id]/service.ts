@@ -110,6 +110,17 @@ export const getVideoById = async (videoId: number, userId: number) => {
       .update(videos)
       .set({ viewCount: video.viewCount })
       .where(eq(videos.id, videoId));
+
+    if (userId !== 0) {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ lastVideoId: videoId })
+        .where(eq(users.id, userId))
+        .returning();
+      if (!updatedUser) {
+        throw new Error("Failed to update user last video");
+      }
+    }
     // insert into history
     await db.insert(userVideoHistory).values({
       userId: Number(userId),
