@@ -4,8 +4,7 @@ import { seedSearchTask } from "./seedFunction.js";
 
 const run = async () => {
   console.log("Seeding Meilisearch data...");
-  const { videosIndexed } = await seedSearchTask();
-  console.log(`Seeding complete. Videos indexed: ${videosIndexed}`);
+  await seedSearchTask();
 };
 
 run()

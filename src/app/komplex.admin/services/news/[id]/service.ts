@@ -233,7 +233,7 @@ export const deleteNews = async (id: string, userId: number) => {
     await redis.del(myNewsKeys);
   }
 
-//   await meilisearch.index("news").deleteDocument(String(id));
+  await meilisearch.index("news").deleteDocument(String(id));
   return {
     data: deletedNews,
   };

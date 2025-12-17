@@ -28,28 +28,35 @@ import { faker } from "@faker-js/faker";
 import { Response, Request } from "express";
 
 export const seedSearchTask = async () => {
-  const videosFromDb = await db
+  // const videosFromDb = await db
+  //   .select({
+  //     id: videos.id,
+  //     title: videos.title,
+  //     description: videos.description,
+  //   })
+  //   .from(videos);
+
+  // const forumsFromDb = await db
+  //   .select({
+  //     id: forums.id,
+  //     title: forums.title,
+  //     description: forums.description,
+  //   })
+  //   .from(forums);
+
+  // await meilisearch.index("videos").addDocuments(videosFromDb);
+  // await meilisearch.index("forums").addDocuments(forumsFromDb);
+
+  const newsFromDb = await db
     .select({
-      id: videos.id,
-      title: videos.title,
-      description: videos.description,
+      id: news.id,
+      title: news.title,
+      description: news.description,
     })
-    .from(videos);
-
-  const forumsFromDb = await db
-    .select({
-      id: forums.id,
-      title: forums.title,
-      description: forums.description,
-    })
-    .from(forums);
-
-  await meilisearch.index("videos").addDocuments(videosFromDb);
-  await meilisearch.index("forums").addDocuments(forumsFromDb);
-
+    .from(news);
+  await meilisearch.index("news").addDocuments(newsFromDb);
   return {
-    videosIndexed: videosFromDb.length,
-    forumsIndexed: forumsFromDb.length,
+    newsIndexed: newsFromDb.length,
   };
 };
 
