@@ -8,6 +8,7 @@ import videoCommentsRouter from "./video-comments.route.js";
 import videoRepliesRouter from "./video-replies.route.js";
 import exercisesRouter from "./exercises.route.js";
 import followRouter from "./follow.route.js";
+import noteRouter from "./notes.route.js";
 import feedbackRouter from "./feedback.route.js";
 import aiRouter from "./ai.route.js";
 import { getUserContentDashboardController } from "../../controllers/me/dashboard.controller.js";
@@ -28,6 +29,8 @@ router.get(
   verifyFirebaseToken as any,
   getUserContentDashboardController as any
 ); // GET /me/dashboard - my dashboard
+
+router.use("/notes", noteRouter);
 
 router.use("/forums", forumsRouter);
 router.use("/forum-comments", forumCommentsRouter);
