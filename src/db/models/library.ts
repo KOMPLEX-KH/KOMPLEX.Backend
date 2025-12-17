@@ -5,7 +5,6 @@ import {
   timestamp,
   serial,
   boolean,
-  
   integer
 } from "drizzle-orm/pg-core";
 import { subjects } from "./subjects.js";

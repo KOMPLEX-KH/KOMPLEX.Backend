@@ -47,4 +47,5 @@ export * from "./models/subjects.js";
 export * from "./models/lessons.js";
 export * from "./models/topics.js";
 export * from "./models/library.js";
+export * from "./models/notes.js";
 

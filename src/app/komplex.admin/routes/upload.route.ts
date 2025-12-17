@@ -8,22 +8,9 @@ import { getSignedUrlFromCloudflare } from "@/db/cloudflare/cloudflareFunction.j
 const uploadRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Existing signed URL endpoint (keep if you have it)
-uploadRouter.post('/upload-url', async (req, res) => {
-  try {
-    const { fileName, fileType } = req.body;
-    const userId = (req as any).user?.id || 0;
-    
-    const { signedUrl, key } = await getSignedUrlFromCloudflare(fileName, fileType, userId);
-    
-    res.json({ signedUrl, key });
-  } catch (error) {
-    console.error('Error generating signed URL:', error);
-    res.status(500).json({ error: 'Failed to generate signed URL' });
-  }
-});
 
-// NEW: Direct file upload endpoint
+// direct file upload handling
+// backend upload endpoint
 uploadRouter.post('/file', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;

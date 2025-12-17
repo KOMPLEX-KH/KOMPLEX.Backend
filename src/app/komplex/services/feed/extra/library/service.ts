@@ -6,7 +6,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { json } from "stream/consumers";
 import e from "express";
 
-const BOOK_CACHE_PREFIX = "book:";
+const BOOK_CACHE_PREFIX = "books:";
 
 export const getAllBooks = async()=>{
    try{
@@ -144,6 +144,3 @@ export const filterBooks = async({lessonId, subjectId}: {lessonId?: string; subj
         throw new Error(`Error filtering books: ${(err as Error).message}`);
     }
 }
-
-
-

@@ -43,38 +43,35 @@ export const createBook = async(
 
 export const updateBook = async (
     id: string, 
-    title?: string,
-    author?: string,
-    gradeId?: number,
-    lessonId?: number,
-    isRecommended?: boolean,
-    subjectId?: number,
-    publishedDate?: Date,
-    description?: string,
-    pdfUrl?: string,
-    imageUrl?: string,
+    payload: {
+        title?: string;
+        author?: string;
+        gradeId?: number;
+        lessonId?: number;
+        isRecommended?: boolean;
+        subjectId?: number;
+        publishedDate?: Date | string;
+        description?: string;
+        pdfUrl?: string;
+        imageUrl?: string;
+    }
 ) => {
-    try{
+    try {
         const result = await db.update(books).set({
-            title, 
-            author, 
-            gradeId, 
-            lessonId, 
-            isRecommended, 
-            subjectId, 
-            publishedDate: publishedDate ? (typeof publishedDate === 'string' ? publishedDate : publishedDate.toISOString().split('T')[0]) : undefined,
-            description, 
-            pdfUrl, 
-            imageUrl, 
+            ...payload,
+            publishedDate: payload.publishedDate ? 
+                (typeof payload.publishedDate === 'string' ? payload.publishedDate : payload.publishedDate.toISOString().split('T')[0]) 
+                : undefined,
             updatedAt: new Date() 
         }).where(eq(books.id, Number(id))).returning();
+        
         if (result.length === 0) {
             return { data: null };
         }
         await redis.del(`${BOOK_CACHE_PREFIX}${id}`);
         await redis.del("books:all");
         return { data: result[0] };
-    }catch(err){
+    } catch(err) {
         throw new Error(`Failed to update book: ${(err as Error).message}`);
     }
 }
