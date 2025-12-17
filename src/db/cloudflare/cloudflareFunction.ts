@@ -4,7 +4,24 @@ import crypto from "crypto";
 import { imageMimeTypes } from "../../utils/imageMimeTypes.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// Upload an image
+// Upload an pdf book
+export const uploadPdfToCloudflare = async (
+  key: string,
+  body: Buffer,
+  contentType: string
+): Promise<string> => {
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: "komplex-assets",
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+  return `${process.env.R2_ASSET_PUBLIC_URL}/${key}`;
+};
+
+// upload image
 export const uploadImageToCloudflare = async (
   key: string,
   body: Buffer,
