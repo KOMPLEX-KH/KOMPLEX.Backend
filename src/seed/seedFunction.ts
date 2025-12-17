@@ -1,8 +1,8 @@
 import { meilisearch } from "@/config/meilisearchConfig.js";
 import { db } from "@/db/index.js";
 import {
-  blogMedia,
-  blogs,
+  newsMedia,
+  news,
   choices,
   exercises,
   forumComments,
@@ -28,32 +28,28 @@ import { faker } from "@faker-js/faker";
 import { Response, Request } from "express";
 
 export const seedSearchTask = async () => {
-  // const blogsFromDb = await db
-  // 	.select({ id: blogs.id, title: blogs.title, description: blogs.description, topic: blogs.topic })
-  // 	.from(blogs);
-  // const forumsFromDb = await db
-  // 	.select({ id: forums.id, title: forums.title, description: forums.description, topic: forums.topic })
-  // 	.from(forums);
   const videosFromDb = await db
     .select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
-      topic: videos.topic,
     })
     .from(videos);
-  // for (let i = 0; i < blogsFromDb.length; i++) {
-  // 	await meilisearch.index("blogs").addDocuments([blogsFromDb[i]]);
-  // }
-  // for (let i = 0; i < forumsFromDb.length; i++) {
-  // 	await meilisearch.index("forums").addDocuments([forumsFromDb[i]]);
-  // }
-  for (let i = 0; i < videosFromDb.length; i++) {
-    await meilisearch.index("videos").addDocuments([videosFromDb[i]]);
-  }
+
+  const forumsFromDb = await db
+    .select({
+      id: forums.id,
+      title: forums.title,
+      description: forums.description,
+    })
+    .from(forums);
+
+  await meilisearch.index("videos").addDocuments(videosFromDb);
+  await meilisearch.index("forums").addDocuments(forumsFromDb);
 
   return {
     videosIndexed: videosFromDb.length,
+    forumsIndexed: forumsFromDb.length,
   };
 };
 
@@ -71,7 +67,7 @@ export const seedSearch = async (req: Request, res: Response) => {
 export const seedDb = async (req: Request, res: Response) => {
   try {
     await db.insert(users).values(mockUsers);
-    const blogsToInsert = mockTitleDescriptionTopicAndType.map((item) => ({
+    const newsToInsert = mockTitleDescriptionTopicAndType.map((item) => ({
       ...item,
       // Add other required fields with default/mock values
       userId: faker.number.int({ min: 1, max: 20 }),
@@ -95,26 +91,26 @@ export const seedDb = async (req: Request, res: Response) => {
       thumbnailUrlForDeletion: faker.internet.url(),
       duration: faker.number.int({ min: 30, max: 3600 }),
     }));
-    const insertBlogs = await db
-      .insert(blogs)
-      .values(blogsToInsert)
-      .returning({ id: blogs.id });
+    const insertNews = await db
+      .insert(news)
+      .values(newsToInsert)
+      .returning({ id: news.id });
     await db.insert(forums).values(forumsToInsert).returning({ id: forums.id });
     const insertVideos = await db
       .insert(videos)
       .values(videosToInsert)
       .returning({ id: videos.id });
 
-    for (const blog of insertBlogs) {
+    for (const newsItem of insertNews) {
       for (let i = 0; i < faker.number.int({ min: 1, max: 4 }); i++) {
-        await db.insert(blogMedia).values({
-          blogId: blog.id,
+        await db.insert(newsMedia).values({
+          newsId: newsItem.id,
           url: faker.image.urlLoremFlickr({ category: "nature" }),
           urlForDeletion: faker.image.urlLoremFlickr({ category: "nature" }),
           mediaType: faker.helpers.arrayElement(["image", "video"]),
         });
         await db.insert(forumMedias).values({
-          forumId: blog.id,
+          forumId: newsItem.id,
           url: faker.image.urlLoremFlickr({ category: "nature" }),
           urlForDeletion: faker.image.urlLoremFlickr({ category: "nature" }),
           mediaType: faker.helpers.arrayElement(["image", "video"]),
@@ -124,7 +120,7 @@ export const seedDb = async (req: Request, res: Response) => {
       const randomComments = faker.helpers.arrayElements(mockComments, 5);
       const randomReplies = faker.helpers.arrayElements(mockReplies, 3);
       const commentsData = randomComments.map((comment) => ({
-        forumId: blog.id,
+        forumId: newsItem.id,
         userId: faker.number.int({ min: 1, max: 20 }),
         description: comment,
       }));

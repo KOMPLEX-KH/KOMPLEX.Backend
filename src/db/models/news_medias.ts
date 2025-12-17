@@ -1,9 +1,9 @@
 import { pgTable, serial, integer, text, timestamp } from "drizzle-orm/pg-core";
 import { mediaTypeEnum } from "./media_type.js";
-import { blogs } from "./blogs.js";
-export const blogMedia = pgTable("blog_media", {
+import { news } from "./news.js";
+export const newsMedia = pgTable("news_media", {
 	id: serial("id").primaryKey(),
-	blogId: integer("blog_id").references(() => blogs.id),
+	newsId: integer("news_id").references(() => news.id),
 	url: text("url"),
 	urlForDeletion: text("url_for_deletion"),
 	mediaType: mediaTypeEnum("media_type"),

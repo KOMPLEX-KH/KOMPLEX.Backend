@@ -2,10 +2,21 @@ import { db } from "@/db/index.js";
 import { eq } from "drizzle-orm";
 import { topics } from "@/db/models/topics.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { users } from "@/db/models/users.js";
 
-export const getTopic = async (topicId: string) => {
+export const getTopic = async (topicId: string, userId: number) => {
   const cached = await redis.get(`topic:${topicId}`);
   if (cached) {
+    if (userId !== 0) {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ lastTopicId: Number(topicId) })
+        .where(eq(users.id, userId))
+        .returning();
+      if (!updatedUser) {
+        throw new Error("Failed to update user last topic");
+      }
+    }
     return { data: JSON.parse(cached) };
   }
   try {
@@ -17,6 +28,18 @@ export const getTopic = async (topicId: string) => {
     if (!topic) {
       throw new Error("Topic not found");
     }
+
+    if (userId !== 0) {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ lastTopicId: Number(topicId) })
+        .where(eq(users.id, userId))
+        .returning();
+      if (!updatedUser) {
+        throw new Error("Failed to update user last topic");
+      }
+    }
+
     await redis.set(
       `topic:${topicId}`,
       JSON.stringify({

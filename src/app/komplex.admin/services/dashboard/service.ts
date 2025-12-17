@@ -2,7 +2,7 @@ import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
 import {
   users,
-  blogs,
+  news,
   videos,
   exercises,
   forums,
@@ -53,10 +53,10 @@ export const getDashboardData = async () => {
     const activeUsers = Number(activeUsersResult[0]?.count || 0);
 
     // Get content counts
-    const totalBlogsResult = await db
+    const totalNewsResult = await db
       .select({ count: sql<number>`count(*)` })
-      .from(blogs);
-    const totalBlogs = Number(totalBlogsResult[0]?.count || 0);
+      .from(news);
+    const totalNews = Number(totalNewsResult[0]?.count || 0);
 
     const totalVideosResult = await db
       .select({ count: sql<number>`count(*)` })
@@ -73,22 +73,21 @@ export const getDashboardData = async () => {
       .from(forums);
     const totalForums = Number(totalForumsResult[0]?.count || 0);
 
-    const totalContent =
-      totalBlogs + totalVideos + totalExercises + totalForums;
+    const totalContent = totalNews + totalVideos + totalExercises + totalForums;
 
     // Get engagement metrics
     const totalViewsResult = await db
       .select({
-        blogViews: sql<number>`COALESCE(SUM(${blogs.viewCount}), 0)`,
+        newsViews: sql<number>`COALESCE(SUM(${news.viewCount}), 0)`,
         videoViews: sql<number>`COALESCE(SUM(${videos.viewCount}), 0)`,
         forumViews: sql<number>`COALESCE(SUM(${forums.viewCount}), 0)`,
       })
-      .from(blogs)
+      .from(news)
       .leftJoin(videos, sql`1=1`)
       .leftJoin(forums, sql`1=1`);
 
     const totalViews =
-      Number(totalViewsResult[0]?.blogViews || 0) +
+      Number(totalViewsResult[0]?.newsViews || 0) +
       Number(totalViewsResult[0]?.videoViews || 0) +
       Number(totalViewsResult[0]?.forumViews || 0);
 
@@ -182,20 +181,20 @@ export const getDashboardData = async () => {
     });
 
     // Recent blog posts
-    const recentBlogs = await db
+    const recentNews = await db
       .select({
-        title: blogs.title,
-        createdAt: blogs.createdAt,
+        title: news.title,
+        createdAt: news.createdAt,
       })
-      .from(blogs)
-      .orderBy(sql`${blogs.createdAt} DESC`)
+      .from(news)
+      .orderBy(sql`${news.createdAt} DESC`)
       .limit(3);
 
-    recentBlogs.forEach((blog) => {
-      if (blog.createdAt) {
+    recentNews.forEach((newsItem) => {
+      if (newsItem.createdAt) {
         recentActivities.push({
-          type: "blog_posted",
-          description: `"${blog.title}" posted`,
+          type: "news_posted",
+          description: `"${newsItem.title}" posted`,
         });
       }
     });
@@ -250,7 +249,7 @@ export const getDashboardData = async () => {
       completionRate: Math.round(completionRate * 100) / 100,
 
       // Content Breakdown
-      totalBlogs,
+      totalNews,
       totalVideos,
       totalExercises,
       totalForums,
