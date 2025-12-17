@@ -26,10 +26,13 @@ export const createAdmin = async (
       })
       .returning();
 
-    const cacheKey = `users:${result[0].id}`;
-    await redis.set(cacheKey, JSON.stringify(result[0]), { EX: 600 });
+    const rows = result as any[];
+    const createdUser = rows[0];
 
-    return result;
+    const cacheKey = `users:${createdUser.id}`;
+    await redis.set(cacheKey, JSON.stringify(createdUser), { EX: 600 });
+
+    return createdUser;
   } catch (error) {
     throw new Error(`Failed to create admin: ${(error as Error).message}`);
   }
@@ -48,10 +51,13 @@ export const updateAdmin = async (
       .where(eq(users.id, id))
       .returning();
 
-    const cacheKey = `users:${result[0].id}`;
-    await redis.set(cacheKey, JSON.stringify(result[0]), { EX: 600 });
+    const rows = result as any[];
+    const updatedUser = rows[0];
 
-    return result;
+    const cacheKey = `users:${updatedUser.id}`;
+    await redis.set(cacheKey, JSON.stringify(updatedUser), { EX: 600 });
+
+    return updatedUser;
   } catch (error) {
     throw new Error(`Failed to update admin: ${(error as Error).message}`);
   }

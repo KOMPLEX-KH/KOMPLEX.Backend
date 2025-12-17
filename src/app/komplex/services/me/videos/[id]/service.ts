@@ -253,7 +253,7 @@ export const updateVideo = async (
         return exercise.id;
       }
       gotToStep.push("creating exercise ");
-      const [createdExercise] = await db
+      const createdExerciseResult = await db
         .insert(exercises)
         .values({
           videoId: Number(id),
@@ -267,6 +267,7 @@ export const updateVideo = async (
           updatedAt: new Date(),
         })
         .returning();
+      const createdExercise = (createdExerciseResult as any[])[0];
       return createdExercise.id;
     };
 

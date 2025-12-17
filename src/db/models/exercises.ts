@@ -8,7 +8,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users.js";
 
-export const exercises = pgTable("exercises", {
+export const exercises: any = pgTable("exercises", {
   id: serial("id").primaryKey(),
   videoId: integer("video_id"),
   duration: integer("duration"),

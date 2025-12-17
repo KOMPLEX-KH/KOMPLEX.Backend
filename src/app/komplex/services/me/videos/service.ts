@@ -176,7 +176,7 @@ export const postVideo = async (body: any, userId: number) => {
   const videoUrl = `${process.env.R2_VIDEO_PUBLIC_URL}/${videoKey}`;
   const thumbnailUrl = `${process.env.R2_PHOTO_PUBLIC_URL}/${thumbnailKey}`;
 
-  const newVideo = await db
+  const newVideoResult = await db
     .insert(videos)
     .values({
       videoUrlForDeletion: videoKey,
@@ -194,6 +194,7 @@ export const postVideo = async (body: any, userId: number) => {
       updatedAt: new Date(),
     })
     .returning();
+  const newVideo = newVideoResult as any[];
   const [username] = await db
     .select({ firstName: users.firstName, lastName: users.lastName })
     .from(users)
@@ -226,7 +227,7 @@ export const postVideo = async (body: any, userId: number) => {
   console.log(questions);
 
   if (questions && questions.length > 0) {
-    const newExercise = await db
+    const newExerciseResult = await db
       .insert(exercises)
       .values({
         videoId: newVideo[0].id,
@@ -240,6 +241,7 @@ export const postVideo = async (body: any, userId: number) => {
         updatedAt: new Date(),
       })
       .returning();
+    const newExercise = newExerciseResult as any[];
 
     let exercise = {
       title: `Quiz for ${title}`,
@@ -269,7 +271,7 @@ export const postVideo = async (body: any, userId: number) => {
     }[] = [];
 
     for (const question of questions) {
-      const newQuestion = await db
+      const newQuestionResult = await db
         .insert(questionsTable)
         .values({
           exerciseId: newExercise[0].id,
@@ -282,6 +284,7 @@ export const postVideo = async (body: any, userId: number) => {
           updatedAt: new Date(),
         })
         .returning();
+      const newQuestion = newQuestionResult as any[];
 
       let questionToAdd = {
         title: newQuestion[0].title,
