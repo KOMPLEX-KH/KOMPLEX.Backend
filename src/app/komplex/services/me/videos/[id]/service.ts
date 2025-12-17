@@ -226,12 +226,12 @@ export const updateVideo = async (
     );
   const cacheVideoKey = `video:${videoRow.id}`;
   await redis.set(cacheVideoKey, JSON.stringify(videoRow), { EX: 600 });
-  // const meilisearchData = {
-  //   id: videoRow.id,
-  //   title: videoRow.title,
-  //   description: videoRow.description,
-  // };
-  // await meilisearch.index("videos").addDocuments([meilisearchData]);
+  const meilisearchData = {
+    id: videoRow.id,
+    title: videoRow.title,
+    description: videoRow.description,
+  };
+  await meilisearch.index("videos").addDocuments([meilisearchData]);
 
   // If questions are provided, update exercise/questions/choices
   if (Array.isArray(questionsPayload) && questionsPayload.length > 0) {
@@ -531,7 +531,7 @@ export const deleteVideo = async (id: number, userId: number) => {
   }
   await redis.del(`dashboardData:${userId}`);
 
-  // await meilisearch.index("videos").deleteDocument(String(id)); // ✅ expects a string ID
+  await meilisearch.index("videos").deleteDocument(String(id)); // ✅ expects a string ID
 
   return { data: deletedVideo, gotToStep };
 };

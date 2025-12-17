@@ -5,6 +5,11 @@ import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 
 const router = Router();
 
-router.get("/", verifyFirebaseTokenOptional as any, getSmallContentRateLimiter, getUserProfileController as any);
+router.get(
+  "/",
+  verifyFirebaseTokenOptional as any,
+  getSmallContentRateLimiter,
+  getUserProfileController as any
+);
 
 export default router;

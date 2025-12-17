@@ -11,7 +11,10 @@ import followRouter from "./follow.route.js";
 import feedbackRouter from "./feedback.route.js";
 import aiRouter from "./ai.route.js";
 import { getUserContentDashboardController } from "../../controllers/me/dashboard.controller.js";
-import { getCurrentUser } from "../../controllers/me/.controller.js";
+import {
+  getCurrentUser,
+  getMeProfile,
+} from "../../controllers/me/.controller.js";
 import { verifyFirebaseToken } from "../../../../middleware/auth.js";
 import lastAccessedRouter from "./last-accessed.route.js";
 
@@ -19,6 +22,7 @@ const router = Router();
 
 // My content and interactions
 router.get("/", verifyFirebaseToken as any, getCurrentUser as any);
+router.get("/profile", verifyFirebaseToken as any, getMeProfile as any);
 router.get(
   "/dashboard",
   verifyFirebaseToken as any,

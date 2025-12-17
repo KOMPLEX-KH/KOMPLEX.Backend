@@ -28,32 +28,28 @@ import { faker } from "@faker-js/faker";
 import { Response, Request } from "express";
 
 export const seedSearchTask = async () => {
-  // const blogsFromDb = await db
-  // 	.select({ id: blogs.id, title: blogs.title, description: blogs.description, topic: blogs.topic })
-  // 	.from(blogs);
-  // const forumsFromDb = await db
-  // 	.select({ id: forums.id, title: forums.title, description: forums.description, topic: forums.topic })
-  // 	.from(forums);
   const videosFromDb = await db
     .select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
-      topic: videos.topic,
     })
     .from(videos);
-  // for (let i = 0; i < blogsFromDb.length; i++) {
-  // 	await meilisearch.index("blogs").addDocuments([blogsFromDb[i]]);
-  // }
-  // for (let i = 0; i < forumsFromDb.length; i++) {
-  // 	await meilisearch.index("forums").addDocuments([forumsFromDb[i]]);
-  // }
-  for (let i = 0; i < videosFromDb.length; i++) {
-    await meilisearch.index("videos").addDocuments([videosFromDb[i]]);
-  }
+
+  const forumsFromDb = await db
+    .select({
+      id: forums.id,
+      title: forums.title,
+      description: forums.description,
+    })
+    .from(forums);
+
+  await meilisearch.index("videos").addDocuments(videosFromDb);
+  await meilisearch.index("forums").addDocuments(forumsFromDb);
 
   return {
     videosIndexed: videosFromDb.length,
+    forumsIndexed: forumsFromDb.length,
   };
 };
 
@@ -115,7 +111,7 @@ export const seedDb = async (req: Request, res: Response) => {
         });
         await db.insert(forumMedias).values({
           forumId: newsItem.id,
-            url: faker.image.urlLoremFlickr({ category: "nature" }),
+          url: faker.image.urlLoremFlickr({ category: "nature" }),
           urlForDeletion: faker.image.urlLoremFlickr({ category: "nature" }),
           mediaType: faker.helpers.arrayElement(["image", "video"]),
         });

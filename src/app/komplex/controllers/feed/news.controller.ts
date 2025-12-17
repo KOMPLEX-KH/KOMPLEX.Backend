@@ -14,7 +14,7 @@ export const getAllNewsController = async (
       type as string,
       topic as string,
       page as string,
-      Number(userId)
+      1
     );
     return res.status(200).json(result);
   } catch (error) {

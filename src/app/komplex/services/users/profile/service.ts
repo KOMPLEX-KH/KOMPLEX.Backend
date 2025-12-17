@@ -34,41 +34,12 @@ export const getUserProfile = async (userId: number) => {
       .from(followers)
       .where(eq(followers.userId, userId));
 
-    // number of saves that other user save their blogs
-
-    // number of forums likes that other user like their forums
-    const numberOfForumLikes = await db
-      .select({ count: count() })
-      .from(forumLikes)
-      .leftJoin(forums, eq(forumLikes.forumId, forums.id))
-      .where(eq(forums.userId, userId));
-
-    // number of videos saved that other user save their videos
-    const numberOfVideosSaved = await db
-      .select({ count: count() })
-      .from(userSavedVideos)
-      .leftJoin(videos, eq(userSavedVideos.videoId, videos.id))
-      .where(eq(videos.userId, userId));
-
-    // number of liked videos that other user like their videos
-    const numberOfLikedVideos = await db
-      .select({ count: count() })
-      .from(videoLikes)
-      .leftJoin(videos, eq(videoLikes.videoId, videos.id))
-      .where(eq(videos.userId, userId));
-
-    const totalLikesAndSaves =
-      numberOfForumLikes[0].count +
-      numberOfVideosSaved[0].count +
-      numberOfLikedVideos[0].count;
-
     await redis.set(
       cacheKey,
       JSON.stringify({
         ...userProfile[0],
         numberOfFollowers: numberOfFollowers[0].count,
         numberOfFollowing: numberOfFollowing[0].count,
-        totalLikesAndSaves: totalLikesAndSaves,
       }),
       { EX: 300 }
     );
@@ -77,7 +48,6 @@ export const getUserProfile = async (userId: number) => {
         ...userProfile[0],
         numberOfFollowers: numberOfFollowers[0].count,
         numberOfFollowing: numberOfFollowing[0].count,
-        totalLikesAndSaves: totalLikesAndSaves,
       },
     };
   } catch (error) {

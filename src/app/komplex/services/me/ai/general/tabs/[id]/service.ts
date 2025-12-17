@@ -106,13 +106,7 @@ export const callAiGeneralService = async (
       //   );
       // }
     }
-    if (userId !== 0) {
-      await db
-        .update(users)
-        .set({ lastAiTabId: tabId })
-        .where(eq(users.id, userId))
-        .returning();
-    }
+    
     return { prompt, aiResult, responseType, id: lastResponse?.[0]?.id };
   } catch (error) {
     throw new Error((error as Error).message);
@@ -130,6 +124,13 @@ export const getAiHistoryByTabService = async (
     const cached = await redis.get(cacheKey);
     const parseData = cached ? JSON.parse(cached) : null;
     if (parseData) {
+      if (userId !== 0) {
+        await db
+          .update(users)
+          .set({ lastAiTabId: tabId })
+          .where(eq(users.id, userId))
+          .returning();
+      }
       return {
         data: parseData,
       };
@@ -158,6 +159,13 @@ export const getAiHistoryByTabService = async (
       ),
       responseType: h.responseType,
     }));
+    if (userId !== 0) {
+      await db
+        .update(users)
+        .set({ lastAiTabId: tabId })
+        .where(eq(users.id, userId))
+        .returning();
+    }
     return {
       data: cleanedHistory,
     };

@@ -195,19 +195,6 @@ export const updateNews = async (
 };
 
 export const deleteNews = async (id: string, userId: number) => {
-  // Step 1: Verify news ownership
-  const doesUserOwnThisNews = await db
-    .select()
-    .from(news)
-    .where(and(eq(news.id, Number(id)), eq(news.userId, Number(userId))))
-    .limit(1);
-
-  if (doesUserOwnThisNews.length === 0) {
-    throw new Error("News not found");
-  }
-
-  // Step 2: Delete associated media (DB + Cloudinary)
-  // Select associated media to delete from Cloudflare first
   const mediaToDelete = await db
     .select({
       urlToDelete: newsMedia.urlForDeletion,
@@ -246,7 +233,7 @@ export const deleteNews = async (id: string, userId: number) => {
     await redis.del(myNewsKeys);
   }
 
-  await meilisearch.index("news").deleteDocument(String(id));
+//   await meilisearch.index("news").deleteDocument(String(id));
   return {
     data: deletedNews,
   };
