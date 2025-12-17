@@ -1,6 +1,5 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Request, Response } from "express";
-import { searchBlogsService } from "../../services/search/blogs/service.js";
 import { searchVideosService } from "../../services/search/videos/service.js";
 
 export const videoSearchController = async (

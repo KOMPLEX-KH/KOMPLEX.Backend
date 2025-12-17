@@ -9,7 +9,7 @@ import {
 import { lessons } from "./lessons.js";
 import { exercises } from "./exercises.js";
 
-export const topics = pgTable("topics", {
+export const topics: any = pgTable("topics", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   component: jsonb("component"),

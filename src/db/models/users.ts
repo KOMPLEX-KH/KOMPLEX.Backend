@@ -11,7 +11,7 @@ import { topics } from "./topics.js";
 import { videos } from "./videos.js";
 import { userAiTabs } from "./user_ai_tabs.js";
 
-export const users = pgTable("users", {
+export const users: any = pgTable("users", {
   id: serial("id").primaryKey(),
   uid: text("uid").unique(),
   username: text("username"),

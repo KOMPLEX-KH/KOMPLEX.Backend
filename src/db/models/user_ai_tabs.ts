@@ -1,7 +1,7 @@
 import { text, pgTable, serial, integer, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./users.js";
 
-export const userAiTabs = pgTable("user_ai_tabs", {
+export const userAiTabs: any = pgTable("user_ai_tabs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   tabName: text("tab_name"),

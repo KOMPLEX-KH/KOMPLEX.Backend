@@ -1,7 +1,7 @@
 import { pgTable, text, integer, timestamp, serial } from "drizzle-orm/pg-core";
 import { users } from "../schema.js";
 
-export const videos = pgTable("videos", {
+export const videos: any = pgTable("videos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   title: text("title"),
