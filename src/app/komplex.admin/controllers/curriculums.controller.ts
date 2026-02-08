@@ -17,7 +17,7 @@ export const getDashboardData = async (
 ) => {
   try {
     const data = await dashboardService.getDashboardData();
-    res.status(200).json({ data: data, isSuccess: true });
+    res.status(200).json({ data, isSuccess: true });
   } catch (error) {
     res
       .status(500)

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as videoCommentService from "@/app/komplex/services/me/video-comments/service.js";
 import * as videoCommentByIdService from "@/app/komplex/services/me/video-comments/[id]/service.js";
-
+import { getResponseError, ResponseError, responseError } from "@/utils/responseError.js";
 export const postVideoCommentController = async (
   req: AuthenticatedRequest,
   res: Response
@@ -22,16 +22,7 @@ export const postVideoCommentController = async (
 
     return res.status(201).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Missing required fields") {
-      return res.status(400).json({
-        success: false,
-        message: (error as Error).message,
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -55,22 +46,7 @@ export const updateVideoCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Comment not found") {
-      return res.status(404).json({
-        success: false,
-        message: (error as Error).message,
-      });
-    }
-    if ((error as Error).message === "Invalid mediasToRemove format") {
-      return res.status(400).json({
-        success: false,
-        message: (error as Error).message,
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -86,16 +62,7 @@ export const deleteVideoCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Comment not found") {
-      return res.status(404).json({
-        success: false,
-        message: (error as Error).message,
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -108,17 +75,14 @@ export const likeVideoCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return responseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await videoCommentByIdService.likeVideoComment(id, userId);
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -131,16 +95,13 @@ export const unlikeVideoCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return responseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await videoCommentByIdService.unlikeVideoComment(id, userId);
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };

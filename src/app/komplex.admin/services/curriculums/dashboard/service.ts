@@ -6,7 +6,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 export const getDashboardData = async () => {
   const cached = await redis.get("curriculums:dashboard");
   if (cached) {
-    return { data: JSON.parse(cached) };
+    return JSON.parse(cached) ;
   }
   const numberOfGrades = await db
     .select({ count: sql<number>`count(*)` })
@@ -30,5 +30,5 @@ export const getDashboardData = async () => {
   await redis.set("curriculums:dashboard", JSON.stringify(data), {
     EX: 60 * 60 * 24,
   });
-  return { data: data };
+  return data ;
 };

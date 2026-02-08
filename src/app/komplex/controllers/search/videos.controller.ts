@@ -1,6 +1,7 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Request, Response } from "express";
 import { searchVideosService } from "../../services/search/videos/service.js";
+import { getResponseError, ResponseError, responseError } from "@/utils/responseError.js";
 
 export const videoSearchController = async (
   req: AuthenticatedRequest,
@@ -10,9 +11,7 @@ export const videoSearchController = async (
     const userId = req.user.userId;
     const { query, limit = "10", offset = "0" } = req.query;
     if (!query || query.trim() === "") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Query parameter is required" });
+      return responseError(res, new ResponseError("Query parameter is required", 400));
     }
     const result = await searchVideosService(
       query as string,
@@ -22,9 +21,6 @@ export const videoSearchController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };

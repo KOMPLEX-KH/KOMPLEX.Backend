@@ -3,6 +3,7 @@ import { users } from "@/db/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { getLastAccessedService } from "../../services/me/last-accessed/service.js";
+import { getResponseError, ResponseError, responseError } from "@/utils/responseError.js";
 
 export const getLastAccessed = async (
   req: AuthenticatedRequest,
@@ -11,11 +12,11 @@ export const getLastAccessed = async (
   try {
     const { userId } = req.user;
     if (!userId || userId === 0) {
-      return res.status(200).json({ data: [] });
+      return responseError(res, new ResponseError("User ID is required", 400));
     }
     const lastAccessed = await getLastAccessedService(userId);
-    return res.status(200).json(lastAccessed);
+    return res.status(200).json(lastAccessed.data);
   } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
+    return getResponseError(res, error as Error);
   }
 };

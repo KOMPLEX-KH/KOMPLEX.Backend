@@ -1,25 +1,24 @@
 import { db } from "../../../../db/index.js";
 import {
-  forumLikes,
   followers,
   users,
-  userSavedVideos,
-  videos,
-  videoLikes,
 } from "../../../../db/schema.js";
-import { forums } from "../../../../db/schema.js";
 import { count, eq } from "drizzle-orm";
 import { redis } from "../../../../db/redis/redisConfig.js";
 import { AuthenticatedRequest } from "../../../../types/request.js";
 import { Response } from "express";
+import { getResponseError } from "@/utils/responseError.js";
+import { ResponseError, responseError } from "@/utils/responseError.js";
 
 export const getCurrentUser = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
+
+  // ! tochange: no db query here
   const userId = req.user?.userId;
   if (!userId) {
-    return res.status(401).json({ message: "Missing user ID" });
+    return responseError(res, new ResponseError("Missing user ID", 401));
   }
   try {
     const cacheKey = `users:${userId}`;
@@ -32,15 +31,14 @@ export const getCurrentUser = async (
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    console.log("user", user);
+
     if (!user[0]) {
-      return res.status(401).json({ message: "User not found" });
+      return responseError(res, new ResponseError("User not found", 401));
     }
     await redis.set(cacheKey, JSON.stringify(user[0]), { EX: 60 * 60 * 24 });
     return res.status(200).json(user[0]);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -50,10 +48,7 @@ export const getMeProfile = async (
 ) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return res.status(401).json({
-      success: false,
-      message: "Missing user ID",
-    });
+    return responseError(res, new ResponseError("Missing user ID", 401));
   }
   try {
     const cacheKey = `user:${userId}:profile`;
@@ -100,10 +95,6 @@ export const getMeProfile = async (
       message: "User profile fetched successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to get user profile",
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error as Error);
   }
 };

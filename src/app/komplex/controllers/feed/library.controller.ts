@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { getAllBooks, getBooksById, getBooksByLesson, getBooksBySubject, getRecommendedBooks, filterBooks } from "../../services/feed/extra/library/service.js";
-
+import { ResponseError, getResponseError } from "@/utils/responseError.js";
 
 export const getAllBooksController = async(req: Request, res: Response )=>{
     try{
         const result = await getAllBooks();
-        res.status(200).json(result);
+        return res.status(200).json(result);
     }catch(err){
-        res.status(500).json({ message: "Failed to fetch books" });
+        return getResponseError(res, err as Error);
     }
 }
 
@@ -17,11 +17,11 @@ export const getBookByIdController = async(req: Request, res: Response )=>{
         const { id } = req.params;
         const result = await getBooksById(String(id));
         if(!result.data){
-             return res.status(404).json({ message: "Book not found" });
+             return getResponseError(res, new ResponseError("Book not found", 404));
         }
-        res.status(200).json(result);
+        return res.status(200).json(result);
     }catch(err){
-        res.status(500).json({ message: "Failed to fetch specific book" });
+        return getResponseError(res, err as Error);
     }
 }
 
@@ -31,9 +31,9 @@ export const getBooksByLessonController = async(req: Request, res: Response )=>{
         const { lessonId } = req.params;
         const result = await getBooksByLesson(String(lessonId));
 
-        res.status(200).json(result);
+        return res.status(200).json(result);
     } catch (err) {
-        res.status(500).json({ message: "Failed to fetch books by lesson" });
+        return getResponseError(res, err as Error);
     }
 }
 
@@ -42,9 +42,9 @@ export const getBooksBySubjectController = async(req: Request, res: Response )=>
         const { subjectId } = req.params;
         const result = await getBooksBySubject(String(subjectId));
 
-        res.status(200).json(result);
+        return res.status(200).json(result);
     } catch (err) {
-        res.status(500).json({ message: "Failed to fetch books by subject" });
+        return getResponseError(res, err as Error);
     }
 }
 
@@ -55,9 +55,9 @@ export const filterBooksController = async(req: Request, res: Response )=>{
             lessonId:lessonId || "",
             subjectId:subjectId || "",
         });
-        res.status(200).json(result);
+        return res.status(200).json(result);
     }catch(err){
-        res.status(500).json({ message: "Failed to filter books" });
+        return getResponseError(res, err as Error);
     }
 }
 

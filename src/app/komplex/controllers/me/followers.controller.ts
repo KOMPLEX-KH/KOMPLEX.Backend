@@ -2,6 +2,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import * as followServiceById from "@/app/komplex/services/me/follow/[id]/service.js";
 import * as followService from "@/app/komplex/services/me/follow/service.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getUserFollowersController = async (
   req: AuthenticatedRequest,
@@ -20,7 +21,7 @@ export const getUserFollowersController = async (
 
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -34,7 +35,7 @@ export const followUserController = async (
     await followServiceById.followUserService(Number(userId), Number(id));
     res.status(200).json({ message: "Successfully followed the user." });
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -46,9 +47,9 @@ export const unfollowUserController = async (
     const { userId } = req.user;
     const { id } = req.params;
     await followServiceById.unfollowUserService(Number(userId), Number(id));
-    res.status(200).json({ message: "Successfully unfollowed the user." });
+    return res.status(200).json({ message: "Successfully unfollowed the user." });
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    return getResponseError(res, error as Error);
   }
 };
 
@@ -69,6 +70,6 @@ export const getFollowingController = async (
 
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    return getResponseError(res, error as Error);
   }
 };
