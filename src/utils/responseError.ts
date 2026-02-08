@@ -23,7 +23,7 @@ export class ResponseError extends Error {
 	code: number;
   
 	constructor(message: string, code: number) {
-	  super(message);
+		super(message);
 	  this.code = code;
   
 	  // Fix prototype chain (important)
@@ -33,16 +33,15 @@ export class ResponseError extends Error {
 
 const isProd = process.env.NODE_ENV === "production";
 
-export const responseError = (res: Response, error: ResponseError) => {
-	return res.status(error.code).json({
-		success: false,
-		error: isProd ? getGenericErrorMessage(error.code.toString()) : error.message,
-	});
-};
-
-export const getResponseError = (res: Response, err: Error) => {
+export const getResponseError = (res: Response, err: unknown) => {
 	if (err instanceof ResponseError) {
-		return responseError(res, err);
+		return res.status(err.code).json({
+			success: false,
+			error: isProd ? getGenericErrorMessage(err.code.toString()) : err.message,
+		});
 	}
-	return responseError(res, new ResponseError(err.message, 500));
+	return res.status(500).json({
+		success: false,
+		error: isProd ? getGenericErrorMessage("500") : (err instanceof Error ? err.message : "Internal Server Error"),
+	});
 }

@@ -13,6 +13,6 @@ export const getVideoLikesController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

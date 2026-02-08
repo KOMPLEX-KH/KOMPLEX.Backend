@@ -131,6 +131,6 @@ export const getAllCurriculums = async () => {
 
     return { data: structuredData };
   } catch (error) {
-    throw new ResponseError((error as Error).message, 500);
+    throw new ResponseError(error as string, 500);
   }
 };

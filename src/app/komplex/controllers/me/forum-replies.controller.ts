@@ -18,7 +18,7 @@ export const postForumReplyController = async (
     );
     return res.status(201).json(result);
   } catch (error) {
-   return getResponseError(res, error as Error);
+   return getResponseError(res, error );
   }
 };
 
@@ -37,7 +37,7 @@ export const updateForumReplyController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -54,7 +54,7 @@ export const deleteForumReplyController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -73,7 +73,7 @@ export const likeForumReplyController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -92,6 +92,6 @@ export const unlikeForumReplyController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

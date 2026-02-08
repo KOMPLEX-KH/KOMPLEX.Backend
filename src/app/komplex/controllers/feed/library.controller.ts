@@ -7,7 +7,7 @@ export const getAllBooksController = async(req: Request, res: Response )=>{
         const result = await getAllBooks();
         return res.status(200).json(result);
     }catch(err){
-        return getResponseError(res, err as Error);
+        return getResponseError(res, err );
     }
 }
 
@@ -21,7 +21,7 @@ export const getBookByIdController = async(req: Request, res: Response )=>{
         }
         return res.status(200).json(result);
     }catch(err){
-        return getResponseError(res, err as Error);
+        return getResponseError(res, err );
     }
 }
 
@@ -33,7 +33,7 @@ export const getBooksByLessonController = async(req: Request, res: Response )=>{
 
         return res.status(200).json(result);
     } catch (err) {
-        return getResponseError(res, err as Error);
+        return getResponseError(res, err );
     }
 }
 
@@ -44,7 +44,7 @@ export const getBooksBySubjectController = async(req: Request, res: Response )=>
 
         return res.status(200).json(result);
     } catch (err) {
-        return getResponseError(res, err as Error);
+        return getResponseError(res, err );
     }
 }
 
@@ -57,7 +57,7 @@ export const filterBooksController = async(req: Request, res: Response )=>{
         });
         return res.status(200).json(result);
     }catch(err){
-        return getResponseError(res, err as Error);
+        return getResponseError(res, err );
     }
 }
 

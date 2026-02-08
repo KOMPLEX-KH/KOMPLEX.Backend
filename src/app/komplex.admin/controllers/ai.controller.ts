@@ -21,7 +21,7 @@ export const getGeneralAiResponsesController = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -36,7 +36,7 @@ export const getTopicAiResponsesController = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -51,7 +51,7 @@ export const getGeneralAiDashboardController = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -66,7 +66,7 @@ export const getTopicAiDashboardController = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -78,7 +78,7 @@ export const getAiDashboardController = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -98,7 +98,7 @@ export const getGeneralAiResponseByIdController = async (
     const result = await getGeneralAiResponseById(id);
     return res.status(200).json(result);
   } catch (error) {
-    const errorMessage = (error as Error).message;
+    const errorMessage = (error ).message;
     if (errorMessage.includes("not found")) {
       return res.status(404).json({
         success: false,
@@ -127,7 +127,7 @@ export const getTopicAiResponseByIdController = async (
     const result = await getTopicAiResponseById(id);
     return res.status(200).json(result);
   } catch (error) {
-    const errorMessage = (error as Error).message;
+    const errorMessage = (error ).message;
     if (errorMessage.includes("not found")) {
       return res.status(404).json({
         success: false,

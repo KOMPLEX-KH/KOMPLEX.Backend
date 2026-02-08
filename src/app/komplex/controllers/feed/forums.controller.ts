@@ -19,7 +19,7 @@ export const getAllForumsController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -33,6 +33,6 @@ export const getForumByIdController = async (
     const result = await forumByIdService.getForumById(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

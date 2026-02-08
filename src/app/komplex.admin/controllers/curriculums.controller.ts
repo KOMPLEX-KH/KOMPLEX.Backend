@@ -58,7 +58,7 @@ export const updateTopic = async (req: AuthenticatedRequest, res: Response) => {
     );
     res.json({ message: " topic updated successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  topic" + error });
@@ -77,7 +77,7 @@ export const updateGrade = async (req: AuthenticatedRequest, res: Response) => {
     );
     res.json({ message: " grade updated successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  grade" + error });
@@ -100,7 +100,7 @@ export const updateSubject = async (
     );
     res.json({ message: " subject updated successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  subject" + error });
@@ -123,7 +123,7 @@ export const updateLesson = async (
     );
     res.json({ message: "Lesson lesson updated successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update lesson lesson" + error });
@@ -136,7 +136,7 @@ export const deleteTopic = async (req: AuthenticatedRequest, res: Response) => {
     await topicByIdService.deleteTopic(parseInt(id));
     res.json({ message: " topic deleted successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  topic" + error });
@@ -149,7 +149,7 @@ export const deleteGrade = async (req: AuthenticatedRequest, res: Response) => {
     await gradeByIdService.deleteGrade(parseInt(id));
     res.json({ message: " grade deleted successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  grade" + error });
@@ -165,7 +165,7 @@ export const deleteSubject = async (
     await subjectByIdService.deleteSubject(parseInt(id));
     res.json({ message: " subject deleted successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  subject" + error });
@@ -180,7 +180,7 @@ export const deleteLesson = async (
     await lessonByIdService.deleteLesson(parseInt(id));
     res.json({ message: " lesson deleted successfully" });
   } catch (error) {
-    if ((error as Error).message.includes("Old order index not found")) {
+    if ((error ).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  lesson" + error });

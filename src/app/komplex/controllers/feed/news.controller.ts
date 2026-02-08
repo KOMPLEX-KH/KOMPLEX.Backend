@@ -19,7 +19,7 @@ export const getAllNewsController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -33,6 +33,6 @@ export const getNewsByIdController = async (
     const result = await newsByIdService.getNewsById(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

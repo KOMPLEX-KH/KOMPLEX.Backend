@@ -7,8 +7,7 @@ import { count, eq } from "drizzle-orm";
 import { redis } from "../../../../db/redis/redisConfig.js";
 import { AuthenticatedRequest } from "../../../../types/request.js";
 import { Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
-import { ResponseError, responseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
 
 export const getCurrentUser = async (
   req: AuthenticatedRequest,
@@ -18,7 +17,7 @@ export const getCurrentUser = async (
   // ! tochange: no db query here
   const userId = req.user?.userId;
   if (!userId) {
-    return responseError(res, new ResponseError("Missing user ID", 401));
+    return getResponseError(res, new ResponseError("Missing user ID", 400));
   }
   try {
     const cacheKey = `users:${userId}`;
@@ -33,12 +32,12 @@ export const getCurrentUser = async (
       .limit(1);
 
     if (!user[0]) {
-      return responseError(res, new ResponseError("User not found", 401));
+      return getResponseError(res, new ResponseError("User not found", 404));
     }
     await redis.set(cacheKey, JSON.stringify(user[0]), { EX: 60 * 60 * 24 });
     return res.status(200).json(user[0]);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -48,7 +47,7 @@ export const getMeProfile = async (
 ) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return responseError(res, new ResponseError("Missing user ID", 401));
+      return getResponseError(res, new ResponseError("Missing user ID", 400));
   }
   try {
     const cacheKey = `user:${userId}:profile`;
@@ -95,6 +94,6 @@ export const getMeProfile = async (
       message: "User profile fetched successfully",
     });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

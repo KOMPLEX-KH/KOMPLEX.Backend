@@ -21,7 +21,7 @@ export const getUserFollowersController = async (
 
     res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -35,7 +35,7 @@ export const followUserController = async (
     await followServiceById.followUserService(Number(userId), Number(id));
     res.status(200).json({ message: "Successfully followed the user." });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -49,7 +49,7 @@ export const unfollowUserController = async (
     await followServiceById.unfollowUserService(Number(userId), Number(id));
     return res.status(200).json({ message: "Successfully unfollowed the user." });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -70,6 +70,6 @@ export const getFollowingController = async (
 
     res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

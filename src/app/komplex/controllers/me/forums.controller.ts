@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumService from "@/app/komplex/services/me/forums/service.js";
 import * as forumByIdService from "@/app/komplex/services/me/forums/[id]/service.js";
-import { getResponseError, ResponseError, responseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getAllMyForumsController = async (
   req: AuthenticatedRequest,
@@ -13,7 +13,7 @@ export const getAllMyForumsController = async (
     const result = await forumService.getAllMyForums(req.query, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -30,7 +30,7 @@ export const postForumController = async (
     );
     return res.status(201).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -44,7 +44,7 @@ export const likeForumController = async (
     const result = await forumByIdService.likeForum(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -58,7 +58,7 @@ export const unlikeForumController = async (
     const result = await forumByIdService.unlikeForum(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -77,7 +77,7 @@ export const updateForumController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -91,6 +91,6 @@ export const deleteForumController = async (
     const result = await forumByIdService.deleteForum(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

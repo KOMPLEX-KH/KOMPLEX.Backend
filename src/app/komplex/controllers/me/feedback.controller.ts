@@ -12,6 +12,6 @@ export const createFeedbackController = async (
     const result = await createFeedback(content, type, Number(userId));
     return res.status(201).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

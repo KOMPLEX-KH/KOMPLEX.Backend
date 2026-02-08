@@ -17,7 +17,7 @@ export const getAllForums = async (req: AuthenticatedRequest, res: Response) => 
     console.error("Get all forums error:", error);
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -30,14 +30,14 @@ export const getForumById = async (req: Request, res: Response) => {
 
     return res.json(forum).status(200);
   } catch (error) {
-    if ((error as Error).message === "Forum not found") {
+    if ((error ).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -65,14 +65,14 @@ export const updateForum = async (req: AuthenticatedRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Forum not found") {
+    if ((error ).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -87,14 +87,14 @@ export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Forum not found") {
+    if ((error ).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };

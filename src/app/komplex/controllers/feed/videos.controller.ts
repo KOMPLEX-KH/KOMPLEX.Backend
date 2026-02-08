@@ -19,7 +19,7 @@ export const getAllVideosController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -33,7 +33,7 @@ export const getVideoByIdController = async (
     const result = await videoByIdService.getVideoById(videoId, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -53,6 +53,6 @@ export const getRecommendedVideosController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

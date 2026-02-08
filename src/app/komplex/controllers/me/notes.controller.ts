@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as noteService from "@/app/komplex/services/me/notes/service.js";
 import * as noteByIdService from "@/app/komplex/services/me/notes/[id]/service.js";
-import { getResponseError, responseError } from "@/utils/responseError.js";
+import { getResponseError ,ResponseError} from "@/utils/responseError.js";
 
 
 export const getAllMyNotesController = async (
@@ -16,7 +16,7 @@ export const getAllMyNotesController = async (
     const userNotes = notes.filter(note => note.userId === userId);
     res.status(200).json(userNotes);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -33,7 +33,7 @@ export const createMyNotesController = async (
 
     return res.status(201).json(newNote);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -49,12 +49,12 @@ export const updateMyNoteController = async (
 
     const success = await noteByIdService.updateNotes(noteId, body, userId);
     if (!success) {
-      return res.status(404).json({ message: "Note not found or not authorized" });
+      return getResponseError(res, new ResponseError("Note not found or not authorized", 404));
     } else {
       return res.status(200).json({ message: "Note updated successfully" });
     }
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -68,14 +68,14 @@ export const getMyNoteByIdController = async (
 
     const note = await noteService.getNotesById(noteId, userId);
     if (note) {
-      res.status(200).json(note);
+      return res.status(200).json(note);
     } else {
-      res.status(404).json({ message: "Note not found or not authorized" });
+      return getResponseError(res, new ResponseError("Note not found or not authorized", 404));
     }
 
   } catch (error) {
-    console.error("Error fetching note:", error);
-    res.status(500).json({ message: "Failed to fetch note" });
+    
+    getResponseError(res, error );
   }
 };
 
@@ -89,12 +89,11 @@ export const DeleteMyNoteController = async (
 
     const success = await noteByIdService.deleteNotes(noteId, userId);
     if (success) {
-      res.status(200).json({ message: "Note deleted successfully" });
+      return res.status(200).json({ message: "Note deleted successfully" });
     } else {
-      res.status(404).json({ message: "Note not found or not authorized" });
+      return getResponseError(res, new ResponseError("Note not found or not authorized", 404));
     }
   } catch (error) {
-    console.error("Error deleting note:", error);
-    res.status(500).json({ message: "Failed to delete note" });
+    return getResponseError(res, error );
   }
 };

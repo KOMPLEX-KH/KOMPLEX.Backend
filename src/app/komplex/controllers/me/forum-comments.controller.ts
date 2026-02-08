@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumCommentService from "@/app/komplex/services/me/forum-comments/service.js";
 import * as forumCommentByIdService from "@/app/komplex/services/me/forum-comments/[id]/service.js";
-import { getResponseError, ResponseError, responseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError} from "@/utils/responseError.js";
 export const updateForumCommentController = async (
   req: AuthenticatedRequest,
   res: Response
@@ -18,7 +18,7 @@ export const updateForumCommentController = async (
     );
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -35,7 +35,7 @@ export const deleteForumCommentController = async (
     );
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -54,7 +54,7 @@ export const postForumCommentController = async (
     );
     return res.status(201).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -67,7 +67,7 @@ export const likeForumCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return responseError(res, new ResponseError("Unauthorized", 401));
+      return getResponseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await forumCommentByIdService.likeForumComment(
@@ -77,7 +77,7 @@ export const likeForumCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -90,7 +90,7 @@ export const unlikeForumCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return responseError(res, new ResponseError("Unauthorized", 401));
+      return getResponseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await forumCommentByIdService.unlikeForumComment(
@@ -100,6 +100,6 @@ export const unlikeForumCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };

@@ -13,7 +13,7 @@ export const getExercisesController = async (
     const result = await exerciseService.getExercises(grade as string, userId);
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error);
   }
 };
 
@@ -26,6 +26,6 @@ export const getExerciseController = async (
     const result = await exerciseService.getExercise(id);
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error);
   }
 };

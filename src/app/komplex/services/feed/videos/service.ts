@@ -8,9 +8,7 @@ import {
   videoLikes,
   followers,
 } from "@/db/schema.js";
-import { Request, Response } from "express";
-import { AuthenticatedRequest } from "@/types/request.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const getAllVideos = async (
   type?: string,
   topic?: string,
@@ -26,8 +24,6 @@ export const getAllVideos = async (
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
 
-    // 1️⃣ Fetch filtered video IDs from DB
-    // Get videos from followed users
     const followedUsersVideosId = await db
       .select({ id: videos.id, userId: videos.userId })
       .from(videos)
@@ -52,7 +48,6 @@ export const getAllVideos = async (
       )
       .limit(5);
 
-    // 1️⃣ Fetch filtered video IDs from DB
     const videoIds = await db
       .select({ id: videos.id, userId: videos.userId })
       .from(videos)
@@ -86,7 +81,6 @@ export const getAllVideos = async (
       return { data: [], hasMore: false };
     }
 
-    // 2️⃣ Fetch videos from Redis in one call
     const cachedResults = (await redis.mGet(
       videoIdRows.map((v) => `videos:${v.id}`)
     )) as (string | null)[];
@@ -100,7 +94,6 @@ export const getAllVideos = async (
       });
     }
 
-    // 3️⃣ Fetch missing videos from DB
     let missedVideos: any[] = [];
     if (missedIds.length > 0) {
       const videoRows = await db
@@ -186,13 +179,11 @@ export const getAllVideos = async (
       }
     }
 
-    // 4️⃣ Merge hits and missed videos, preserving original order
     const allVideosMap = new Map<number, any>();
     for (const video of [...hits, ...missedVideos])
       allVideosMap.set(video.id, video);
     const allVideos = videoIdRows.map((v) => allVideosMap.get(v.id));
 
-    // 5️⃣ Fetch dynamic fields fresh
     const dynamicData = await db
       .select({
         id: videos.id,
@@ -229,7 +220,7 @@ export const getAllVideos = async (
       const dynamic = dynamicData.find((d) => d.id === v.id);
       return {
         ...v,
-        viewCount: Number(dynamic?.viewCount ?? 0), // Remove the +1 since view count is already incremented in getVideoById
+        viewCount: Number(dynamic?.viewCount ?? 0),
         likeCount: Number(dynamic?.likeCount) || 0,
         saveCount: Number(dynamic?.saveCount) || 0,
         isLiked: !!dynamic?.isLiked,
@@ -258,6 +249,6 @@ export const getAllVideos = async (
       hasMore: allVideos.length === limit,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

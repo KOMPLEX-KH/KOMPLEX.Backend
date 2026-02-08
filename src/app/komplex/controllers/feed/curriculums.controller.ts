@@ -9,7 +9,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
     const result = await curriculumsService.getAllCurriculums();
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error);
   }
 };
 
@@ -20,6 +20,6 @@ export const getTopic = async (req: AuthenticatedRequest, res: Response) => {
     const result = await topicService.getTopic(id, userId);
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error);
   }
 };

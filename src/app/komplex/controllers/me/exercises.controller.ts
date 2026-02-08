@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as exerciseService from "@/app/komplex/services/me/exercises/service.js";
 import * as exerciseByIdService from "@/app/komplex/services/me/exercises/[id]/service.js";
-import { getResponseError, responseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
 // export const getExercisesController = async (
 //   req: AuthenticatedRequest,
 //   res: Response
@@ -29,7 +29,7 @@ export const getExerciseHistoryController = async (
     const result = await exerciseService.getExerciseHistory(Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -42,7 +42,7 @@ export const getExerciseDashboardController = async (
     const result = await exerciseService.getExerciseDashboard(Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -59,7 +59,7 @@ export const getExerciseByIdController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
 
@@ -80,6 +80,6 @@ export const submitExerciseController = async (
     );
     return res.status(200).json(result.data);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return getResponseError(res, error );
   }
 };
