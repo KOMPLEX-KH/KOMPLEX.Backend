@@ -24,21 +24,21 @@ export const getAllRepliesForAComment = async (req: Request, res: Response) => {
     const { forumCommentId } = req.params;
 
     const replies = await forumReplyService.getAllRepliesForAComment(
-      Number(forumCommentId)
+      Number(forumCommentId),
     );
 
     return res.json(replies).status(200);
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const postForumReply = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user ?? {};
@@ -51,7 +51,7 @@ export const postForumReply = async (
       Number(forumCommentId),
       description,
       public_url || undefined,
-      mediaType || undefined
+      mediaType || undefined,
     );
 
     return res.status(201).json({
@@ -60,14 +60,14 @@ export const postForumReply = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const likeForumCommentReply = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.body;
@@ -79,21 +79,21 @@ export const likeForumCommentReply = async (
 
     const result = await forumReplyByIdService.likeForumReply(
       Number(userId),
-      Number(id)
+      Number(id),
     );
 
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const unlikeForumCommentReply = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.body;
@@ -105,21 +105,21 @@ export const unlikeForumCommentReply = async (
 
     const result = await forumReplyByIdService.unlikeForumReply(
       Number(userId),
-      Number(id)
+      Number(id),
     );
 
     return res.json(result).status(200);
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const updateForumReply = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user;
@@ -131,7 +131,7 @@ export const updateForumReply = async (
       Number(userId),
       description,
       req.files as Express.Multer.File[] | undefined,
-      photosToRemove
+      photosToRemove,
     );
 
     return res.status(200).json({
@@ -140,26 +140,26 @@ export const updateForumReply = async (
       deleteMedia: result.deleteMedia,
     });
   } catch (error) {
-    if ((error ).message === "Reply not found") {
+    if ((error as Error).message === "Reply not found") {
       return res
         .status(404)
         .json({ success: false, message: "Reply not found" });
     }
-    if ((error ).message === "Invalid photosToRemove format") {
+    if ((error as Error).message === "Invalid photosToRemove format") {
       return res
         .status(400)
         .json({ success: false, message: "Invalid photosToRemove format" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const deleteForumReply = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user;
@@ -168,7 +168,7 @@ export const deleteForumReply = async (
     const result = await forumReplyByIdService.deleteForumReply(
       Number(id),
       Number(userId),
-      deleteReply
+      deleteReply,
     );
 
     return res.status(200).json({
@@ -177,14 +177,14 @@ export const deleteForumReply = async (
       ...result,
     });
   } catch (error) {
-    if ((error ).message === "Reply not found") {
+    if ((error as Error).message === "Reply not found") {
       return res
         .status(404)
         .json({ success: false, message: "Reply not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
@@ -193,7 +193,7 @@ export const deleteForumReply = async (
 export const deleteReply = async (
   userId: number,
   replyId: number | null,
-  commentId: number | null
+  commentId: number | null,
 ) => {
   if (replyId === null && commentId === null) {
     throw new Error("Either replyId or commentId must be provided");
@@ -240,7 +240,7 @@ export const deleteReply = async (
       .where(
         replyIds.length > 0
           ? inArray(forumReplyMedias.forumReplyId, replyIds)
-          : eq(forumReplyMedias.forumReplyId, -1)
+          : eq(forumReplyMedias.forumReplyId, -1),
       );
 
     for (const media of mediasToDelete) {
@@ -254,7 +254,7 @@ export const deleteReply = async (
       .where(
         replyIds.length > 0
           ? inArray(forumReplyMedias.forumReplyId, replyIds)
-          : eq(forumReplyMedias.forumReplyId, -1)
+          : eq(forumReplyMedias.forumReplyId, -1),
       )
       .returning();
 
@@ -263,7 +263,7 @@ export const deleteReply = async (
       .where(
         replyIds.length > 0
           ? inArray(forumReplies.id, replyIds)
-          : eq(forumReplies.id, -1)
+          : eq(forumReplies.id, -1),
       )
       .returning();
 

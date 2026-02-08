@@ -20,11 +20,11 @@ export const getExercise = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const exerciseWithQuestions = await exerciseByIdService.getExercise(
-      parseInt(id)
+      parseInt(id),
     );
     return res.status(200).json(exerciseWithQuestions);
   } catch (error: any) {
-    if ((error ).message === "Exercise not found") {
+    if ((error as Error).message === "Exercise not found") {
       return res.status(404).json({ message: "Exercise not found" });
     }
     console.error("Get exercise error:", error);
@@ -48,7 +48,7 @@ export const createExercise = async (req: Request, res: Response) => {
       description,
       subject,
       grade,
-      exerciseQuestions
+      exerciseQuestions,
     );
 
     res.status(201).json(result);
@@ -89,7 +89,7 @@ export const updateExercise = async (req: Request, res: Response) => {
       description,
       subject,
       grade,
-      exerciseQuestions
+      exerciseQuestions,
     );
 
     res.status(200).json(result);

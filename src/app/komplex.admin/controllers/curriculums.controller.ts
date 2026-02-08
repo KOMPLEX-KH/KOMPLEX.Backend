@@ -13,24 +13,22 @@ import * as dashboardService from "@/app/komplex.admin/services/curriculums/dash
 
 export const getDashboardData = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const data = await dashboardService.getDashboardData();
     res.status(200).json({ data, isSuccess: true });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Failed to get dashboard data" + error,
-        isSuccess: false,
-      });
+    res.status(500).json({
+      error: "Failed to get dashboard data" + error,
+      isSuccess: false,
+    });
   }
 };
 
 export const updateTopicComponent = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -38,7 +36,7 @@ export const updateTopicComponent = async (
     await topicComponentService.updateTopicComponent(
       parseInt(id),
       component,
-      componentCode
+      componentCode,
     );
     res.json({ message: "Lesson updated successfully" });
   } catch (error) {
@@ -54,11 +52,11 @@ export const updateTopic = async (req: AuthenticatedRequest, res: Response) => {
       parseInt(id),
       newName,
       orderIndex,
-      insertType
+      insertType,
     );
     res.json({ message: " topic updated successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  topic" + error });
@@ -73,11 +71,11 @@ export const updateGrade = async (req: AuthenticatedRequest, res: Response) => {
       parseInt(id),
       newName,
       orderIndex,
-      insertType
+      insertType,
     );
     res.json({ message: " grade updated successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  grade" + error });
@@ -86,7 +84,7 @@ export const updateGrade = async (req: AuthenticatedRequest, res: Response) => {
 
 export const updateSubject = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -96,11 +94,11 @@ export const updateSubject = async (
       newName,
       orderIndex,
       insertType,
-      icon
+      icon,
     );
     res.json({ message: " subject updated successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update  subject" + error });
@@ -109,7 +107,7 @@ export const updateSubject = async (
 
 export const updateLesson = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -119,11 +117,11 @@ export const updateLesson = async (
       newName,
       orderIndex,
       insertType,
-      icon
+      icon,
     );
     res.json({ message: "Lesson lesson updated successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to update lesson lesson" + error });
@@ -136,7 +134,7 @@ export const deleteTopic = async (req: AuthenticatedRequest, res: Response) => {
     await topicByIdService.deleteTopic(parseInt(id));
     res.json({ message: " topic deleted successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  topic" + error });
@@ -149,7 +147,7 @@ export const deleteGrade = async (req: AuthenticatedRequest, res: Response) => {
     await gradeByIdService.deleteGrade(parseInt(id));
     res.json({ message: " grade deleted successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  grade" + error });
@@ -158,14 +156,14 @@ export const deleteGrade = async (req: AuthenticatedRequest, res: Response) => {
 
 export const deleteSubject = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
     await subjectByIdService.deleteSubject(parseInt(id));
     res.json({ message: " subject deleted successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  subject" + error });
@@ -173,14 +171,14 @@ export const deleteSubject = async (
 };
 export const deleteLesson = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
     await lessonByIdService.deleteLesson(parseInt(id));
     res.json({ message: " lesson deleted successfully" });
   } catch (error) {
-    if ((error ).message.includes("Old order index not found")) {
+    if ((error as Error).message.includes("Old order index not found")) {
       return res.status(400).json({ error: "Old order index not found" });
     }
     res.status(500).json({ error: "Failed to delete  lesson" + error });
@@ -195,7 +193,7 @@ export const createTopic = async (req: AuthenticatedRequest, res: Response) => {
       lessonId,
       orderIndex,
       insertType,
-      exerciseId
+      exerciseId,
     );
     res.json({ message: " topic created successfully" });
   } catch (error) {
@@ -213,7 +211,7 @@ export const createGrade = async (req: AuthenticatedRequest, res: Response) => {
 };
 export const createSubject = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { title, icon, gradeId, orderIndex, insertType } = req.body;
@@ -222,7 +220,7 @@ export const createSubject = async (
       icon,
       gradeId,
       orderIndex,
-      insertType
+      insertType,
     );
     res.json({ message: " subject created successfully" });
   } catch (error) {
@@ -232,7 +230,7 @@ export const createSubject = async (
 
 export const createLesson = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { title, icon, subjectId, orderIndex, insertType } = req.body;
@@ -241,7 +239,7 @@ export const createLesson = async (
       icon,
       subjectId,
       orderIndex,
-      insertType
+      insertType,
     );
     res.json({ message: " lesson created successfully" });
   } catch (error) {

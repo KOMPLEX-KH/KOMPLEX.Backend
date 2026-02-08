@@ -23,7 +23,7 @@ import * as forumCommentByIdService from "../services/forum-comments/[id]/servic
 
 export const getAllCommentsForAForum = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -31,21 +31,21 @@ export const getAllCommentsForAForum = async (
 
     const commentsWithMedia = await forumCommentService.getAllCommentsForAForum(
       Number(id),
-      Number(userId)
+      Number(userId),
     );
 
     return res.status(200).json(commentsWithMedia);
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const postForumComment = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user;
@@ -62,7 +62,7 @@ export const postForumComment = async (
       Number(userId),
       Number(id),
       description,
-      req.files as Express.Multer.File[] | undefined
+      req.files as Express.Multer.File[] | undefined,
     );
 
     return res.status(201).json({
@@ -73,14 +73,14 @@ export const postForumComment = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const likeForumComment = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -92,21 +92,21 @@ export const likeForumComment = async (
 
     const like = await forumCommentByIdService.likeForumComment(
       Number(userId),
-      Number(id)
+      Number(id),
     );
 
     return res.status(200).json({ like });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const unlikeForumComment = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -118,21 +118,21 @@ export const unlikeForumComment = async (
 
     const unlike = await forumCommentByIdService.unlikeForumComment(
       Number(userId),
-      Number(id)
+      Number(id),
     );
 
     return res.status(200).json({ unlike });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const updateForumComment = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user;
@@ -144,7 +144,7 @@ export const updateForumComment = async (
       Number(userId),
       description,
       req.files as Express.Multer.File[] | undefined,
-      photosToRemove
+      photosToRemove,
     );
 
     return res.status(200).json({
@@ -153,26 +153,26 @@ export const updateForumComment = async (
       deleteMedia: result.deleteMedia,
     });
   } catch (error) {
-    if ((error ).message === "Comment not found") {
+    if ((error as Error).message === "Comment not found") {
       return res
         .status(404)
         .json({ success: false, message: "Comment not found" });
     }
-    if ((error ).message === "Invalid photosToRemove format") {
+    if ((error as Error).message === "Invalid photosToRemove format") {
       return res
         .status(400)
         .json({ success: false, message: "Invalid photosToRemove format" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
 
 export const deleteForumComment = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { userId } = req.user;
@@ -181,7 +181,7 @@ export const deleteForumComment = async (
     const result = await forumCommentByIdService.deleteForumComment(
       Number(id),
       Number(userId),
-      deleteReply
+      deleteReply,
     );
 
     return res.status(200).json({
@@ -191,14 +191,14 @@ export const deleteForumComment = async (
       commentResults: result.commentResults,
     });
   } catch (error) {
-    if ((error ).message === "Comment not found") {
+    if ((error as Error).message === "Comment not found") {
       return res
         .status(404)
         .json({ success: false, message: "Comment not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
@@ -207,7 +207,7 @@ export const deleteForumComment = async (
 export const deleteComment = async (
   userId: number,
   commentId: number | null,
-  forumId: number | null
+  forumId: number | null,
 ) => {
   if (commentId === null && forumId === null) {
     throw new Error("Either commentId or forumId must be provided");
@@ -241,7 +241,7 @@ export const deleteComment = async (
     const deletedComment = await db
       .delete(forumComments)
       .where(
-        and(eq(forumComments.id, commentId), eq(forumComments.userId, userId))
+        and(eq(forumComments.id, commentId), eq(forumComments.userId, userId)),
       )
       .returning();
 
@@ -261,7 +261,7 @@ export const deleteComment = async (
       .where(
         commentIds.length > 0
           ? inArray(forumCommentMedias.forumCommentId, commentIds)
-          : eq(forumCommentMedias.forumCommentId, -1)
+          : eq(forumCommentMedias.forumCommentId, -1),
       );
 
     for (const media of mediasToDelete) {
@@ -275,7 +275,7 @@ export const deleteComment = async (
       .where(
         commentIds.length > 0
           ? inArray(forumCommentMedias.forumCommentId, commentIds)
-          : eq(forumCommentMedias.forumCommentId, -1)
+          : eq(forumCommentMedias.forumCommentId, -1),
       )
       .returning();
 
@@ -284,7 +284,7 @@ export const deleteComment = async (
       .where(
         commentIds.length > 0
           ? inArray(forumCommentLikes.forumCommentId, commentIds)
-          : eq(forumCommentLikes.forumCommentId, -1)
+          : eq(forumCommentLikes.forumCommentId, -1),
       )
       .returning();
 
@@ -293,7 +293,7 @@ export const deleteComment = async (
       .where(
         commentIds.length > 0
           ? inArray(forumComments.id, commentIds)
-          : eq(forumComments.id, -1)
+          : eq(forumComments.id, -1),
       )
       .returning();
 

@@ -3,13 +3,16 @@ import { AuthenticatedRequest } from "../../../types/request.js";
 import * as forumsService from "../services/forums/service.js";
 import * as forumByIdService from "../services/forums/[id]/service.js";
 
-export const getAllForums = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllForums = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const { type, topic } = req.query;
 
     const forumsWithDetails = await forumsService.getAllForums(
       type as string,
-      topic as string
+      topic as string,
     );
 
     return res.status(200).json(forumsWithDetails);
@@ -17,7 +20,7 @@ export const getAllForums = async (req: AuthenticatedRequest, res: Response) => 
     console.error("Get all forums error:", error);
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
@@ -30,14 +33,14 @@ export const getForumById = async (req: Request, res: Response) => {
 
     return res.json(forum).status(200);
   } catch (error) {
-    if ((error ).message === "Forum not found") {
+    if ((error as Error).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
@@ -60,19 +63,19 @@ export const updateForum = async (req: AuthenticatedRequest, res: Response) => {
       type,
       topic,
       public_url || undefined,
-      mediaType || undefined
+      mediaType || undefined,
     );
 
     return res.status(200).json(result);
   } catch (error) {
-    if ((error ).message === "Forum not found") {
+    if ((error as Error).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
@@ -83,18 +86,21 @@ export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const result = await forumByIdService.deleteForum(Number(id), Number(userId));
+    const result = await forumByIdService.deleteForum(
+      Number(id),
+      Number(userId),
+    );
 
     return res.status(200).json(result);
   } catch (error) {
-    if ((error ).message === "Forum not found") {
+    if ((error as Error).message === "Forum not found") {
       return res
         .status(404)
         .json({ success: false, message: "Forum not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error ).message,
+      error: (error as Error).message,
     });
   }
 };
