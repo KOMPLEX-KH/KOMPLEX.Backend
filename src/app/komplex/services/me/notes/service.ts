@@ -1,11 +1,11 @@
 import { eq, sql, and } from "drizzle-orm";
 import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { profile } from "console";
-import { notes, users } from "@/db/schema.js";
+import { notes } from "@/db/schema.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 
 export const getAllNotes = async ()=>{
+    // ! no filter by user ?
     return await db.select().from(notes);
 }
 
@@ -15,10 +15,9 @@ export const getNotesById = async(
 )=>{
     try{
         const note = await db.select().from(notes).where(and(eq(notes.id , Number(id)), eq(notes.userId , userId))).limit(1);
-
         return note.length > 0 ? note[0] : null;
     }catch(err){
-        throw err;
+        throw new ResponseError(err as string, 500);
     }
 }
 
@@ -50,7 +49,7 @@ export const createNotes = async(
 
         return newNote;
    }catch(err){
-        throw err;
+        throw new ResponseError(err as string, 500);
    }
 
 }

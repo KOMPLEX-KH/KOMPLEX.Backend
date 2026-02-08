@@ -5,6 +5,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { followers, forumLikes, users } from "@/db/schema.js";
 import { meilisearch } from "@/config/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const searchForumsService = async (
   query: string,
@@ -186,8 +187,8 @@ export const searchForumsService = async (
       hasMore: allForums.length === limit,
       isMatch: searchResults.hits.length > 0,
     };
-  } catch (error) {
-    console.error("Error searching forums:", error);
-    throw error;
+  } catch (err: any) {
+    if (err instanceof ResponseError) throw err;
+    throw new ResponseError(err?.message || "An error occurred", 500);
   }
 };

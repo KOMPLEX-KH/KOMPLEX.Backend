@@ -2,6 +2,7 @@ import { db } from "@/db/index.js";
 import { topics, users, videos } from "@/db/schema.js";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { eq } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getLastAccessedService = async (userId: number) => {
   try {
@@ -48,6 +49,6 @@ export const getLastAccessedService = async (userId: number) => {
       },
     };
   } catch (error) {
-    throw new Error("Failed to get last accessed");
+    throw new ResponseError(error as string, 500);
   }
 };

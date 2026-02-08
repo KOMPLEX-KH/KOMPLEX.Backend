@@ -6,6 +6,7 @@ import { eq, desc, and, asc } from "drizzle-orm";
 import axios from "axios";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { userAITopicHistory, users } from "@/db/schema.js";
+import { ResponseError } from "@/utils/responseError.js";
 // import { summarize } from "../../service.js";
 
 export const callAiGeneralService = async (
@@ -109,7 +110,7 @@ export const callAiGeneralService = async (
     
     return { prompt, aiResult, responseType, id: lastResponse?.[0]?.id };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -170,7 +171,7 @@ export const getAiHistoryByTabService = async (
       data: cleanedHistory,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -186,7 +187,7 @@ export const deleteAiGeneralTab = async (userId: number, tabId: number) => {
     await redis.flushAll(); // TO CHANGE
     return { data: response };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -204,6 +205,6 @@ export const editAiGeneralTab = async (
     await redis.flushAll(); // TO CHANGE
     return { data: response };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

@@ -2,6 +2,7 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { forums, forumMedias, users, followers } from "@/db/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getUserForums = async (userId: number, page?: string, type?: string, topic?: string) => {
 	try {
@@ -72,7 +73,7 @@ export const getUserForums = async (userId: number, page?: string, type?: string
 		await redis.set(cacheKey, JSON.stringify(forumsWithMedia), { EX: 300 });
 
 		return { data: forumsWithMedia, hasMore: forumsWithMedia.length === limit };
-	} catch (error) {
-		throw new Error("Failed to get user forums");
+	} catch (err) {
+		throw new ResponseError(err as string, 500);
 	}
 };

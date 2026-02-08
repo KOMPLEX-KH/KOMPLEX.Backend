@@ -13,9 +13,7 @@ import {
 import { redis } from "@/db/redis/redisConfig.js";
 import { and, eq, inArray } from "drizzle-orm";
 import { deleteReply } from "../../forum-replies/[id]/service.js";
-import { Request, Response } from "express";
-import { AuthenticatedRequest } from "@/types/request.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const updateForumComment = async (
   id: string,
   body: any,
@@ -36,7 +34,7 @@ export const updateForumComment = async (
     .limit(1);
 
   if (doesUserOwnThisComment.length === 0) {
-    throw new Error("Comment not found");
+    throw new ResponseError("Comment not found", 404);
   }
 
   let photosToRemoveParse: { url: string }[] = [];
@@ -44,7 +42,7 @@ export const updateForumComment = async (
     try {
       photosToRemoveParse = JSON.parse(photosToRemove);
     } catch (err) {
-      throw new Error("Invalid photosToRemove format");
+      throw new ResponseError("Invalid photosToRemove format", 400);
     }
   }
 
@@ -71,7 +69,7 @@ export const updateForumComment = async (
           .returning();
         newCommentMedia.push(media);
       } catch (error) {
-        console.error("Error uploading file or saving media:", error);
+        throw new ResponseError(error as string, 500);
       }
     }
   }
@@ -157,7 +155,7 @@ export const deleteForumComment = async (id: string, userId: number) => {
     .limit(1);
 
   if (doesUserOwnThisComment.length === 0) {
-    throw new Error("Comment not found");
+    throw new ResponseError("Comment not found", 404);
   }
 
   const doesThisCommentHasReply = await db
@@ -186,7 +184,7 @@ export const deleteComment = async (
   forumId: number | null
 ) => {
   if (commentId === null && forumId === null) {
-    throw new Error("Either commentId or forumId must be provided");
+    throw new ResponseError("Either commentId or forumId must be provided", 400);
   }
 
   // Delete by commentId
@@ -345,7 +343,7 @@ export const likeForumComment = async (id: string, userId: number) => {
       },
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -369,6 +367,6 @@ export const unlikeForumComment = async (id: string, userId: number) => {
       },
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

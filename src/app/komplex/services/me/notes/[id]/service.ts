@@ -1,9 +1,7 @@
-import { eq, sql, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { profile } from "console";
-import { notes, users } from "@/db/schema.js";
-
+import { notes } from "@/db/schema.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const updateNotes = async(
     id: string,
@@ -35,9 +33,8 @@ export const updateNotes = async(
 
         return updateCount > 0;
     }catch(err){
-        console.error("Failed to update note:", err);
-        throw err;
-    }
+        throw new ResponseError(err as string, 500);
+        }
 }
 
 export const deleteNotes = async(
@@ -53,7 +50,6 @@ export const deleteNotes = async(
 
         return deleteCount > 0;
     }catch(err){
-        console.error("Failed to delete note:", err);
-        throw err;
+        throw new ResponseError(err as string, 500);
     }   
 }

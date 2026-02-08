@@ -5,6 +5,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedNews } from "@/db/schema.js";
 import { meilisearch } from "@/config/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const searchNews = async (
   query: string,
@@ -176,8 +177,7 @@ export const searchNews = async (
       hasMore: allNews.length === limit,
       isMatch: searchResults.hits.length > 0,
     };
-  } catch (error) {
-    console.error("Error searching news:", error);
-    throw error;
+  } catch (err: any) {
+    throw new ResponseError(err as string, 500);
   }
 };

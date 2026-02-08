@@ -4,6 +4,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedVideos, videoLikes } from "@/db/schema.js";
 import { meilisearch } from "@/config/meilisearchConfig.js";
 import { and, ConsoleLogWriter, desc, eq, inArray, sql } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const searchVideosService = async (query: string, limit: number, offset: number, userId: number) => {
 	try {
@@ -133,8 +134,7 @@ export const searchVideosService = async (query: string, limit: number, offset: 
 		});
 
 		return { data: videosWithMedia, hasMore: allVideos.length === limit, isMatch: searchResults.hits.length > 0 };
-	} catch (error) {
-		console.error("Error searching videos:", error);
-		throw error;
+	} catch (err) {
+		throw new ResponseError(err as string,  500);
 	}
 };
