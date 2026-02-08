@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { userVideoHistory, videos } from "@/db/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const getUserVideoHistory = async (
   req: AuthenticatedRequest,
   res: Response
@@ -29,9 +29,6 @@ export const getUserVideoHistory = async (
       }))
     );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    throw new ResponseError(error as string, 500);
   }
 };

@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as videoService from "@/app/komplex/services/me/videos/service.js";
 import * as videoByIdService from "@/app/komplex/services/me/videos/[id]/service.js";
-
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
 export const getAllMyVideosController = async (
   req: AuthenticatedRequest,
   res: Response
@@ -12,9 +12,7 @@ export const getAllMyVideosController = async (
     const result = await videoService.getAllMyVideos(req.query, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return res
-      .status(500)
-      .json({ success: false, error: (error as Error).message });
+    return getResponseError(res, error );
   }
 };
 
@@ -28,13 +26,7 @@ export const likeVideoController = async (
     const result = await videoByIdService.likeVideo(Number(id), Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Unauthorized") {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -51,13 +43,7 @@ export const unlikeVideoController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Unauthorized") {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -71,13 +57,7 @@ export const saveVideoController = async (
     const result = await videoByIdService.saveVideo(Number(id), Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Unauthorized") {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -94,18 +74,7 @@ export const unsaveVideoController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Unauthorized") {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-    if ((error as Error).message === "Video not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Video not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -118,9 +87,7 @@ export const updateVideoController = async (
     const { id } = req.params;
 
     if (!id || !req.body.title || !req.body.description) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+      return getResponseError(res, new ResponseError("Missing required fields", 400));
     }
 
     const { title, description, videoKey, thumbnailKey, questions } = req.body;
@@ -138,15 +105,7 @@ export const updateVideoController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Video not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Video not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+      return getResponseError(res, error );
   }
 };
 
@@ -161,16 +120,7 @@ export const deleteVideoController = async (
     result = await videoByIdService.deleteVideo(Number(id), Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Video not found or unauthorized") {
-      return res.status(404).json({
-        success: false,
-        message: "Video not found or unauthorized",
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -183,10 +133,7 @@ export const getMyVideoHistoryController = async (
     const result = await videoService.getMyVideoHistory(Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -199,15 +146,6 @@ export const postVideoController = async (
     const result = await videoService.postVideo(req.body, Number(userId));
     return res.status(201).json(result);
   } catch (error) {
-    if ((error as Error).message.includes("User with ID")) {
-      return res.status(400).json({
-        success: false,
-        error: (error as Error).message,
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

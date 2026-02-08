@@ -1,10 +1,8 @@
 import { db } from "@/db/index.js";
 import { eq, ilike, and } from "drizzle-orm";
-import { grades, lessons, subjects } from "@/db/schema.js";
 import { books } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { json } from "stream/consumers";
-import e from "express";
+import { ResponseError } from "@/utils/responseError.js";
 
 const BOOK_CACHE_PREFIX = "books:";
 
@@ -24,8 +22,8 @@ export const getAllBooks = async()=>{
         return {
             data: allBooks
         };
-   }catch(err){
-    throw new Error(`Error fetching books: ${(err as Error).message}`);
+   }catch(error){
+    throw new ResponseError(error as string, 500);
    }
 }
 
@@ -49,8 +47,8 @@ export const getBooksById = async(id: string)=>{
         return {
             data: result[0]
         }
-    }catch(err){
-        throw new Error(`Error fetching book by id: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 }
 
@@ -68,8 +66,8 @@ export const getRecommendedBooks = async()=>{
 
         return {data:result};
 
-    }catch(err){
-        throw new Error(`Error fetching recommended books: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 }
 
@@ -87,8 +85,8 @@ export const getBooksBySubject = async (subjectId: string) => {
         await redis.set(cacheKey, JSON.stringify(result), {EX: 60*30});
 
         return {data: result};
-    }catch(err){
-        throw new Error(`Error fetching books by subject: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 
 }
@@ -107,8 +105,8 @@ export const getBooksByLesson = async (lessonId: string) => {
         await redis.set(cacheKey, JSON.stringify(result), { EX: 60 * 30 });
 
         return { data: result };
-    }catch(err){
-        throw new Error(`Error fetching books by lesson: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 }
 
@@ -117,8 +115,8 @@ export const searchBooks = async(keyword: string)=>{
         const result = await db.select().from(books).where(ilike(books.title, `${keyword}`));
 
         return {data:result};
-    }catch(err){
-        throw new Error(`Error searching books: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 }
 
@@ -140,7 +138,7 @@ export const filterBooks = async({lessonId, subjectId}: {lessonId?: string; subj
 
         return { data: result };
 
-    }catch(err){
-        throw new Error(`Error filtering books: ${(err as Error).message}`);
+    }catch(error){
+        throw new ResponseError(error as string, 500);
     }
 }

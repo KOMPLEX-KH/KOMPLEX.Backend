@@ -6,6 +6,9 @@ import * as aiGeneralRatingService from "@/app/komplex/services/me/ai/general/ta
 import * as aiGeneralServiceById from "@/app/komplex/services/me/ai/general/tabs/[id]/service.js";
 import * as aiTopicRatingService from "@/app/komplex/services/me/ai/topics/[id]/rating/service.js";
 import * as aiGeneralService from "@/app/komplex/services/me/ai/general/service.js";
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
+
+
 export const callAiGeneralAndWriteToHistory = async (
   req: AuthenticatedRequest,
   res: Response
@@ -15,10 +18,7 @@ export const callAiGeneralAndWriteToHistory = async (
     const { prompt, responseType } = req.body;
     const { tabId } = req.params;
     if (!prompt || !tabId) {
-      return res.status(400).json({
-        success: false,
-        message: "Prompt is required",
-      });
+      return getResponseError(res, new ResponseError("Prompt is required", 400));
     }
 
     const result = await aiGeneralServiceById.callAiGeneralService(
@@ -34,10 +34,7 @@ export const callAiGeneralAndWriteToHistory = async (
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -47,10 +44,7 @@ export const callAiTopic = async (req: AuthenticatedRequest, res: Response) => {
     const { prompt, responseType } = req.body;
     const { topicId } = req.params;
     if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        message: "Prompt is required",
-      });
+        return getResponseError(res, new ResponseError("Prompt is required", 400));
     }
     const result = await aiTopicServiceById.callAiTopicAndWriteToTopicHistory(
       prompt,
@@ -64,10 +58,7 @@ export const callAiTopic = async (req: AuthenticatedRequest, res: Response) => {
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -80,10 +71,7 @@ export const callAiGeneralFirstTime = async (
     const { prompt, responseType } = req.body;
 
     if (!prompt || !responseType) {
-      return res.status(400).json({
-        success: false,
-        message: "Prompt and response type are required",
-      });
+      return getResponseError(res, new ResponseError("Prompt and response type are required", 400));
     }
     const result = await aiGeneralService.callAiFirstTimeService(
       prompt,
@@ -96,10 +84,7 @@ export const callAiGeneralFirstTime = async (
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -118,10 +103,7 @@ export const getAllAiGeneralTabNames = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -140,10 +122,7 @@ export const getAllAiTopicNames = async (
       message: "AI topic names fetched successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -164,10 +143,7 @@ export const getAiGeneralHistoryBasedOnTab = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    getResponseError(res, error);
   }
 };
 
@@ -187,10 +163,7 @@ export const getAiGeneralHistoryBasedOnTopic = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -223,10 +196,7 @@ export const getAiTopicResponse = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -247,10 +217,7 @@ export const getAiTopicHistoryController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -268,10 +235,7 @@ export const rateAiGeneralResponseController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -289,10 +253,7 @@ export const rateAiTopicResponseController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -313,10 +274,7 @@ export const deleteAiGeneralTabController = async (
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+      return getResponseError(res, error );
   }
 };
 
@@ -339,10 +297,7 @@ export const editAiGeneralTabController = async (
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -363,9 +318,6 @@ export const deleteAiTopicTabController = async (
       data: result,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

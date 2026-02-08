@@ -2,16 +2,14 @@ import { Request, Response } from "express";
 import * as curriculumsService from "@/app/komplex/services/feed/curriculums/service.js";
 import * as topicService from "@/app/komplex/services/feed/curriculums/[id]/service.js";
 import { AuthenticatedRequest } from "@/types/request.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getCurriculums = async (req: Request, res: Response) => {
   try {
     const result = await curriculumsService.getAllCurriculums();
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error);
   }
 };
 
@@ -22,14 +20,6 @@ export const getTopic = async (req: AuthenticatedRequest, res: Response) => {
     const result = await topicService.getTopic(id, userId);
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Topic not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Topic not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error);
   }
 };

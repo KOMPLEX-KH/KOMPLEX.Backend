@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as exerciseService from "@/app/komplex/services/feed/exercises/service.js";
 import { AuthenticatedRequest } from "@/types/request.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getExercisesController = async (
   req: AuthenticatedRequest,
@@ -12,10 +13,7 @@ export const getExercisesController = async (
     const result = await exerciseService.getExercises(grade as string, userId);
     return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(500).json({
-      message: "Internal server error",
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error);
   }
 };
 
@@ -25,16 +23,9 @@ export const getExerciseController = async (
 ) => {
   try {
     const { id } = req.params;
-    // const userId = req.user.userId;
     const result = await exerciseService.getExercise(id);
     return res.status(200).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Exercise not found") {
-      return res.status(404).json({ message: "Exercise not found" });
-    }
-    return res.status(500).json({
-      message: "Internal server error",
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error);
   }
 };

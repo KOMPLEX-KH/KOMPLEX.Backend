@@ -1,6 +1,7 @@
 import { db } from "@/db/index.js";
 import { feedbacks } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const createFeedback = async (
   content: string,
@@ -25,6 +26,6 @@ export const createFeedback = async (
     await redis.set(cacheKey, JSON.stringify(feedback[0]), { EX: 600 });
     return { data: feedback };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

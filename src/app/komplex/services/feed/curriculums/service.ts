@@ -1,3 +1,4 @@
+import { ResponseError } from '@/utils/responseError.js';
 import { db } from "@/db/index.js";
 import { eq } from "drizzle-orm";
 import { grades, lessons, subjects, topics } from "@/db/schema.js";
@@ -130,6 +131,6 @@ export const getAllCurriculums = async () => {
 
     return { data: structuredData };
   } catch (error) {
-    throw new Error(`Error fetching curriculums: ${(error as Error).message}`);
+    throw new ResponseError(error as string, 500);
   }
 };

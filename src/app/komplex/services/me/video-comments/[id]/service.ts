@@ -6,150 +6,155 @@ import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const deleteVideoCommentInternal = async (userId: number, commentId: number | null, videoId: number | null) => {
-	if (commentId === null && videoId === null) {
-		throw new Error("Either commentId or videoId must be provided");
-	}
-
-	// Delete by commentId
-	if (commentId && videoId === null) {
-		const doesThisCommentHasReply = await db
-			.select()
-			.from(videoReplies)
-			.where(eq(videoReplies.videoCommentId, Number(commentId)))
-			.limit(1);
-
-    let deleteReply = null;
-    console.log("ABOUT TO CHECK IF COMMENT HAS REPLY");
-    if (doesThisCommentHasReply.length > 0) {
-      console.log("COMMENT HAS REPLY");
-      deleteReply = await deleteVideoReplyInternal(
-        Number(userId),
-        null,
-        Number(commentId)
-      );
-    }
-
-		const mediaToDelete = await db
-			.select({ urlForDeletion: videoCommentMedias.urlForDeletion })
-			.from(videoCommentMedias)
-			.where(eq(videoCommentMedias.videoCommentId, commentId));
-
-		for (const media of mediaToDelete) {
-			await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
+	try {
+		if (commentId === null && videoId === null) {
+			throw new ResponseError("Either commentId or videoId must be provided", 400);
 		}
-
-		const deletedMedia = await db
-			.delete(videoCommentMedias)
-			.where(eq(videoCommentMedias.videoCommentId, commentId))
-			.returning({
-				url: videoCommentMedias.url,
-				mediaType: videoCommentMedias.mediaType,
-			});
-
-		const deletedLikes = await db
-			.delete(videoCommentLike)
-			.where(eq(videoCommentLike.videoCommentId, commentId))
-			.returning();
-
-		const deletedComment = await db
-			.delete(videoComments)
-			.where(and(eq(videoComments.id, commentId), eq(videoComments.userId, userId)))
-			.returning();
-
-		const pattern = `videoComments:video:${deletedComment[0].videoId}:page:*`;
-		let cursor = "0";
-
-		do {
-			const scanResult = await redis.scan(cursor, {
-				MATCH: pattern,
-				COUNT: 100,
-			});
-			cursor = scanResult.cursor;
-			const keys = scanResult.keys;
-
-			if (keys.length > 0) {
-				await Promise.all(keys.map((k) => redis.del(k)));
+	
+		// Delete by commentId
+		if (commentId && videoId === null) {
+			const doesThisCommentHasReply = await db
+				.select()
+				.from(videoReplies)
+				.where(eq(videoReplies.videoCommentId, Number(commentId)))
+				.limit(1);
+	
+	    let deleteReply = null;
+	    console.log("ABOUT TO CHECK IF COMMENT HAS REPLY");
+	    if (doesThisCommentHasReply.length > 0) {
+	      console.log("COMMENT HAS REPLY");
+	      deleteReply = await deleteVideoReplyInternal(
+	        Number(userId),
+	        null,
+	        Number(commentId)
+	      );
+	    }
+	
+			const mediaToDelete = await db
+				.select({ urlForDeletion: videoCommentMedias.urlForDeletion })
+				.from(videoCommentMedias)
+				.where(eq(videoCommentMedias.videoCommentId, commentId));
+	
+			for (const media of mediaToDelete) {
+				await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
 			}
-		} while (cursor !== "0");
-
-		await redis.del(`videoComments:video:${deletedComment[0].videoId}:lastPage`);
-
-		return { deletedComment, deletedMedia, deletedLikes, deleteReply };
-	}
-
-  // Delete all comments for a videoId
-  if (videoId && commentId === null) {
-    console.log("ABOUT TO GET COMMENT IDS BY VIDEO ID");
-    const getCommentIdsByVideoId = await db
-      .select({ id: videoComments.id })
-      .from(videoComments)
-      .where(eq(videoComments.videoId, videoId));
-    const commentIds = getCommentIdsByVideoId.map((c) => c.id);
-
-    for (const commentId of commentIds) {
-      await deleteVideoReplyInternal(Number(userId), null, commentId);
-    }
-
-    const mediaToDelete = await db
-      .select({ urlForDeletion: videoCommentMedias.urlForDeletion })
-      .from(videoCommentMedias)
-      .where(
-        commentIds.length > 0
-          ? inArray(videoCommentMedias.videoCommentId, commentIds)
-          : eq(videoCommentMedias.videoCommentId, -1)
-      );
-
-		for (const media of mediaToDelete) {
-			await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
+	
+			const deletedMedia = await db
+				.delete(videoCommentMedias)
+				.where(eq(videoCommentMedias.videoCommentId, commentId))
+				.returning({
+					url: videoCommentMedias.url,
+					mediaType: videoCommentMedias.mediaType,
+				});
+	
+			const deletedLikes = await db
+				.delete(videoCommentLike)
+				.where(eq(videoCommentLike.videoCommentId, commentId))
+				.returning();
+	
+			const deletedComment = await db
+				.delete(videoComments)
+				.where(and(eq(videoComments.id, commentId), eq(videoComments.userId, userId)))
+				.returning();
+	
+			const pattern = `videoComments:video:${deletedComment[0].videoId}:page:*`;
+			let cursor = "0";
+	
+			do {
+				const scanResult = await redis.scan(cursor, {
+					MATCH: pattern,
+					COUNT: 100,
+				});
+				cursor = scanResult.cursor;
+				const keys = scanResult.keys;
+	
+				if (keys.length > 0) {
+					await Promise.all(keys.map((k) => redis.del(k)));
+				}
+			} while (cursor !== "0");
+	
+			await redis.del(`videoComments:video:${deletedComment[0].videoId}:lastPage`);
+	
+			return { deletedComment, deletedMedia, deletedLikes, deleteReply };
 		}
-
-		const deletedMedia = await db
-			.delete(videoCommentMedias)
-			.where(
-				commentIds.length > 0
-					? inArray(videoCommentMedias.videoCommentId, commentIds)
-					: eq(videoCommentMedias.videoCommentId, -1)
-			)
-			.returning({
-				url: videoCommentMedias.url,
-				mediaType: videoCommentMedias.mediaType,
-			});
-
-		const deletedLikes = await db
-			.delete(videoCommentLike)
-			.where(
-				commentIds.length > 0
-					? inArray(videoCommentLike.videoCommentId, commentIds)
-					: eq(videoCommentLike.videoCommentId, -1)
-			)
-			.returning();
-
-		const deletedComment = await db
-			.delete(videoComments)
-			.where(commentIds.length > 0 ? inArray(videoComments.id, commentIds) : eq(videoComments.id, -1))
-			.returning();
-
-		const pattern = `videoComments:video:${deletedComment[0].videoId}:page:*`;
-		let cursor = "0";
-
-		do {
-			const scanResult = await redis.scan(cursor, {
-				MATCH: pattern,
-				COUNT: 100,
-			});
-			cursor = scanResult.cursor;
-			const keys = scanResult.keys;
-
-			if (keys.length > 0) {
-				await Promise.all(keys.map((k) => redis.del(k)));
+	
+	  // Delete all comments for a videoId
+	  if (videoId && commentId === null) {
+	    console.log("ABOUT TO GET COMMENT IDS BY VIDEO ID");
+	    const getCommentIdsByVideoId = await db
+	      .select({ id: videoComments.id })
+	      .from(videoComments)
+	      .where(eq(videoComments.videoId, videoId));
+	    const commentIds = getCommentIdsByVideoId.map((c) => c.id);
+	
+	    for (const commentId of commentIds) {
+	      await deleteVideoReplyInternal(Number(userId), null, commentId);
+	    }
+	
+	    const mediaToDelete = await db
+	      .select({ urlForDeletion: videoCommentMedias.urlForDeletion })
+	      .from(videoCommentMedias)
+	      .where(
+	        commentIds.length > 0
+	          ? inArray(videoCommentMedias.videoCommentId, commentIds)
+	          : eq(videoCommentMedias.videoCommentId, -1)
+	      );
+	
+			for (const media of mediaToDelete) {
+				await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
 			}
-		} while (cursor !== "0");
-
-		await redis.del(`videoComments:video:${deletedComment[0].videoId}:lastPage`);
-
-		return { deletedComment, deletedMedia, deletedLikes };
+	
+			const deletedMedia = await db
+				.delete(videoCommentMedias)
+				.where(
+					commentIds.length > 0
+						? inArray(videoCommentMedias.videoCommentId, commentIds)
+						: eq(videoCommentMedias.videoCommentId, -1)
+				)
+				.returning({
+					url: videoCommentMedias.url,
+					mediaType: videoCommentMedias.mediaType,
+				});
+	
+			const deletedLikes = await db
+				.delete(videoCommentLike)
+				.where(
+					commentIds.length > 0
+						? inArray(videoCommentLike.videoCommentId, commentIds)
+						: eq(videoCommentLike.videoCommentId, -1)
+				)
+				.returning();
+	
+			const deletedComment = await db
+				.delete(videoComments)
+				.where(commentIds.length > 0 ? inArray(videoComments.id, commentIds) : eq(videoComments.id, -1))
+				.returning();
+	
+			const pattern = `videoComments:video:${deletedComment[0].videoId}:page:*`;
+			let cursor = "0";
+	
+			do {
+				const scanResult = await redis.scan(cursor, {
+					MATCH: pattern,
+					COUNT: 100,
+				});
+				cursor = scanResult.cursor;
+				const keys = scanResult.keys;
+	
+				if (keys.length > 0) {
+					await Promise.all(keys.map((k) => redis.del(k)));
+				}
+			} while (cursor !== "0");
+	
+			await redis.del(`videoComments:video:${deletedComment[0].videoId}:lastPage`);
+	
+			return { deletedComment, deletedMedia, deletedLikes };
+		}
+	} catch (error) {
+		throw new ResponseError(error as string, 500);
 	}
 };
 
@@ -169,7 +174,7 @@ export const updateVideoComment = async (
 		.limit(1);
 
 	if (doesUserOwnThisComment.length === 0) {
-		throw new Error("Comment not found");
+		throw new ResponseError("Comment not found", 404);
 	}
 
 	let mediasToRemoveParse: { url: string }[] = [];
@@ -177,7 +182,7 @@ export const updateVideoComment = async (
 		try {
 			mediasToRemoveParse = typeof mediasToRemove === "string" ? JSON.parse(mediasToRemove) : mediasToRemove;
 		} catch (err) {
-			throw new Error("Invalid mediasToRemove format");
+			throw new ResponseError("Invalid mediasToRemove format", 400);
 		}
 	}
 
@@ -200,7 +205,7 @@ export const updateVideoComment = async (
 					.returning();
 				newCommentMedia.push(media);
 			} catch (error) {
-				console.error("Error uploading file or saving media:", error);
+				throw new ResponseError(error as string, 500);
 			}
 		}
 	}
@@ -262,25 +267,29 @@ export const updateVideoComment = async (
 };
 
 export const deleteVideoComment = async (id: string, userId: number) => {
-	const doesUserOwnThisComment = await db
-		.select()
-		.from(videoComments)
-		.where(and(eq(videoComments.id, Number(id)), eq(videoComments.userId, Number(userId))))
-		.limit(1);
-
-	if (doesUserOwnThisComment.length === 0) {
-		throw new Error("Comment not found");
+	try {
+		const doesUserOwnThisComment = await db
+			.select()
+			.from(videoComments)
+			.where(and(eq(videoComments.id, Number(id)), eq(videoComments.userId, Number(userId))))
+			.limit(1);
+	
+		if (doesUserOwnThisComment.length === 0) {
+			throw new ResponseError("Comment not found", 404);
+		}
+	
+		const commentResults = await deleteVideoCommentInternal(Number(userId), Number(id), null);
+	
+		return {
+			data: {
+				success: true,
+				message: "Comment deleted successfully",
+				commentResults,
+			},
+		};
+	} catch (error) {
+		throw new ResponseError(error as string, 500);
 	}
-
-	const commentResults = await deleteVideoCommentInternal(Number(userId), Number(id), null);
-
-	return {
-		data: {
-			success: true,
-			message: "Comment deleted successfully",
-			commentResults,
-		},
-	};
 };
 
 export const likeVideoComment = async (id: string, userId: number) => {
@@ -303,7 +312,7 @@ export const likeVideoComment = async (id: string, userId: number) => {
 			},
 		};
 	} catch (error) {
-		throw new Error((error as Error).message);
+		throw new ResponseError(error as string, 500);
 	}
 };
 
@@ -322,6 +331,6 @@ export const unlikeVideoComment = async (id: string, userId: number) => {
 			},
 		};
 	} catch (error) {
-		throw new Error((error as Error).message);
+		throw new ResponseError(error as string, 500);
 	}
 };

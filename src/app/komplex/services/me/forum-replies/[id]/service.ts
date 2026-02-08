@@ -9,8 +9,7 @@ import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { and, eq, inArray } from "drizzle-orm";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { Request, Response } from "express";
-import { AuthenticatedRequest } from "@/types/request.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const updateForumReply = async (
   id: string,
@@ -32,7 +31,7 @@ export const updateForumReply = async (
     .limit(1);
 
   if (doesUserOwnThisReply.length === 0) {
-    throw new Error("Reply not found");
+    throw new ResponseError("Reply not found", 404);
   }
 
   let photosToRemoveParse: { url: string }[] = [];
@@ -40,7 +39,7 @@ export const updateForumReply = async (
     try {
       photosToRemoveParse = JSON.parse(photosToRemove);
     } catch (err) {
-      throw new Error("Invalid photosToRemove format");
+      throw new ResponseError("Invalid photosToRemove format", 400);
     }
   }
 
@@ -67,7 +66,7 @@ export const updateForumReply = async (
           .returning();
         newReplyMedia.push(media);
       } catch (error) {
-        console.error("Error uploading file or saving media:", error);
+        throw new ResponseError(error as string, 500);
       }
     }
   }
@@ -153,7 +152,7 @@ export const deleteForumReply = async (id: string, userId: number) => {
     .limit(1);
 
   if (doesUserOwnThisReply.length === 0) {
-    throw new Error("Reply not found");
+    throw new ResponseError("Reply not found", 404);
   }
   const result = await deleteReply(Number(userId), Number(id), null);
 
@@ -171,133 +170,137 @@ export const deleteReply = async (
   replyId: number | null,
   commentId: number | null
 ) => {
-  if (replyId === null && commentId === null) {
-    throw new Error("Either replyId or commentId must be provided");
-  }
-
-  // Delete by replyId
-  if (replyId && commentId === null) {
-    const mediasToDelete = await db
-      .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
-      .from(forumReplyMedias)
-      .where(eq(forumReplyMedias.forumReplyId, replyId));
-
-    for (const media of mediasToDelete) {
-      if (media.urlForDeletion) {
-        await deleteFromCloudflare("komplex-image", media.urlForDeletion);
-      }
+  try {
+    if (replyId === null && commentId === null) {
+      throw new ResponseError("Either replyId or commentId must be provided", 400);
     }
-
-    const deletedMedia = await db
-      .delete(forumReplyMedias)
-      .where(eq(forumReplyMedias.forumReplyId, replyId))
-      .returning({
-        url: forumReplyMedias.url,
-        mediaType: forumReplyMedias.mediaType,
-      });
-
-    const deletedLikes = await db
-      .delete(forumReplyLikes)
-      .where(eq(forumReplyLikes.forumReplyId, replyId))
-      .returning();
-
-    const deletedReply = await db
-      .delete(forumReplies)
-      .where(and(eq(forumReplies.id, replyId), eq(forumReplies.userId, userId)))
-      .returning();
-
-    const pattern = `forumReplies:comment:${deletedReply[0].forumCommentId}:page:*`;
-    let cursor = "0";
-
-    do {
-      const scanResult = await redis.scan(cursor, {
-        MATCH: pattern,
-        COUNT: 100,
-      });
-      cursor = scanResult.cursor;
-      const keys = scanResult.keys;
-
-      if (keys.length > 0) {
-        await Promise.all(keys.map((k) => redis.del(k)));
+  
+    // Delete by replyId
+    if (replyId && commentId === null) {
+      const mediasToDelete = await db
+        .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
+        .from(forumReplyMedias)
+        .where(eq(forumReplyMedias.forumReplyId, replyId));
+  
+      for (const media of mediasToDelete) {
+        if (media.urlForDeletion) {
+          await deleteFromCloudflare("komplex-image", media.urlForDeletion);
+        }
       }
-    } while (cursor !== "0");
-
-    await redis.del(
-      `forumReplies:comment:${deletedReply[0].forumCommentId}:lastPage`
-    );
-
-    return { deletedReply, deletedMedia, deletedLikes };
-  }
-
-  // Delete all replies for a commentId
-  if (commentId && replyId === null) {
-    const getReplyIdsByCommentId = await db
-      .select({ id: forumReplies.id })
-      .from(forumReplies)
-      .where(eq(forumReplies.forumCommentId, commentId));
-    const replyIds = getReplyIdsByCommentId.map((r) => r.id);
-
-    const mediasToDelete = await db
-      .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
-      .from(forumReplyMedias)
-      .where(
-        replyIds.length > 0
-          ? inArray(forumReplyMedias.forumReplyId, replyIds)
-          : eq(forumReplyMedias.forumReplyId, -1)
+  
+      const deletedMedia = await db
+        .delete(forumReplyMedias)
+        .where(eq(forumReplyMedias.forumReplyId, replyId))
+        .returning({
+          url: forumReplyMedias.url,
+          mediaType: forumReplyMedias.mediaType,
+        });
+  
+      const deletedLikes = await db
+        .delete(forumReplyLikes)
+        .where(eq(forumReplyLikes.forumReplyId, replyId))
+        .returning();
+  
+      const deletedReply = await db
+        .delete(forumReplies)
+        .where(and(eq(forumReplies.id, replyId), eq(forumReplies.userId, userId)))
+        .returning();
+  
+      const pattern = `forumReplies:comment:${deletedReply[0].forumCommentId}:page:*`;
+      let cursor = "0";
+  
+      do {
+        const scanResult = await redis.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = scanResult.cursor;
+        const keys = scanResult.keys;
+  
+        if (keys.length > 0) {
+          await Promise.all(keys.map((k) => redis.del(k)));
+        }
+      } while (cursor !== "0");
+  
+      await redis.del(
+        `forumReplies:comment:${deletedReply[0].forumCommentId}:lastPage`
       );
-
-    for (const media of mediasToDelete) {
-      if (media.urlForDeletion) {
-        await deleteFromCloudflare("komplex-image", media.urlForDeletion);
-      }
+  
+      return { deletedReply, deletedMedia, deletedLikes };
     }
-
-    const deletedMedia = await db
-      .delete(forumReplyMedias)
-      .where(
-        replyIds.length > 0
-          ? inArray(forumReplyMedias.forumReplyId, replyIds)
-          : eq(forumReplyMedias.forumReplyId, -1)
-      )
-      .returning();
-
-    const deletedLikes = await db
-      .delete(forumReplyLikes)
-      .where(
-        replyIds.length > 0
-          ? inArray(forumReplyLikes.forumReplyId, replyIds)
-          : eq(forumReplyLikes.forumReplyId, -1)
-      )
-      .returning();
-
-    const deletedReply = await db
-      .delete(forumReplies)
-      .where(
-        replyIds.length > 0
-          ? inArray(forumReplies.id, replyIds)
-          : eq(forumReplies.id, -1)
-      )
-      .returning();
-
-    const pattern = `forumReplies:comment:${commentId}:page:*`;
-    let cursor = "0";
-
-    do {
-      const scanResult = await redis.scan(cursor, {
-        MATCH: pattern,
-        COUNT: 100,
-      });
-      cursor = scanResult.cursor;
-      const keys = scanResult.keys;
-
-      if (keys.length > 0) {
-        await Promise.all(keys.map((k) => redis.del(k)));
+  
+    // Delete all replies for a commentId
+    if (commentId && replyId === null) {
+      const getReplyIdsByCommentId = await db
+        .select({ id: forumReplies.id })
+        .from(forumReplies)
+        .where(eq(forumReplies.forumCommentId, commentId));
+      const replyIds = getReplyIdsByCommentId.map((r) => r.id);
+  
+      const mediasToDelete = await db
+        .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
+        .from(forumReplyMedias)
+        .where(
+          replyIds.length > 0
+            ? inArray(forumReplyMedias.forumReplyId, replyIds)
+            : eq(forumReplyMedias.forumReplyId, -1)
+        );
+  
+      for (const media of mediasToDelete) {
+        if (media.urlForDeletion) {
+          await deleteFromCloudflare("komplex-image", media.urlForDeletion);
+        }
       }
-    } while (cursor !== "0");
-
-    await redis.del(`forumReplies:comment:${commentId}:lastPage`);
-
-    return { deletedReply, deletedMedia, deletedLikes };
+  
+      const deletedMedia = await db
+        .delete(forumReplyMedias)
+        .where(
+          replyIds.length > 0
+            ? inArray(forumReplyMedias.forumReplyId, replyIds)
+            : eq(forumReplyMedias.forumReplyId, -1)
+        )
+        .returning();
+  
+      const deletedLikes = await db
+        .delete(forumReplyLikes)
+        .where(
+          replyIds.length > 0
+            ? inArray(forumReplyLikes.forumReplyId, replyIds)
+            : eq(forumReplyLikes.forumReplyId, -1)
+        )
+        .returning();
+  
+      const deletedReply = await db
+        .delete(forumReplies)
+        .where(
+          replyIds.length > 0
+            ? inArray(forumReplies.id, replyIds)
+            : eq(forumReplies.id, -1)
+        )
+        .returning();
+  
+      const pattern = `forumReplies:comment:${commentId}:page:*`;
+      let cursor = "0";
+  
+      do {
+        const scanResult = await redis.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = scanResult.cursor;
+        const keys = scanResult.keys;
+  
+        if (keys.length > 0) {
+          await Promise.all(keys.map((k) => redis.del(k)));
+        }
+      } while (cursor !== "0");
+  
+      await redis.del(`forumReplies:comment:${commentId}:lastPage`);
+  
+      return { deletedReply, deletedMedia, deletedLikes };
+    }
+  } catch (error) {
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -321,7 +324,7 @@ export const likeForumReply = async (id: string, userId: number) => {
       },
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -345,6 +348,6 @@ export const unlikeForumReply = async (id: string, userId: number) => {
       },
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

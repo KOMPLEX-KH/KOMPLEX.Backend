@@ -6,7 +6,7 @@ import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 // import { summarize } from "../../general/service.js";
 import { redis } from "@/db/redis/redisConfig.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const callAiTopicAndWriteToTopicHistory = async (
   prompt: string,
   responseType: string,
@@ -20,7 +20,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
       .where(eq(topics.id, Number(id)));
     const topicContent = topic[0].component;
     if (!topicContent) {
-      throw new Error("Topic not found");
+      throw new ResponseError("Topic not found", 404);
     }
 
     const previousContext = await db
@@ -103,7 +103,7 @@ export const callAiTopicAndWriteToTopicHistory = async (
       id: lastResponse.id,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -147,7 +147,7 @@ export const getAiTopicHistory = async (
       hasMore: history.length === (limit ?? 20),
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -165,6 +165,6 @@ export const deleteAiTopicTab = async (userId: number, topicId: number) => {
     await redis.flushAll(); // TO CHANGE
     return { data: response };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

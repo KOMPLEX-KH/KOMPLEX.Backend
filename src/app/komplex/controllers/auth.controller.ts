@@ -4,7 +4,8 @@ import { db } from "../../../db/index.js";
 import { users } from "../../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { userOauth } from "../../../db/models/user_oauth.js";
-import { redis } from "../../../db/redis/redisConfig.js";
+
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
 
 export const handleSignup = async (
   req: AuthenticatedRequest,
@@ -21,7 +22,7 @@ export const handleSignup = async (
     profileImageKey,
   } = req.body;
   if (!email || !username) {
-    return res.status(400).json({ message: "Missing email or username" });
+    return getResponseError(res, new ResponseError("Missing email or username", 400));
   }
   try {
     const profileImage = `${process.env.R2_PHOTO_PUBLIC_URL}/${profileImageKey}`;
@@ -46,8 +47,7 @@ export const handleSignup = async (
       .returning();
     return res.status(200).json(user);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal server error", error });
+    return getResponseError(res, error );
   }
 };
 
@@ -69,7 +69,7 @@ export const handleSocialLogIn = async (
       profileImageKey = null, // set to null
     } = req.body;
     if (!email || !username || !uid) {
-      return res.status(400).json({ message: "Missing email or username" });
+      return getResponseError(res, new ResponseError("Missing email or username", 400));
     }
     const isUserExists = await db
       .select()
@@ -106,7 +106,6 @@ export const handleSocialLogIn = async (
     });
     return res.status(200).json(user);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal server error" + error });
+    return getResponseError(res, error );
   }
 };

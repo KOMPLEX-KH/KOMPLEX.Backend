@@ -16,14 +16,14 @@ export const postNewsController = async (
     );
     return res.status(201).json(result);
   } catch (error) {
-    if ((error as Error).message === "Missing required fields") {
+    if ((error ).message === "Missing required fields") {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields" });
     }
     return res
       .status(500)
-      .json({ success: false, error: (error as Error).message });
+      .json({ success: false, error: (error ).message });
   }
 };
 
@@ -44,7 +44,7 @@ export const updateNewsController = async (
   } catch (error) {
     return res
       .status(500)
-      .json({ success: false, error: (error as Error).message });
+      .json({ success: false, error: (error ).message });
   }
 };
 
@@ -60,6 +60,6 @@ export const deleteNewsController = async (
   } catch (error) {
     return res
       .status(500)
-      .json({ success: false, error: (error as Error).message });
+      .json({ success: false, error: (error ).message });
   }
 };

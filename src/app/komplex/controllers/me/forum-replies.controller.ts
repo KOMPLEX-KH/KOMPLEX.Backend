@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumReplyService from "@/app/komplex/services/me/forum-replies/service.js";
 import * as forumReplyByIdService from "@/app/komplex/services/me/forum-replies/[id]/service.js";
-
+import { getResponseError } from "@/utils/responseError.js";
 export const postForumReplyController = async (
   req: AuthenticatedRequest,
   res: Response
@@ -18,15 +18,7 @@ export const postForumReplyController = async (
     );
     return res.status(201).json(result);
   } catch (error) {
-    if ((error as Error).message === "Missing required fields") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+   return getResponseError(res, error );
   }
 };
 
@@ -45,20 +37,7 @@ export const updateForumReplyController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Reply not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Reply not found" });
-    }
-    if ((error as Error).message === "Invalid photosToRemove format") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid photosToRemove format" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -75,15 +54,7 @@ export const deleteForumReplyController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Reply not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Reply not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -102,10 +73,7 @@ export const likeForumReplyController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -124,9 +92,6 @@ export const unlikeForumReplyController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

@@ -8,12 +8,12 @@ export const handleLogin = async (req: AuthenticatedRequest, res: Response) => {
     const user = await authService.handleLogin(uid);
     return res.status(200).json(user);
   } catch (error) {
-    if ((error as Error).message === "UID is required") {
+    if ((error ).message === "UID is required") {
       return res.status(400).json({ message: "UID is required" });
     }
-    if ((error as Error).message === "Invalid credentials") {
+    if ((error ).message === "Invalid credentials") {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    return res.status(500).json({ error: (error as Error).message });
+    return res.status(500).json({ error: (error ).message });
   }
 };

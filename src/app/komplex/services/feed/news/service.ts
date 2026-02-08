@@ -9,7 +9,7 @@ import {
   userSavedNews,
 } from "@/db/schema.js";
 import { profile } from "console";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const getAllNews = async (
   type?: string,
   topic?: string,
@@ -235,6 +235,6 @@ export const getAllNews = async (
       hasMore: allNews.length === limit,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

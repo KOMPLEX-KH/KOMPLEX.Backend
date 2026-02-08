@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { topics } from "@/db/models/topics.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { users } from "@/db/models/users.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getTopic = async (topicId: string, userId: number) => {
   const cached = await redis.get(`topic:${topicId}`);
@@ -14,7 +15,7 @@ export const getTopic = async (topicId: string, userId: number) => {
         .where(eq(users.id, userId))
         .returning();
       if (!updatedUser) {
-        throw new Error("Failed to update user last topic");
+        throw new ResponseError("Failed to update user last topic", 500);
       }
     }
     return { data: JSON.parse(cached) };
@@ -26,7 +27,7 @@ export const getTopic = async (topicId: string, userId: number) => {
       .where(eq(topics.id, Number(topicId)));
 
     if (!topic) {
-      throw new Error("Topic not found");
+      throw new ResponseError("Topic not found", 404);
     }
 
     if (userId !== 0) {
@@ -36,7 +37,7 @@ export const getTopic = async (topicId: string, userId: number) => {
         .where(eq(users.id, userId))
         .returning();
       if (!updatedUser) {
-        throw new Error("Failed to update user last topic");
+        throw new ResponseError("Failed to update user last topic", 500);
       }
     }
 
@@ -55,6 +56,6 @@ export const getTopic = async (topicId: string, userId: number) => {
       data: { component: topic.component, componentCode: topic.componentCode },
     };
   } catch (error) {
-    throw new Error(`Error fetching topic: ${(error as Error).message}`);
+    throw new ResponseError(`Error fetching topic: ${(error as Error).message}`, 500);
   }
 };

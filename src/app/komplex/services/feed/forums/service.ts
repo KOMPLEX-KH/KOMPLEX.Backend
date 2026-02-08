@@ -8,7 +8,7 @@ import {
   forumLikes,
   followers,
 } from "@/db/schema.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const getAllForums = async (
   type?: string,
   topic?: string,
@@ -245,6 +245,6 @@ export const getAllForums = async (
       hasMore: allForums.length === limit,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

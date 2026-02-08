@@ -2,6 +2,7 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { videos, users } from "@/db/schema.js";
 import { desc, eq } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getUserVideos = async (userId: number, page?: string, topic?: string, type?: string) => {
 	try {
@@ -46,7 +47,7 @@ export const getUserVideos = async (userId: number, page?: string, topic?: strin
 		});
 
 		return { data: userVideos, hasMore: userVideos.length === limit };
-	} catch (error) {
-		throw new Error("Failed to get user videos");
+	} catch (err) {
+		throw new ResponseError(err as string, 500);
 	}
 };

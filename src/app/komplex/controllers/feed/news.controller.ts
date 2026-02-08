@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as newsService from "@/app/komplex/services/feed/news/service.js";
 import * as newsByIdService from "@/app/komplex/services/feed/news/[id]/service.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getAllNewsController = async (
   req: AuthenticatedRequest,
@@ -18,10 +19,7 @@ export const getAllNewsController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -35,14 +33,6 @@ export const getNewsByIdController = async (
     const result = await newsByIdService.getNewsById(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "News not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "News not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

@@ -2,7 +2,7 @@ import { and, eq, max, count, avg } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { userExerciseHistory, exerciseQuestionHistory, questions, users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
-
+import { ResponseError } from "@/utils/responseError.js";
 export const getExerciseById = async (id: string, userId: number) => {
 	const cacheKey = `exercise:userId:${userId}:exerciseId:${id}`;
 	const cached = await redis.get(cacheKey);
@@ -17,7 +17,7 @@ export const getExerciseById = async (id: string, userId: number) => {
 		.where(and(eq(userExerciseHistory.userId, userId), eq(userExerciseHistory.exerciseId, Number(id))));
 
   if (maxScore[0].maxScore === null) {
-    throw new Error("History not found");
+    throw new ResponseError("History not found", 404);
   }
 
 	const numberOfAttempts = await db
@@ -181,6 +181,6 @@ export const submitExercise = async (id: string, answers: any[], score: number, 
 		await redis.set(`exerciseDashboard:userId:${userId}`, JSON.stringify(cacheData), { EX: 600 });
 		return { data: cacheData };
 	} catch (error: any) {
-		throw new Error((error as Error).message);
+		throw new ResponseError(error as string, 500);
 	}
 };

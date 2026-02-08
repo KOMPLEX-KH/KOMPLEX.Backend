@@ -5,6 +5,7 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import axios from "axios";
 import { asc, eq } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getAllAiTabNamesService = async (
   userId: number,
@@ -35,7 +36,7 @@ export const getAllAiTabNamesService = async (
       hasMore: tabs.length === (limit ?? 20),
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -94,7 +95,7 @@ export const callAiFirstTimeService = async (
       name: tabIdAndTabName.tabName,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -120,28 +121,32 @@ const createNewTab = async (userId: number, tabName: string) => {
       tabName: tabName,
     };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
 // only use for tab summary for now
-
+// currently not in use
 export const summarize = async (
   text: string,
   outputType: "title" | "summary"
 ) => {
-  const response = await axios.post(
-    `${process.env.DARA_ENDPOINT}/summarize`,
-    {
-      text,
-      outputType,
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.INTERNAL_API_KEY,
-      },
-    }
-  );
-  return response.data;
+ try {
+   const response = await axios.post(
+     `${process.env.DARA_ENDPOINT}/summarize`,
+     {
+       text,
+       outputType,
+     },
+     {
+       headers: {
+         "Content-Type": "application/json",
+         "x-api-key": process.env.INTERNAL_API_KEY,
+       },
+     }
+   );
+   return response.data;
+ } catch (error) {
+  throw new ResponseError(error as string, 500);
+ }
 };

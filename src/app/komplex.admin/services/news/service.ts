@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { newsMedia } from "@/db/models/news_medias.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { meilisearch } from "@/config/meilisearchConfig.js";
 import crypto from "crypto";
 
 export const getAllNews = async (type?: string, topic?: string) => {
@@ -158,6 +159,15 @@ export const postNews = async (body: any, files: any, userId: number) => {
       type: m.mediaType,
     })),
   };
+
+  const meilisearchData = {
+    id: newsWithMedia.id,
+    title: newsWithMedia.title,
+    description: newsWithMedia.description,
+    type: newsWithMedia.type,
+    topic: newsWithMedia.topic,
+  };
+  await meilisearch.index("news").addDocuments([meilisearchData]);
 
   const redisKey = `news:${newNews.id}`;
   await redis.set(redisKey, JSON.stringify(newsWithMedia), { EX: 600 });

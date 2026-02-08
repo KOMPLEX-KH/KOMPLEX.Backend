@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumReplyService from "@/app/komplex/services/feed/forum-replies/service.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getForumCommentsRepliesController = async (
   req: AuthenticatedRequest,
@@ -20,9 +21,6 @@ export const getForumCommentsRepliesController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

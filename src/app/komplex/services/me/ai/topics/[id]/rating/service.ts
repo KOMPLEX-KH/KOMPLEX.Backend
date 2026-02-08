@@ -1,5 +1,6 @@
 import { db } from "@/db/index.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
+import { ResponseError } from "@/utils/responseError.js";
 import { eq } from "drizzle-orm";
 
 export const rateAiTopicResponse = async (
@@ -15,6 +16,6 @@ export const rateAiTopicResponse = async (
       .returning();
     return { data: response };
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

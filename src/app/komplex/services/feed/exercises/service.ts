@@ -8,6 +8,7 @@ import {
   exerciseQuestionHistory,
 } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getExercises = async (grade: string, userId: number) => {
   try {
@@ -103,8 +104,7 @@ export const getExercises = async (grade: string, userId: number) => {
 
     return { data: response };
   } catch (error: any) {
-    console.error("Get exercises error:", error);
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };
 
@@ -124,7 +124,7 @@ export const getExercise = async (id: string) => {
       .limit(1);
 
     if (!exerciseResult || exerciseResult.length === 0) {
-      throw new Error("Exercise not found");
+      throw new ResponseError("Exercise not found", 404);
     }
 
     const exercise = exerciseResult[0];
@@ -190,7 +190,6 @@ export const getExercise = async (id: string) => {
       },
     };
   } catch (error: any) {
-    console.error("Get exercise error:", error);
-    throw new Error((error as Error).message);
+    throw new ResponseError(error as string, 500);
   }
 };

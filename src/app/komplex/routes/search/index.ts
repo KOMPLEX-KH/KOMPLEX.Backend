@@ -1,10 +1,12 @@
 import { Router } from "express";
 import videoRoute from "./videos.route.js";
 import forumRoute from "./forums.route.js";
+import newsRoute from "./news.route.js";
 
 const router = Router();
 
 router.use("/videos", videoRoute);
 router.use("/forums", forumRoute);
+router.use("/news", newsRoute);
 
 export default router;

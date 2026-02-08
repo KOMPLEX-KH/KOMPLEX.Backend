@@ -10,6 +10,7 @@ import {
   videoLikes,
 } from "@/db/schema.js";
 import { count, eq } from "drizzle-orm";
+import { ResponseError } from "@/utils/responseError.js";
 
 export const getUserProfile = async (userId: number) => {
   try {
@@ -50,7 +51,7 @@ export const getUserProfile = async (userId: number) => {
         numberOfFollowing: numberOfFollowing[0].count,
       },
     };
-  } catch (error) {
-    throw new Error("Failed to get user profile");
+  } catch (err) {
+    throw new ResponseError(err as string, 500);
   }
 };

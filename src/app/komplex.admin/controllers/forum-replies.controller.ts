@@ -31,7 +31,7 @@ export const getAllRepliesForAComment = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -60,7 +60,7 @@ export const postForumReply = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -86,7 +86,7 @@ export const likeForumCommentReply = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -112,7 +112,7 @@ export const unlikeForumCommentReply = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -140,19 +140,19 @@ export const updateForumReply = async (
       deleteMedia: result.deleteMedia,
     });
   } catch (error) {
-    if ((error as Error).message === "Reply not found") {
+    if ((error ).message === "Reply not found") {
       return res
         .status(404)
         .json({ success: false, message: "Reply not found" });
     }
-    if ((error as Error).message === "Invalid photosToRemove format") {
+    if ((error ).message === "Invalid photosToRemove format") {
       return res
         .status(400)
         .json({ success: false, message: "Invalid photosToRemove format" });
     }
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };
@@ -177,14 +177,14 @@ export const deleteForumReply = async (
       ...result,
     });
   } catch (error) {
-    if ((error as Error).message === "Reply not found") {
+    if ((error ).message === "Reply not found") {
       return res
         .status(404)
         .json({ success: false, message: "Reply not found" });
     }
     return res.status(500).json({
       success: false,
-      error: (error as Error).message,
+      error: (error ).message,
     });
   }
 };

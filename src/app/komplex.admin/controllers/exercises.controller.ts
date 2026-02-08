@@ -24,7 +24,7 @@ export const getExercise = async (req: Request, res: Response) => {
     );
     return res.status(200).json(exerciseWithQuestions);
   } catch (error: any) {
-    if ((error as Error).message === "Exercise not found") {
+    if ((error ).message === "Exercise not found") {
       return res.status(404).json({ message: "Exercise not found" });
     }
     console.error("Get exercise error:", error);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumService from "@/app/komplex/services/feed/forums/service.js";
 import * as forumByIdService from "@/app/komplex/services/feed/forums/[id]/service.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getAllForumsController = async (
   req: AuthenticatedRequest,
@@ -18,10 +19,7 @@ export const getAllForumsController = async (
     );
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -35,14 +33,6 @@ export const getForumByIdController = async (
     const result = await forumByIdService.getForumById(id, Number(userId));
     return res.status(200).json(result);
   } catch (error) {
-    if ((error as Error).message === "Forum not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Forum not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

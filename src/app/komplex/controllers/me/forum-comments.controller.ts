@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as forumCommentService from "@/app/komplex/services/me/forum-comments/service.js";
 import * as forumCommentByIdService from "@/app/komplex/services/me/forum-comments/[id]/service.js";
-
+import { getResponseError, ResponseError} from "@/utils/responseError.js";
 export const updateForumCommentController = async (
   req: AuthenticatedRequest,
   res: Response
@@ -18,20 +18,7 @@ export const updateForumCommentController = async (
     );
     return res.status(200).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Comment not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Comment not found" });
-    }
-    if ((error as Error).message === "Invalid photosToRemove format") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid photosToRemove format" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -48,15 +35,7 @@ export const deleteForumCommentController = async (
     );
     return res.status(200).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Comment not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Comment not found" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -75,15 +54,7 @@ export const postForumCommentController = async (
     );
     return res.status(201).json(result.data);
   } catch (error) {
-    if ((error as Error).message === "Missing required fields") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
-    }
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -96,7 +67,7 @@ export const likeForumCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return getResponseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await forumCommentByIdService.likeForumComment(
@@ -106,10 +77,7 @@ export const likeForumCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
 
@@ -122,7 +90,7 @@ export const unlikeForumCommentController = async (
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return getResponseError(res, new ResponseError("Unauthorized", 401));
     }
 
     const result = await forumCommentByIdService.unlikeForumComment(
@@ -132,9 +100,6 @@ export const unlikeForumCommentController = async (
 
     return res.status(200).json(result.data);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };

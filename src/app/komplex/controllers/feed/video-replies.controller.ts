@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import * as videoReplyService from "@/app/komplex/services/feed/video-replies/service.js";
+import { getResponseError } from "@/utils/responseError.js";
 
 export const getAllVideoRepliesForACommentController = async (
   req: AuthenticatedRequest,
@@ -20,9 +21,6 @@ export const getAllVideoRepliesForACommentController = async (
 
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: (error as Error).message,
-    });
+    return getResponseError(res, error );
   }
 };
