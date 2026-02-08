@@ -13,7 +13,7 @@ export const getLastAccessed = async (
       return getResponseError(res, new ResponseError("User ID is required", 400));
     }
     const lastAccessed = await getLastAccessedService(userId);
-    return res.status(200).json(lastAccessed.data);
+    return res.status(200).json(lastAccessed);
   } catch (error) {
     return getResponseError(res, error );
   }
