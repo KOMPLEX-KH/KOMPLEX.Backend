@@ -4,8 +4,8 @@ import cors from "cors";
 import morgan from "morgan";
 import { redis } from "./db/redis/redisConfig.js";
 
-import routes from "./app/komplex/routes/index.js";
-import adminRoutes from "./app/komplex.admin/routes/index.js";
+import routes from "./app/api/v2/komplex/routes/index.js";
+import adminRoutes from "./app/api/v2/komplex-admin/routes/index.js";
 import { globalRateLimiter } from "./middleware/redisLimiter.js";
 import { seedDb, seedSearch } from "./seed/seedFunction.js";
 import { db } from "./db/index.js";
