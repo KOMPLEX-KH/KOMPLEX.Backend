@@ -4,7 +4,7 @@ import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 
-export const handleSignup = async (
+export const postSignup = async (
   req: Request,
   res: Response
 ) => {

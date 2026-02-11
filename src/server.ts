@@ -4,8 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { redis } from "./db/redis/redisConfig.js";
 
-import routes from "./app/api/v2/komplex/routes/index.js";
-import adminRoutes from "./app/api/v2/komplex-admin/routes/index.js";
+import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/redisLimiter.js";
 import { seedDb, seedSearch } from "./seed/seedFunction.js";
 import { db } from "./db/index.js";
@@ -73,8 +72,7 @@ app.get("/ping", async (req, res) => {
   }
 });
 
-app.use("/api/", routes);
-app.use("/api/admin", adminRoutes);
+app.use("/", routes);
 
 // seedDb
 

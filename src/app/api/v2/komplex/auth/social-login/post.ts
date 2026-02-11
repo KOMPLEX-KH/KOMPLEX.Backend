@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { userOauth } from "@/db/models/user_oauth.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 
-export const handleSocialLogIn = async (
+export const postSocialLogIn = async (
     req: AuthenticatedRequest,
     res: Response
   ) => {
