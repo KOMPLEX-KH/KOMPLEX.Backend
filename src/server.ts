@@ -5,7 +5,7 @@ import morgan from "morgan";
 import { redis } from "./db/redis/redisConfig.js";
 
 import routes from "./app/route.js";
-import { globalRateLimiter } from "./middleware/redisLimiter.js";
+import { globalRateLimiter } from "./middleware/rateLimiter.js";
 import { seedDb, seedSearch } from "./seed/seedFunction.js";
 import { db } from "./db/index.js";
 import { sql } from "drizzle-orm";

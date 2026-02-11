@@ -35,7 +35,7 @@ import {
     adminSmallDeleteRateLimiter,
     adminVideoDeleteRateLimiter,
     updateBigRateLimiter,
-} from "@/middleware/redisLimiter.js";
+} from "@/middleware/rateLimiter.js";
 
 // ============================================================================
 // Authentication Routes
@@ -172,7 +172,7 @@ import { deleteMyNote } from "./api/komplex/me/notes/[id]/delete.js";
 import { getAllAiGeneralTabs } from "./api/komplex/me/ai/general/tabs/get.js";
 import { createAiGeneralTab } from "./api/komplex/me/ai/general/tabs/post.js";
 import { getAiGeneralTabHistory } from "./api/komplex/me/ai/general/tabs/[id]/get.js";
-import { callAiGeneral } from "./api/komplex/me/ai/general/tabs/[id]/post.js";
+import { postAiGeneral } from "./api/komplex/me/ai/general/tabs/[id]/post.js";
 import { updateAiGeneralTab } from "./api/komplex/me/ai/general/tabs/[id]/put.js";
 import { deleteAiGeneralTab } from "./api/komplex/me/ai/general/tabs/[id]/delete.js";
 import { rateAiGeneralResponse } from "./api/komplex/me/ai/general/rating/[id]/post.js";
@@ -789,7 +789,7 @@ router.post(
     `${ME_AI_GENERAL_API}/tabs/:id`,
     verifyFirebaseToken as any,
     aiRateLimiter,
-    callAiGeneral as any
+    postAiGeneral as any
 );
 router.put(
     `${ME_AI_GENERAL_API}/tabs/:id`,

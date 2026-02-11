@@ -1,7 +1,10 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
-import * as aiTopicServiceById from "@/app/api/v1/komplex/services/me/ai/topics/[id]/service.js";
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/index.js";
+import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
+import { redis } from "@/db/redis/redisConfig.js";
+import { and, eq } from "drizzle-orm";
 
 export const deleteAiTopic = async (
   req: AuthenticatedRequest,
@@ -11,7 +14,7 @@ export const deleteAiTopic = async (
     const { id } = req.params;
     const { userId } = req.user;
 
-    const result = await aiTopicServiceById.deleteAiTopicTab(
+    const result = await deleteAiTopicTabInternal(
       Number(userId),
       Number(id)
     );
@@ -24,3 +27,22 @@ export const deleteAiTopic = async (
     return getResponseError(res, error);
   }
 };
+
+const deleteAiTopicTabInternal = async (userId: number, topicId: number) => {
+  try {
+    const response = await db
+      .delete(userAITopicHistory)
+      .where(
+        and(
+          eq(userAITopicHistory.userId, userId),
+          eq(userAITopicHistory.topicId, topicId)
+        )
+      )
+      .returning();
+    await redis.flushAll(); // TO CHANGE
+    return { data: response };
+  } catch (error) {
+    throw new ResponseError(error as string, 500);
+  }
+};
+

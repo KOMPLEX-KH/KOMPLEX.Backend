@@ -1,7 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
-import * as getAllAiTopicNamesService from "@/app/api/v1/komplex/services/me/ai/topics/service.js";
+import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/index.js";
+import { userAITopicHistory, topics } from "@/db/schema.js";
+import { asc, eq } from "drizzle-orm";
 
 export const getAllAiTopics = async (
   req: AuthenticatedRequest,
@@ -9,9 +11,7 @@ export const getAllAiTopics = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const result = await getAllAiTopicNamesService.getAllAiTopicNamesService(
-      Number(userId)
-    );
+    const result = await getAllAiTopicNamesServiceInternal(Number(userId));
     return res.status(200).json({
       data: result,
       success: true,
@@ -19,5 +19,26 @@ export const getAllAiTopics = async (
     });
   } catch (error) {
     return getResponseError(res, error);
+  }
+};
+
+const getAllAiTopicNamesServiceInternal = async (userId: number) => {
+  try {
+    const result = await db
+      .select({
+        id: userAITopicHistory.topicId,
+        name: topics.name,
+      })
+      .from(userAITopicHistory)
+      .innerJoin(topics, eq(userAITopicHistory.topicId, topics.id))
+      .where(eq(userAITopicHistory.userId, userId))
+      .orderBy(asc(userAITopicHistory.updatedAt));
+    const uniqueTopicIds = new Set(result.map((r) => r.id));
+    return Array.from(uniqueTopicIds).map((id) => ({
+      id,
+      name: result.find((r) => r.id === id)?.name,
+    }));
+  } catch (error) {
+    throw new ResponseError(error as string, 500);
   }
 };

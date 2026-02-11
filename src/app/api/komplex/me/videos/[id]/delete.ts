@@ -16,7 +16,7 @@ import {
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { deleteVideoCommentInternal } from "@/app/api/v1/komplex/services/me/video-comments/[id]/service.js";
+import { deleteVideoCommentInternal } from "./comments/[id]/delete.js";
 
 export const deleteVideo = async (
   req: AuthenticatedRequest,
