@@ -1,4 +1,41 @@
 import Router from "express";
+import {
+    verifyFirebaseToken,
+    verifyFirebaseTokenAdmin,
+    verifyFirebaseTokenOptional,
+} from "@/middleware/auth.js";
+import {
+    getVideoRateLimiter,
+    getSmallContentRateLimiter,
+    getBigContentRateLimiter,
+    searchRateLimiter,
+    userLoginRateLimiter,
+    userSignupRateLimiter,
+    postVideoRateLimiter,
+    followLimiter,
+    postSmallRateLimiter,
+    aiRateLimiter,
+    adminLoginRateLimiter,
+    adminGetVideoRateLimiter,
+    adminGetSmallContentRateLimiter,
+    adminGetBigContentRateLimiter,
+    deleteVideoRateLimiter,
+    updateSmallRateLimiter,
+    updateVideoRateLimiter,
+    postBigRateLimiter,
+    deleteBigRateLimiter,
+    deleteSmallRateLimiter,
+    adminBigPostRateLimiter,
+    adminSmallPostRateLimiter,
+    adminVideoPostRateLimiter,
+    adminBigUpdateRateLimiter,
+    adminSmallUpdateRateLimiter,
+    adminVideoUpdateRateLimiter,
+    adminBigDeleteRateLimiter,
+    adminSmallDeleteRateLimiter,
+    adminVideoDeleteRateLimiter,
+    updateBigRateLimiter,
+} from "@/middleware/redisLimiter.js";
 
 // ============================================================================
 // Authentication Routes
@@ -43,7 +80,7 @@ import { getCurriculumTopic } from "./api/komplex/feed/curriculums/[id]/get.js";
 
 // Library
 import {
-  getAllBooks as getFeedBooks,
+    getAllBooks as getFeedBooks,
 } from "./api/komplex/feed/librarys/get.js";
 import { getBookById as getFeedBookById } from "./api/komplex/feed/librarys/[id]/get.js";
 import { getBooksByLesson } from "./api/komplex/feed/librarys/lesson/[lessonId]/get.js";
@@ -266,13 +303,26 @@ const router = Router();
 // ============================================================================
 // Authentication Routes
 // ============================================================================
-router.get(`${BASE_API}/auth/signup`, postSignup);
-router.get(`${BASE_API}/auth/social-login`, postSocialLogIn as any);
+router.post(
+    `${BASE_API}/auth/signup`,
+    userSignupRateLimiter,
+    postSignup as any
+);
+router.post(
+    `${BASE_API}/auth/social-login`,
+    userLoginRateLimiter,
+    postSocialLogIn as any
+);
 
 // ============================================================================
 // Upload Routes
 // ============================================================================
-router.post(`${BASE_API}/upload/upload-url`, postUploadUrl as any);
+router.post(
+    `${BASE_API}/upload/upload-url`,
+    verifyFirebaseTokenAdmin as any,
+    postVideoRateLimiter,
+    postUploadUrl as any
+);
 
 // ============================================================================
 // Feed Routes
@@ -281,58 +331,143 @@ const FEED_API = `${BASE_API}/feed`;
 
 // Videos
 const VIDEO_FEED_API = `${FEED_API}/videos`;
-router.get(`${VIDEO_FEED_API}`, getAllVideos as any);
-router.get(`${VIDEO_FEED_API}/:id`, getVideoById as any);
-router.get(`${VIDEO_FEED_API}/:id/recommended`, getRecommendedVideos as any);
+router.get(
+    `${VIDEO_FEED_API}`,
+    verifyFirebaseTokenOptional as any,
+    getVideoRateLimiter,
+    getAllVideos as any
+);
+router.get(
+    `${VIDEO_FEED_API}/:id`,
+    verifyFirebaseTokenOptional as any,
+    getVideoRateLimiter,
+    getVideoById as any
+);
+router.get(
+    `${VIDEO_FEED_API}/:id/recommended`,
+    verifyFirebaseTokenOptional as any,
+    getVideoRateLimiter,
+    getRecommendedVideos as any
+);
 router.get(`${VIDEO_FEED_API}/:id/likes`, getVideoLikes as any);
 router.get(`${VIDEO_FEED_API}/:id/comments`, getVideoComments as any);
 router.get(`${VIDEO_FEED_API}/:id/comments/:id/replies`, getVideoReplies as any);
 
 // Forums
 const FORUM_FEED_API = `${FEED_API}/forums`;
-router.get(`${FORUM_FEED_API}`, getAllFeedForums as any);
-router.get(`${FORUM_FEED_API}/:id`, getForumById as any);
+router.get(
+    `${FORUM_FEED_API}`,
+    verifyFirebaseTokenOptional as any,
+    getBigContentRateLimiter,
+    getAllFeedForums as any
+);
+router.get(
+    `${FORUM_FEED_API}/:id`,
+    verifyFirebaseTokenOptional as any,
+    getBigContentRateLimiter,
+    getForumById as any
+);
 router.get(`${FORUM_FEED_API}/:id/comments`, getForumComments as any);
 router.get(`${FORUM_FEED_API}/:id/comments/:id/replies`, getForumReplies as any);
 
 // News
 const NEWS_FEED_API = `${FEED_API}/news`;
-router.get(`${NEWS_FEED_API}`, getAllNews as any);
-router.get(`${NEWS_FEED_API}/:id`, getNewsById as any);
+router.get(
+    `${NEWS_FEED_API}`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getAllNews as any
+);
+router.get(
+    `${NEWS_FEED_API}/:id`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getNewsById as any
+);
 
 // Exercises
 const EXERCISES_FEED_API = `${FEED_API}/exercises`;
-router.get(`${EXERCISES_FEED_API}`, getExercises as any);
-router.get(`${EXERCISES_FEED_API}/:id`, getExerciseById as any);
+router.get(
+    `${EXERCISES_FEED_API}`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getExercises as any
+);
+router.get(
+    `${EXERCISES_FEED_API}/:id`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getExerciseById as any
+);
 
 // Curriculums
 const CURRICULUMS_FEED_API = `${FEED_API}/curriculums`;
-router.get(`${CURRICULUMS_FEED_API}`, getCurriculums as any);
-router.get(`${CURRICULUMS_FEED_API}/:id`, getCurriculumTopic as any);
+router.get(
+    `${CURRICULUMS_FEED_API}`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getCurriculums as any
+);
+router.get(
+    `${CURRICULUMS_FEED_API}/:id`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getCurriculumTopic as any
+);
 
 // Library
 const LIBRARY_FEED_API = `${FEED_API}/librarys`;
-router.get(`${LIBRARY_FEED_API}`, getFeedBooks as any);
-router.get(`${LIBRARY_FEED_API}/lesson/:lessonId`, getBooksByLesson as any);
-router.get(`${LIBRARY_FEED_API}/subject/:subjectId`, getBooksBySubject as any);
-router.get(`${LIBRARY_FEED_API}/:id`, getFeedBookById as any);
-router.post(`${LIBRARY_FEED_API}/filter`, filterBooks as any);
+router.get(`${LIBRARY_FEED_API}`, verifyFirebaseTokenOptional as any, getFeedBooks as any);
+router.get(`${LIBRARY_FEED_API}/lesson/:lessonId`, verifyFirebaseTokenOptional as any, getBooksByLesson as any);
+router.get(`${LIBRARY_FEED_API}/subject/:subjectId`, verifyFirebaseTokenOptional as any, getBooksBySubject as any);
+router.get(`${LIBRARY_FEED_API}/:id`, verifyFirebaseTokenOptional as any, getFeedBookById as any);
+router.post(`${LIBRARY_FEED_API}/filter`, verifyFirebaseTokenOptional as any, filterBooks as any);
 
 // ============================================================================
 // Search Routes
 // ============================================================================
 const SEARCH_API = `${BASE_API}/search`;
-router.get(`${SEARCH_API}/videos`, searchVideos as any);
-router.get(`${SEARCH_API}/forums`, searchForums as any);
-router.get(`${SEARCH_API}/news`, searchNews as any);
+router.get(
+    `${SEARCH_API}/videos`,
+    verifyFirebaseTokenOptional as any,
+    searchRateLimiter,
+    searchVideos as any
+);
+router.get(
+    `${SEARCH_API}/forums`,
+    verifyFirebaseTokenOptional as any,
+    searchRateLimiter,
+    searchForums as any
+);
+router.get(
+    `${SEARCH_API}/news`,
+    verifyFirebaseTokenOptional as any,
+    searchRateLimiter,
+    searchNews as any
+);
 
 // ============================================================================
 // Users Routes
 // ============================================================================
 const USERS_API = `${BASE_API}/users`;
-router.get(`${USERS_API}/:id/profile`, getUserProfile as any);
-router.get(`${USERS_API}/:id/videos`, getUserVideos as any);
-router.get(`${USERS_API}/:id/forums`, getUserForums as any);
+router.get(
+    `${USERS_API}/:id/profile`,
+    verifyFirebaseTokenOptional as any,
+    getSmallContentRateLimiter,
+    getUserProfile as any
+);
+router.get(
+    `${USERS_API}/:id/videos`,
+    verifyFirebaseTokenOptional as any,
+    getVideoRateLimiter,
+    getUserVideos as any
+);
+router.get(
+    `${USERS_API}/:id/forums`,
+    verifyFirebaseTokenOptional as any,
+    getBigContentRateLimiter,
+    getUserForums as any
+);
 
 // ============================================================================
 // Me Routes
@@ -340,65 +475,287 @@ router.get(`${USERS_API}/:id/forums`, getUserForums as any);
 const ME_API = `${BASE_API}/me`;
 
 // Profile
-router.get(`${ME_API}`, getMe as any);
-router.get(`${ME_API}/profile`, getMeProfile as any);
-router.get(`${ME_API}/dashboard`, getMeDashboard as any);
-router.get(`${ME_API}/last-accessed`, getLastAccessed as any);
-router.get(`${ME_API}/video-history`, getMyVideoHistory as any);
-router.post(`${ME_API}/feedback`, postFeedback as any);
+router.get(`${ME_API}`, verifyFirebaseToken as any, getMe as any);
+router.get(`${ME_API}/profile`, verifyFirebaseToken as any, getMeProfile as any);
+router.get(
+    `${ME_API}/dashboard`,
+    verifyFirebaseToken as any,
+    getMeDashboard as any
+);
+router.get(
+    `${ME_API}/last-accessed`,
+    verifyFirebaseToken as any,
+    getLastAccessed as any
+);
+router.get(
+    `${ME_API}/video-history`,
+    verifyFirebaseToken as any,
+    getMyVideoHistory as any
+);
+router.post(
+    `${ME_API}/feedback`,
+    verifyFirebaseToken as any,
+    postSmallRateLimiter,
+    postFeedback as any
+);
 
 // Follow
 const FOLLOW_API = `${ME_API}/follow`;
-router.get(`${FOLLOW_API}/followers`, getFollowers as any);
-router.get(`${FOLLOW_API}/following`, getFollowing as any);
-router.post(`${FOLLOW_API}/follow/:id`, followUser as any);
-router.post(`${FOLLOW_API}/unfollow/:id`, unfollowUser as any);
+router.get(
+    `${FOLLOW_API}/followers`,
+    verifyFirebaseToken as any,
+    followLimiter,
+    getFollowers as any
+);
+router.get(
+    `${FOLLOW_API}/following`,
+    verifyFirebaseToken as any,
+    followLimiter,
+    getFollowing as any
+);
+router.post(
+    `${FOLLOW_API}/follow/:id`,
+    verifyFirebaseToken as any,
+    followLimiter,
+    followUser as any
+);
+router.post(
+    `${FOLLOW_API}/unfollow/:id`,
+    verifyFirebaseToken as any,
+    followLimiter,
+    unfollowUser as any
+);
 
 // Videos
 const ME_VIDEOS_API = `${ME_API}/videos`;
-router.get(`${ME_VIDEOS_API}`, getAllMyVideos as any);
-router.post(`${ME_VIDEOS_API}`, postVideo as any);
-router.put(`${ME_VIDEOS_API}/:id`, updateVideo as any);
-router.delete(`${ME_VIDEOS_API}/:id`, deleteVideo as any);
-router.patch(`${ME_VIDEOS_API}/:id/like`, likeVideo as any);
-router.patch(`${ME_VIDEOS_API}/:id/unlike`, unlikeVideo as any);
-router.post(`${ME_VIDEOS_API}/:id/comments`, postVideoComment as any);
-router.put(`${ME_VIDEOS_API}/:id/comments/:id`, updateVideoComment as any);
-router.delete(`${ME_VIDEOS_API}/:id/comments/:id`, deleteVideoComment as any);
-router.patch(`${ME_VIDEOS_API}/:id/comments/:id/like`, likeVideoComment as any);
-router.patch(`${ME_VIDEOS_API}/:id/comments/:id/unlike`, unlikeVideoComment as any);
-router.post(`${ME_VIDEOS_API}/:id/comments/:id/replies`, postVideoReply as any);
-router.put(`${ME_VIDEOS_API}/:id/comments/:id/replies/:id`, updateVideoReply as any);
-router.delete(`${ME_VIDEOS_API}/:id/comments/:id/replies/:id`, deleteVideoReply as any);
-router.patch(`${ME_VIDEOS_API}/:id/comments/:id/replies/:id/like`, likeVideoReply as any);
-router.patch(`${ME_VIDEOS_API}/:id/comments/:id/replies/:id/unlike`, unlikeVideoReply as any);
+router.get(
+    `${ME_VIDEOS_API}`,
+    verifyFirebaseToken as any,
+    getVideoRateLimiter,
+    getAllMyVideos as any
+);
+router.post(
+    `${ME_VIDEOS_API}`,
+    verifyFirebaseToken as any,
+    postVideoRateLimiter,
+    postVideo as any
+);
+router.put(
+    `${ME_VIDEOS_API}/:id`,
+    verifyFirebaseToken as any,
+    updateVideoRateLimiter,
+    updateVideo as any
+);
+router.delete(
+    `${ME_VIDEOS_API}/:id`,
+    verifyFirebaseToken as any,
+    deleteVideoRateLimiter,
+    deleteVideo as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeVideo as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeVideo as any
+);
+router.post(
+    `${ME_VIDEOS_API}/:id/comments`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    postVideoComment as any
+);
+router.put(
+    `${ME_VIDEOS_API}/:id/comments/:id`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    updateVideoComment as any
+);
+router.delete(
+    `${ME_VIDEOS_API}/:id/comments/:id`,
+    verifyFirebaseToken as any,
+    deleteBigRateLimiter,
+    deleteVideoComment as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/comments/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeVideoComment as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/comments/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeVideoComment as any
+);
+router.post(
+    `${ME_VIDEOS_API}/:id/comments/:id/replies`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    postVideoReply as any
+);
+router.put(
+    `${ME_VIDEOS_API}/:id/comments/:id/replies/:id`,
+    verifyFirebaseToken as any,
+    updateBigRateLimiter,
+    updateVideoReply as any
+);
+router.delete(
+    `${ME_VIDEOS_API}/:id/comments/:id/replies/:id`,
+    verifyFirebaseToken as any,
+    deleteBigRateLimiter,
+    deleteVideoReply as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/comments/:id/replies/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeVideoReply as any
+);
+router.patch(
+    `${ME_VIDEOS_API}/:id/comments/:id/replies/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeVideoReply as any
+);
 
 // Forums
 const ME_FORUMS_API = `${ME_API}/forums`;
-router.get(`${ME_FORUMS_API}`, getAllMyForums as any);
-router.post(`${ME_FORUMS_API}`, postForum as any);
-router.put(`${ME_FORUMS_API}/:id`, updateForum as any);
-router.delete(`${ME_FORUMS_API}/:id`, deleteForum as any);
-router.patch(`${ME_FORUMS_API}/:id/like`, likeForum as any);
-router.patch(`${ME_FORUMS_API}/:id/unlike`, unlikeForum as any);
-router.post(`${ME_FORUMS_API}/:id/comments`, postForumComment as any);
-router.put(`${ME_FORUMS_API}/:id/comments/:id`, updateForumComment as any);
-router.delete(`${ME_FORUMS_API}/:id/comments/:id`, deleteForumComment as any);
-router.patch(`${ME_FORUMS_API}/:id/comments/:id/like`, likeForumComment as any);
-router.patch(`${ME_FORUMS_API}/:id/comments/:id/unlike`, unlikeForumComment as any);
-router.post(`${ME_FORUMS_API}/:id/comments/:id/replies`, postForumReply as any);
-router.put(`${ME_FORUMS_API}/:id/comments/:id/replies/:id`, updateForumReply as any);
-router.delete(`${ME_FORUMS_API}/:id/comments/:id/replies/:id`, deleteForumReply as any);
-router.patch(`${ME_FORUMS_API}/:id/comments/:id/replies/:id/like`, likeForumReply as any);
-router.patch(`${ME_FORUMS_API}/:id/comments/:id/replies/:id/unlike`, unlikeForumReply as any);
+router.get(
+    `${ME_FORUMS_API}`,
+    verifyFirebaseToken as any,
+    getBigContentRateLimiter,
+    getAllMyForums as any
+);
+router.post(
+    `${ME_FORUMS_API}`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    postForum as any
+);
+router.put(
+    `${ME_FORUMS_API}/:id`,
+    verifyFirebaseToken as any,
+    updateBigRateLimiter,
+    updateForum as any
+);
+router.delete(
+    `${ME_FORUMS_API}/:id`,
+    verifyFirebaseToken as any,
+    deleteBigRateLimiter,
+    deleteForum as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeForum as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeForum as any
+);
+router.post(
+    `${ME_FORUMS_API}/:id/comments`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    postForumComment as any
+);
+router.put(
+    `${ME_FORUMS_API}/:id/comments/:id`,
+    verifyFirebaseToken as any,
+    updateBigRateLimiter,
+    updateForumComment as any
+);
+router.delete(
+    `${ME_FORUMS_API}/:id/comments/:id`,
+    verifyFirebaseToken as any,
+    deleteBigRateLimiter,
+    deleteForumComment as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/comments/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeForumComment as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/comments/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeForumComment as any
+);
+router.post(
+    `${ME_FORUMS_API}/:id/comments/:id/replies`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    postForumReply as any
+);
+router.put(
+    `${ME_FORUMS_API}/:id/comments/:id/replies/:id`,
+    verifyFirebaseToken as any,
+    updateBigRateLimiter,
+    updateForumReply as any
+);
+router.delete(
+    `${ME_FORUMS_API}/:id/comments/:id/replies/:id`,
+    verifyFirebaseToken as any,
+    deleteBigRateLimiter,
+    deleteForumReply as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/comments/:id/replies/:id/like`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    likeForumReply as any
+);
+router.patch(
+    `${ME_FORUMS_API}/:id/comments/:id/replies/:id/unlike`,
+    verifyFirebaseToken as any,
+    updateSmallRateLimiter,
+    unlikeForumReply as any
+);
 
 // Notes
 const ME_NOTES_API = `${ME_API}/notes`;
-router.get(`${ME_NOTES_API}`, getMyNotes as any);
-router.post(`${ME_NOTES_API}`, createMyNote as any);
-router.get(`${ME_NOTES_API}/:id`, getMyNoteById as any);
-router.put(`${ME_NOTES_API}/:id`, updateMyNote as any);
-router.delete(`${ME_NOTES_API}/:id`, deleteMyNote as any);
+router.get(
+    `${ME_NOTES_API}`,
+    verifyFirebaseToken as any,
+    getSmallContentRateLimiter,
+    getMyNotes as any
+);
+router.post(
+    `${ME_NOTES_API}`,
+    verifyFirebaseToken as any,
+    getBigContentRateLimiter,
+    createMyNote as any
+);
+router.get(
+    `${ME_NOTES_API}/:id`,
+    verifyFirebaseToken as any,
+    getSmallContentRateLimiter,
+    getMyNoteById as any
+);
+router.put(
+    `${ME_NOTES_API}/:id`,
+    verifyFirebaseToken as any,
+    postBigRateLimiter,
+    updateMyNote as any
+);
+router.delete(
+    `${ME_NOTES_API}/:id`,
+    verifyFirebaseToken as any,
+    deleteSmallRateLimiter,
+    deleteMyNote as any
+);
 
 // Exercises (not yet implemented in v2)
 // router.get(`${BASE_API}/me/exercises/dashboard`, getExerciseDashboard as any);
@@ -410,131 +767,529 @@ router.delete(`${ME_NOTES_API}/:id`, deleteMyNote as any);
 const ME_AI_API = `${ME_API}/ai`;
 const ME_AI_GENERAL_API = `${ME_AI_API}/general`;
 const ME_AI_TOPICS_API = `${ME_AI_API}/topics`;
-router.get(`${ME_AI_GENERAL_API}/tabs`, getAllAiGeneralTabs as any);
-router.post(`${ME_AI_GENERAL_API}/tabs`, createAiGeneralTab as any);
-router.get(`${ME_AI_GENERAL_API}/tabs/:id`, getAiGeneralTabHistory as any);
-router.post(`${ME_AI_GENERAL_API}/tabs/:id`, callAiGeneral as any);
-router.put(`${ME_AI_GENERAL_API}/tabs/:id`, updateAiGeneralTab as any);
-router.delete(`${ME_AI_GENERAL_API}/tabs/:id`, deleteAiGeneralTab as any);
-router.post(`${ME_AI_GENERAL_API}/rating/:id`, rateAiGeneralResponse as any);
-router.get(`${ME_AI_TOPICS_API}`, getAllAiTopics as any);
-router.get(`${ME_AI_TOPICS_API}/:id`, getAiTopicHistory as any);
-router.post(`${ME_AI_TOPICS_API}/:id`, callAiTopic as any);
-router.delete(`${ME_AI_TOPICS_API}/:id`, deleteAiTopic as any);
-router.post(`${ME_AI_TOPICS_API}/rating/:id`, rateAiTopicResponse as any);
+router.get(
+    `${ME_AI_GENERAL_API}/tabs`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    getAllAiGeneralTabs as any
+);
+router.post(
+    `${ME_AI_GENERAL_API}/tabs`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    createAiGeneralTab as any
+);
+router.get(
+    `${ME_AI_GENERAL_API}/tabs/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    getAiGeneralTabHistory as any
+);
+router.post(
+    `${ME_AI_GENERAL_API}/tabs/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    callAiGeneral as any
+);
+router.put(
+    `${ME_AI_GENERAL_API}/tabs/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    updateAiGeneralTab as any
+);
+router.delete(
+    `${ME_AI_GENERAL_API}/tabs/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    deleteAiGeneralTab as any
+);
+router.post(
+    `${ME_AI_GENERAL_API}/rating/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    rateAiGeneralResponse as any
+);
+router.get(
+    `${ME_AI_TOPICS_API}`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    getAllAiTopics as any
+);
+router.get(
+    `${ME_AI_TOPICS_API}/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    getAiTopicHistory as any
+);
+router.post(
+    `${ME_AI_TOPICS_API}/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    callAiTopic as any
+);
+router.delete(
+    `${ME_AI_TOPICS_API}/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    deleteAiTopic as any
+);
+router.post(
+    `${ME_AI_TOPICS_API}/rating/:id`,
+    verifyFirebaseToken as any,
+    aiRateLimiter,
+    rateAiTopicResponse as any
+);
 
 // ============================================================================
 // Admin Routes
 // ============================================================================
 
 // Auth
-router.post(`${ADMIN_BASE_API}/auth/login`, login as any);
+router.post(
+    `${ADMIN_BASE_API}/auth/login`,
+    adminLoginRateLimiter,
+    login as any
+);
 
 // Dashboard
-router.get(`${ADMIN_BASE_API}/dashboard`, getDashboard as any);
+router.get(
+    `${ADMIN_BASE_API}/dashboard`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getDashboard as any
+);
 
 // Videos
-router.get(`${ADMIN_BASE_API}/videos`, getAllAdminVideos as any);
-router.get(`${ADMIN_BASE_API}/videos/:id`, getAdminVideoById as any);
+router.get(
+    `${ADMIN_BASE_API}/videos`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetVideoRateLimiter,
+    getAllAdminVideos as any
+);
+router.get(
+    `${ADMIN_BASE_API}/videos/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetVideoRateLimiter,
+    getAdminVideoById as any
+);
 
 // Grades & Subjects
-router.get(`${ADMIN_BASE_API}/grades`, getAdminGrades as any);
-router.get(`${ADMIN_BASE_API}/subjects`, getAdminSubjects as any);
+router.get(
+    `${ADMIN_BASE_API}/grades`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminGrades as any
+);
+router.get(
+    `${ADMIN_BASE_API}/subjects`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminSubjects as any
+);
 
 // Users
-router.get(`${ADMIN_BASE_API}/users`, getAllUsers as any);
-router.get(`${ADMIN_BASE_API}/users/admins`, getAllAdmins as any);
-router.post(`${ADMIN_BASE_API}/users/admins`, createAdmin as any);
-router.put(`${ADMIN_BASE_API}/users/admins/:id`, updateAdmin as any);
-router.delete(`${ADMIN_BASE_API}/users/admins/:id`, deleteAdmin as any);
+router.get(
+    `${ADMIN_BASE_API}/users`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAllUsers as any
+);
+router.get(
+    `${ADMIN_BASE_API}/users/admins`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAllAdmins as any
+);
+router.post(
+    `${ADMIN_BASE_API}/users/admins`,
+    verifyFirebaseTokenAdmin as any,
+    createAdmin as any
+);
+router.put(
+    `${ADMIN_BASE_API}/users/admins/:id`,
+    verifyFirebaseTokenAdmin as any,
+    updateAdmin as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/users/admins/:id`,
+    verifyFirebaseTokenAdmin as any,
+    deleteAdmin as any
+);
 
 // Forums
-router.get(`${ADMIN_BASE_API}/forums`, getAllAdminForums as any);
-router.get(`${ADMIN_BASE_API}/forums/:id`, getAdminForumById as any);
-router.put(`${ADMIN_BASE_API}/forums/:id`, updateAdminForum as any);
-router.delete(`${ADMIN_BASE_API}/forums/:id`, deleteAdminForum as any);
+router.get(
+    `${ADMIN_BASE_API}/forums`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAllAdminForums as any
+);
+router.get(
+    `${ADMIN_BASE_API}/forums/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAdminForumById as any
+);
+router.put(
+    `${ADMIN_BASE_API}/forums/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigUpdateRateLimiter,
+    updateAdminForum as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/forums/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigDeleteRateLimiter,
+    deleteAdminForum as any
+);
 
 // News
-router.post(`${ADMIN_BASE_API}/news`, postNews as any);
-router.put(`${ADMIN_BASE_API}/news/:id`, updateNews as any);
-router.delete(`${ADMIN_BASE_API}/news/:id`, deleteNews as any);
+router.post(
+    `${ADMIN_BASE_API}/news`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    postNews as any
+);
+router.put(
+    `${ADMIN_BASE_API}/news/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateNews as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/news/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteNews as any
+);
 
 // Exercises
-router.get(`${ADMIN_BASE_API}/exercises`, getAdminExercises as any);
-router.post(`${ADMIN_BASE_API}/exercises`, createExercise as any);
-router.get(`${ADMIN_BASE_API}/exercises/:id`, getAdminExercise as any);
-router.put(`${ADMIN_BASE_API}/exercises/:id`, updateExercise as any);
-router.delete(`${ADMIN_BASE_API}/exercises/:id`, deleteExercise as any);
-router.get(`${ADMIN_BASE_API}/exercises/dashboard`, getExerciseDashboard as any);
+router.get(
+    `${ADMIN_BASE_API}/exercises`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminExercises as any
+);
+router.post(
+    `${ADMIN_BASE_API}/exercises`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    createExercise as any
+);
+router.get(
+    `${ADMIN_BASE_API}/exercises/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminExercise as any
+);
+router.put(
+    `${ADMIN_BASE_API}/exercises/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateExercise as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/exercises/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteExercise as any
+);
+router.get(
+    `${ADMIN_BASE_API}/exercises/dashboard`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getExerciseDashboard as any
+);
 
 // Feedbacks
-router.get(`${ADMIN_BASE_API}/feedbacks`, getFeedbacks as any);
-router.patch(`${ADMIN_BASE_API}/feedbacks/:id`, updateFeedbackStatus as any);
+router.get(
+    `${ADMIN_BASE_API}/feedbacks`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getFeedbacks as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/feedbacks/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateFeedbackStatus as any
+);
 
 // Forum Comments
-router.get(`${ADMIN_BASE_API}/forum_comments/:id`, getAllAdminCommentsForAForum as any);
-router.post(`${ADMIN_BASE_API}/forum_comments/:id`, postAdminForumComment as any);
-router.patch(`${ADMIN_BASE_API}/forum_comments/:id`, updateAdminForumComment as any);
-router.post(`${ADMIN_BASE_API}/forum_comments/:id/like`, likeAdminForumComment as any);
-router.delete(`${ADMIN_BASE_API}/forum_comments/:id/unlike`, unlikeAdminForumComment as any);
+router.get(
+    `${ADMIN_BASE_API}/forum_comments/:id`,
+    verifyFirebaseTokenAdmin as any,
+    getAllAdminCommentsForAForum as any
+);
+router.post(
+    `${ADMIN_BASE_API}/forum_comments/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigPostRateLimiter,
+    postAdminForumComment as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/forum_comments/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigUpdateRateLimiter,
+    updateAdminForumComment as any
+);
+router.post(
+    `${ADMIN_BASE_API}/forum_comments/:id/like`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    likeAdminForumComment as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/forum_comments/:id/unlike`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    unlikeAdminForumComment as any
+);
 
 // Forum Replies
-router.get(`${ADMIN_BASE_API}/forum_replies/:id`, getAllAdminRepliesForAComment as any);
-router.post(`${ADMIN_BASE_API}/forum_replies/:id`, postAdminForumReply as any);
-router.patch(`${ADMIN_BASE_API}/forum_replies/:id`, updateAdminForumReply as any);
-router.post(`${ADMIN_BASE_API}/forum_replies/:id/like`, likeAdminForumReply as any);
-router.delete(`${ADMIN_BASE_API}/forum_replies/:id/unlike`, unlikeAdminForumReply as any);
+router.get(
+    `${ADMIN_BASE_API}/forum_replies/:id`,
+    verifyFirebaseTokenAdmin as any,
+    getAllAdminRepliesForAComment as any
+);
+router.post(
+    `${ADMIN_BASE_API}/forum_replies/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigPostRateLimiter,
+    postAdminForumReply as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/forum_replies/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminBigUpdateRateLimiter,
+    updateAdminForumReply as any
+);
+router.post(
+    `${ADMIN_BASE_API}/forum_replies/:id/like`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    likeAdminForumReply as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/forum_replies/:id/unlike`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    unlikeAdminForumReply as any
+);
 
 // AI
-router.get(`${ADMIN_BASE_API}/ai/dashboard`, getAdminAiDashboard as any);
-router.get(`${ADMIN_BASE_API}/ai/general/dashboard`, getAdminGeneralAiDashboard as any);
-router.get(`${ADMIN_BASE_API}/ai/general`, getAdminGeneralAiResponses as any);
-router.get(`${ADMIN_BASE_API}/ai/general/responses/:id`, getAdminGeneralAiResponseById as any);
-router.get(`${ADMIN_BASE_API}/ai/topics/dashboard`, getAdminTopicAiDashboard as any);
-router.get(`${ADMIN_BASE_API}/ai/topics`, getAdminTopicAiResponses as any);
-router.get(`${ADMIN_BASE_API}/ai/topics/responses/:id`, getAdminTopicAiResponseById as any);
+router.get(`${ADMIN_BASE_API}/ai/dashboard`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminAiDashboard as any);
+router.get(`${ADMIN_BASE_API}/ai/general/dashboard`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminGeneralAiDashboard as any);
+router.get(`${ADMIN_BASE_API}/ai/general`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminGeneralAiResponses as any);
+router.get(`${ADMIN_BASE_API}/ai/general/responses/:id`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminGeneralAiResponseById as any);
+router.get(`${ADMIN_BASE_API}/ai/topics/dashboard`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminTopicAiDashboard as any);
+router.get(`${ADMIN_BASE_API}/ai/topics`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminTopicAiResponses as any);
+router.get(`${ADMIN_BASE_API}/ai/topics/responses/:id`, verifyFirebaseTokenAdmin as any, adminGetBigContentRateLimiter, getAdminTopicAiResponseById as any);
 
 // Curriculums
-router.get(`${ADMIN_BASE_API}/curriculums/dashboard`, getAdminCurriculumsDashboard as any);
-router.post(`${ADMIN_BASE_API}/curriculums/grades`, createAdminGrade as any);
-router.patch(`${ADMIN_BASE_API}/curriculums/grades/:id`, updateAdminGrade as any);
-router.delete(`${ADMIN_BASE_API}/curriculums/grades/:id`, deleteAdminGrade as any);
-router.post(`${ADMIN_BASE_API}/curriculums/subjects`, createAdminSubject as any);
-router.patch(`${ADMIN_BASE_API}/curriculums/subjects/:id`, updateAdminSubject as any);
-router.delete(`${ADMIN_BASE_API}/curriculums/subjects/:id`, deleteAdminSubject as any);
-router.post(`${ADMIN_BASE_API}/curriculums/lessons`, createAdminLesson as any);
-router.patch(`${ADMIN_BASE_API}/curriculums/lessons/:id`, updateAdminLesson as any);
-router.delete(`${ADMIN_BASE_API}/curriculums/lessons/:id`, deleteAdminLesson as any);
-router.post(`${ADMIN_BASE_API}/curriculums/topics`, createAdminTopic as any);
-router.put(`${ADMIN_BASE_API}/curriculums/topics/:id`, updateAdminTopicComponent as any);
-router.patch(`${ADMIN_BASE_API}/curriculums/topics/:id`, updateAdminTopic as any);
-router.delete(`${ADMIN_BASE_API}/curriculums/topics/:id`, deleteAdminTopic as any);
+router.get(
+    `${ADMIN_BASE_API}/curriculums/dashboard`,
+    verifyFirebaseTokenAdmin as any,
+    getAdminCurriculumsDashboard as any
+);
+router.post(
+    `${ADMIN_BASE_API}/curriculums/grades`,
+    verifyFirebaseTokenAdmin as any,
+    createAdminGrade as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/curriculums/grades/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminGrade as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/curriculums/grades/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminGrade as any
+);
+router.post(
+    `${ADMIN_BASE_API}/curriculums/subjects`,
+    verifyFirebaseTokenAdmin as any,
+    createAdminSubject as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/curriculums/subjects/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminSubject as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/curriculums/subjects/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminSubject as any
+);
+router.post(
+    `${ADMIN_BASE_API}/curriculums/lessons`,
+    verifyFirebaseTokenAdmin as any,
+    createAdminLesson as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/curriculums/lessons/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminLesson as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/curriculums/lessons/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminLesson as any
+);
+router.post(
+    `${ADMIN_BASE_API}/curriculums/topics`,
+    verifyFirebaseTokenAdmin as any,
+    createAdminTopic as any
+);
+router.put(
+    `${ADMIN_BASE_API}/curriculums/topics/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminTopicComponent as any
+);
+router.patch(
+    `${ADMIN_BASE_API}/curriculums/topics/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminTopic as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/curriculums/topics/:id`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminTopic as any
+);
 
 // Database
-router.get(`${ADMIN_BASE_API}/database/dashboard`, getDatabaseDashboard as any);
-router.get(`${ADMIN_BASE_API}/database/schema`, getAdminSchemaData as any);
-router.get(`${ADMIN_BASE_API}/database/users`, getAdminDatabaseUsers as any);
-router.post(`${ADMIN_BASE_API}/database/users`, createAdminDatabaseUser as any);
-router.put(`${ADMIN_BASE_API}/database/users/:username`, updateAdminDatabaseUser as any);
-router.delete(`${ADMIN_BASE_API}/database/users/:username`, deleteAdminDatabaseUser as any);
-router.get(`${ADMIN_BASE_API}/database/roles`, getAdminDatabaseRoles as any);
-router.post(`${ADMIN_BASE_API}/database/roles`, createAdminDatabaseRole as any);
-router.put(`${ADMIN_BASE_API}/database/roles/:rolename`, updateAdminDatabaseRoleName as any);
-router.delete(`${ADMIN_BASE_API}/database/roles/:rolename`, deleteAdminDatabaseRole as any);
-router.put(`${ADMIN_BASE_API}/database/roles/:rolename/privileges`, updateAdminDatabaseRolePrivileges as any);
-router.put(`${ADMIN_BASE_API}/database/roles/:rolename/tables`, updateAdminDatabaseRoleTableAccess as any);
-router.get(`${ADMIN_BASE_API}/database/privileges`, getAdminDatabasePrivileges as any);
-router.get(`${ADMIN_BASE_API}/database/tables`, getAdminDatabaseTables as any);
-router.post(`${ADMIN_BASE_API}/database/console`, executeAdminDatabaseConsole as any);
+router.get(
+    `${ADMIN_BASE_API}/database/dashboard`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getDatabaseDashboard as any
+);
+router.get(
+    `${ADMIN_BASE_API}/database/schema`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAdminSchemaData as any
+);
+router.get(
+    `${ADMIN_BASE_API}/database/users`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminDatabaseUsers as any
+);
+router.post(
+    `${ADMIN_BASE_API}/database/users`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    createAdminDatabaseUser as any
+);
+router.put(
+    `${ADMIN_BASE_API}/database/users/:username`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminDatabaseUser as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/database/users/:username`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminDatabaseUser as any
+);
+router.get(
+    `${ADMIN_BASE_API}/database/roles`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminDatabaseRoles as any
+);
+router.post(
+    `${ADMIN_BASE_API}/database/roles`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    createAdminDatabaseRole as any
+);
+router.put(
+    `${ADMIN_BASE_API}/database/roles/:rolename`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminDatabaseRoleName as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/database/roles/:rolename`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallDeleteRateLimiter,
+    deleteAdminDatabaseRole as any
+);
+router.put(
+    `${ADMIN_BASE_API}/database/roles/:rolename/privileges`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminDatabaseRolePrivileges as any
+);
+router.put(
+    `${ADMIN_BASE_API}/database/roles/:rolename/tables`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallUpdateRateLimiter,
+    updateAdminDatabaseRoleTableAccess as any
+);
+router.get(
+    `${ADMIN_BASE_API}/database/privileges`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetSmallContentRateLimiter,
+    getAdminDatabasePrivileges as any
+);
+router.get(
+    `${ADMIN_BASE_API}/database/tables`,
+    verifyFirebaseTokenAdmin as any,
+    adminGetBigContentRateLimiter,
+    getAdminDatabaseTables as any
+);
+router.post(
+    `${ADMIN_BASE_API}/database/console`,
+    verifyFirebaseTokenAdmin as any,
+    adminSmallPostRateLimiter,
+    executeAdminDatabaseConsole as any
+);
 
 // Library
-router.get(`${ADMIN_BASE_API}/library/books`, getAdminAllBooks as any);
-router.post(`${ADMIN_BASE_API}/library/books`, createAdminBook as any);
-router.get(`${ADMIN_BASE_API}/library/books/:id`, getAdminBookById as any);
-router.put(`${ADMIN_BASE_API}/library/books/:id`, updateAdminBook as any);
-router.delete(`${ADMIN_BASE_API}/library/books/:id`, deleteAdminBook as any);
+router.get(
+    `${ADMIN_BASE_API}/library/books`,
+    verifyFirebaseTokenAdmin as any,
+    getAdminAllBooks as any
+);
+router.post(
+    `${ADMIN_BASE_API}/library/books`,
+    verifyFirebaseTokenAdmin as any,
+    createAdminBook as any
+);
+router.get(
+    `${ADMIN_BASE_API}/library/books/:id`,
+    verifyFirebaseTokenAdmin as any,
+    getAdminBookById as any
+);
+router.put(
+    `${ADMIN_BASE_API}/library/books/:id`,
+    verifyFirebaseTokenAdmin as any,
+    updateAdminBook as any
+);
+router.delete(
+    `${ADMIN_BASE_API}/library/books/:id`,
+    verifyFirebaseTokenAdmin as any,
+    deleteAdminBook as any
+);
 
 // Upload
-router.post(`${ADMIN_BASE_API}/upload/file`, uploadAdminFile as any);
+router.post(
+    `${ADMIN_BASE_API}/upload/file`,
+    verifyFirebaseTokenAdmin as any,
+    uploadAdminFile as any
+);
 
 export default router;
