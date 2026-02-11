@@ -122,6 +122,8 @@ import { unlikeForumReply } from "./api/v2/komplex/me/forums/[id]/comments/[id]/
 // import { getExerciseReport } from "./api/v2/komplex/me/exercises/[id]/report/get.js";
 // import { submitExercise } from "./api/v2/komplex/me/exercises/[id]/submit/post.js";
 
+// ! library routes not implemented
+
 // AI
 import { getAllAiGeneralTabs } from "./api/v2/komplex/me/ai/general/tabs/get.js";
 import { createAiGeneralTab } from "./api/v2/komplex/me/ai/general/tabs/post.js";
@@ -290,5 +292,231 @@ router.get(`${ME_AI_TOPICS_API}/:id`, getAiTopicHistory as any);
 router.post(`${ME_AI_TOPICS_API}/:id`, callAiTopic as any);
 router.delete(`${ME_AI_TOPICS_API}/:id`, deleteAiTopic as any);
 router.post(`${ME_AI_TOPICS_API}/rating/:id`, rateAiTopicResponse as any);
+
+// ============================================================================
+// Admin Routes
+// ============================================================================
+
+// Auth
+import { login } from "./api/v2/komplex-admin/auth/login/post.js";
+
+// Dashboard
+import { getDashboard } from "./api/v2/komplex-admin/dashboard/get.js";
+
+// Videos
+import { getAllVideos as getAllAdminVideos } from "./api/v2/komplex-admin/videos/get.js";
+import { getVideoById as getAdminVideoById } from "./api/v2/komplex-admin/videos/[id]/get.js";
+
+// Grades & Subjects
+import { getGrades as getAdminGrades } from "./api/v2/komplex-admin/grades/get.js";
+import { getSubjects as getAdminSubjects } from "./api/v2/komplex-admin/subjects/get.js";
+
+// Users
+import { getAllUsers } from "./api/v2/komplex-admin/users/get.js";
+import { getAllAdmins } from "./api/v2/komplex-admin/users/admins/get.js";
+import { createAdmin } from "./api/v2/komplex-admin/users/admins/post.js";
+import { updateAdmin } from "./api/v2/komplex-admin/users/admins/[id]/put.js";
+import { deleteAdmin } from "./api/v2/komplex-admin/users/admins/[id]/delete.js";
+
+// Forums
+import { getAllForums as getAllAdminForums } from "./api/v2/komplex-admin/forums/get.js";
+import { getForumById as getAdminForumById } from "./api/v2/komplex-admin/forums/[id]/get.js";
+import { updateForum as updateAdminForum } from "./api/v2/komplex-admin/forums/[id]/put.js";
+import { deleteForum as deleteAdminForum } from "./api/v2/komplex-admin/forums/[id]/delete.js";
+
+// News
+import { postNews } from "./api/v2/komplex-admin/news/post.js";
+import { updateNews } from "./api/v2/komplex-admin/news/[id]/put.js";
+import { deleteNews } from "./api/v2/komplex-admin/news/[id]/delete.js";
+
+// Exercises
+import { getExercises as getAdminExercises } from "./api/v2/komplex-admin/exercises/get.js";
+import { createExercise } from "./api/v2/komplex-admin/exercises/post.js";
+import { getExercise as getAdminExercise } from "./api/v2/komplex-admin/exercises/[id]/get.js";
+import { updateExercise } from "./api/v2/komplex-admin/exercises/[id]/put.js";
+import { deleteExercise } from "./api/v2/komplex-admin/exercises/[id]/delete.js";
+import { getExerciseDashboard } from "./api/v2/komplex-admin/exercises/dashboard/get.js";
+
+// Feedbacks
+import { getFeedbacks } from "./api/v2/komplex-admin/feedbacks/get.js";
+import { updateFeedbackStatus } from "./api/v2/komplex-admin/feedbacks/[id]/patch.js";
+
+// Forum Comments
+import { getAllCommentsForAForum as getAllAdminCommentsForAForum } from "./api/v2/komplex-admin/forum_comments/[id]/get.js";
+import { postForumComment as postAdminForumComment } from "./api/v2/komplex-admin/forum_comments/[id]/post.js";
+import { updateForumComment as updateAdminForumComment } from "./api/v2/komplex-admin/forum_comments/[id]/patch.js";
+import { likeForumComment as likeAdminForumComment } from "./api/v2/komplex-admin/forum_comments/[id]/like/post.js";
+import { unlikeForumComment as unlikeAdminForumComment } from "./api/v2/komplex-admin/forum_comments/[id]/unlike/delete.js";
+
+// Forum Replies
+import { getAllRepliesForAComment as getAllAdminRepliesForAComment } from "./api/v2/komplex-admin/forum_replies/[id]/get.js";
+import { postForumReply as postAdminForumReply } from "./api/v2/komplex-admin/forum_replies/[id]/post.js";
+import { updateForumReply as updateAdminForumReply } from "./api/v2/komplex-admin/forum_replies/[id]/patch.js";
+import { likeForumReply as likeAdminForumReply } from "./api/v2/komplex-admin/forum_replies/[id]/like/post.js";
+import { unlikeForumReply as unlikeAdminForumReply } from "./api/v2/komplex-admin/forum_replies/[id]/unlike/delete.js";
+
+// AI
+import { getAiDashboard as getAdminAiDashboard } from "./api/v2/komplex-admin/ai/dashboard/get.js";
+import { getGeneralAiDashboard as getAdminGeneralAiDashboard } from "./api/v2/komplex-admin/ai/general/dashboard/get.js";
+import { getGeneralAiResponses as getAdminGeneralAiResponses } from "./api/v2/komplex-admin/ai/general/get.js";
+import { getGeneralAiResponseById as getAdminGeneralAiResponseById } from "./api/v2/komplex-admin/ai/general/responses/[id]/get.js";
+import { getTopicAiDashboard as getAdminTopicAiDashboard } from "./api/v2/komplex-admin/ai/topics/dashboard/get.js";
+import { getTopicAiResponses as getAdminTopicAiResponses } from "./api/v2/komplex-admin/ai/topics/get.js";
+import { getTopicAiResponseById as getAdminTopicAiResponseById } from "./api/v2/komplex-admin/ai/topics/responses/[id]/get.js";
+
+// Curriculums
+import { getCurriculumsDashboard as getAdminCurriculumsDashboard } from "./api/v2/komplex-admin/curriculums/dashboard/get.js";
+import { createGrade as createAdminGrade } from "./api/v2/komplex-admin/curriculums/grades/post.js";
+import { updateGrade as updateAdminGrade } from "./api/v2/komplex-admin/curriculums/grades/[id]/patch.js";
+import { deleteGrade as deleteAdminGrade } from "./api/v2/komplex-admin/curriculums/grades/[id]/delete.js";
+import { createSubject as createAdminSubject } from "./api/v2/komplex-admin/curriculums/subjects/post.js";
+import { updateSubject as updateAdminSubject } from "./api/v2/komplex-admin/curriculums/subjects/[id]/patch.js";
+import { deleteSubject as deleteAdminSubject } from "./api/v2/komplex-admin/curriculums/subjects/[id]/delete.js";
+import { createLesson as createAdminLesson } from "./api/v2/komplex-admin/curriculums/lessons/post.js";
+import { updateLesson as updateAdminLesson } from "./api/v2/komplex-admin/curriculums/lessons/[id]/patch.js";
+import { deleteLesson as deleteAdminLesson } from "./api/v2/komplex-admin/curriculums/lessons/[id]/delete.js";
+import { createTopic as createAdminTopic } from "./api/v2/komplex-admin/curriculums/topics/post.js";
+import { updateTopicComponent as updateAdminTopicComponent } from "./api/v2/komplex-admin/curriculums/topics/[id]/put.js";
+import { updateTopic as updateAdminTopic } from "./api/v2/komplex-admin/curriculums/topics/[id]/patch.js";
+import { deleteTopic as deleteAdminTopic } from "./api/v2/komplex-admin/curriculums/topics/[id]/delete.js";
+
+// Database
+import { getDatabaseDashboard } from "./api/v2/komplex-admin/database/dashboard/get.js";
+import { getSchemaData as getAdminSchemaData } from "./api/v2/komplex-admin/database/schema/get.js";
+import { getUsers as getAdminDatabaseUsers } from "./api/v2/komplex-admin/database/users/get.js";
+import { createUser as createAdminDatabaseUser } from "./api/v2/komplex-admin/database/users/post.js";
+import { updateUser as updateAdminDatabaseUser } from "./api/v2/komplex-admin/database/users/[username]/put.js";
+import { deleteUser as deleteAdminDatabaseUser } from "./api/v2/komplex-admin/database/users/[username]/delete.js";
+import { getRoles as getAdminDatabaseRoles } from "./api/v2/komplex-admin/database/roles/get.js";
+import { createRole as createAdminDatabaseRole } from "./api/v2/komplex-admin/database/roles/post.js";
+import { updateRoleName as updateAdminDatabaseRoleName } from "./api/v2/komplex-admin/database/roles/[rolename]/put.js";
+import { deleteRole as deleteAdminDatabaseRole } from "./api/v2/komplex-admin/database/roles/[rolename]/delete.js";
+import { updateRolePrivileges as updateAdminDatabaseRolePrivileges } from "./api/v2/komplex-admin/database/roles/[rolename]/privileges/put.js";
+import { updateRoleTableAccess as updateAdminDatabaseRoleTableAccess } from "./api/v2/komplex-admin/database/roles/[rolename]/tables/put.js";
+import { getPrivileges as getAdminDatabasePrivileges } from "./api/v2/komplex-admin/database/privileges/get.js";
+import { getTables as getAdminDatabaseTables } from "./api/v2/komplex-admin/database/tables/get.js";
+import { executeConsoleCommand as executeAdminDatabaseConsole } from "./api/v2/komplex-admin/database/console/post.js";
+
+// Library
+import { getAllBooks as getAdminAllBooks } from "./api/v2/komplex-admin/library/books/get.js";
+import { createBook as createAdminBook } from "./api/v2/komplex-admin/library/books/post.js";
+import { getBookById as getAdminBookById } from "./api/v2/komplex-admin/library/books/[id]/get.js";
+import { updateBook as updateAdminBook } from "./api/v2/komplex-admin/library/books/[id]/put.js";
+import { deleteBook as deleteAdminBook } from "./api/v2/komplex-admin/library/books/[id]/delete.js";
+
+// Upload
+import { uploadFile as uploadAdminFile } from "./api/v2/komplex-admin/upload/file/post.js";
+
+const ADMIN_API = "/api/komplex-admin";
+
+// Auth
+router.post(`${ADMIN_API}/auth/login`, login as any);
+
+// Dashboard
+router.get(`${ADMIN_API}/dashboard`, getDashboard as any);
+
+// Videos
+router.get(`${ADMIN_API}/videos`, getAllAdminVideos as any);
+router.get(`${ADMIN_API}/videos/:id`, getAdminVideoById as any);
+
+// Grades & Subjects
+router.get(`${ADMIN_API}/grades`, getAdminGrades as any);
+router.get(`${ADMIN_API}/subjects`, getAdminSubjects as any);
+
+// Users
+router.get(`${ADMIN_API}/users`, getAllUsers as any);
+router.get(`${ADMIN_API}/users/admins`, getAllAdmins as any);
+router.post(`${ADMIN_API}/users/admins`, createAdmin as any);
+router.put(`${ADMIN_API}/users/admins/:id`, updateAdmin as any);
+router.delete(`${ADMIN_API}/users/admins/:id`, deleteAdmin as any);
+
+// Forums
+router.get(`${ADMIN_API}/forums`, getAllAdminForums as any);
+router.get(`${ADMIN_API}/forums/:id`, getAdminForumById as any);
+router.put(`${ADMIN_API}/forums/:id`, updateAdminForum as any);
+router.delete(`${ADMIN_API}/forums/:id`, deleteAdminForum as any);
+
+// News
+router.post(`${ADMIN_API}/news`, postNews as any);
+router.put(`${ADMIN_API}/news/:id`, updateNews as any);
+router.delete(`${ADMIN_API}/news/:id`, deleteNews as any);
+
+// Exercises
+router.get(`${ADMIN_API}/exercises`, getAdminExercises as any);
+router.post(`${ADMIN_API}/exercises`, createExercise as any);
+router.get(`${ADMIN_API}/exercises/:id`, getAdminExercise as any);
+router.put(`${ADMIN_API}/exercises/:id`, updateExercise as any);
+router.delete(`${ADMIN_API}/exercises/:id`, deleteExercise as any);
+router.get(`${ADMIN_API}/exercises/dashboard`, getExerciseDashboard as any);
+
+// Feedbacks
+router.get(`${ADMIN_API}/feedbacks`, getFeedbacks as any);
+router.patch(`${ADMIN_API}/feedbacks/:id`, updateFeedbackStatus as any);
+
+// Forum Comments
+router.get(`${ADMIN_API}/forum_comments/:id`, getAllAdminCommentsForAForum as any);
+router.post(`${ADMIN_API}/forum_comments/:id`, postAdminForumComment as any);
+router.patch(`${ADMIN_API}/forum_comments/:id`, updateAdminForumComment as any);
+router.post(`${ADMIN_API}/forum_comments/:id/like`, likeAdminForumComment as any);
+router.delete(`${ADMIN_API}/forum_comments/:id/unlike`, unlikeAdminForumComment as any);
+
+// Forum Replies
+router.get(`${ADMIN_API}/forum_replies/:id`, getAllAdminRepliesForAComment as any);
+router.post(`${ADMIN_API}/forum_replies/:id`, postAdminForumReply as any);
+router.patch(`${ADMIN_API}/forum_replies/:id`, updateAdminForumReply as any);
+router.post(`${ADMIN_API}/forum_replies/:id/like`, likeAdminForumReply as any);
+router.delete(`${ADMIN_API}/forum_replies/:id/unlike`, unlikeAdminForumReply as any);
+
+// AI
+router.get(`${ADMIN_API}/ai/dashboard`, getAdminAiDashboard as any);
+router.get(`${ADMIN_API}/ai/general/dashboard`, getAdminGeneralAiDashboard as any);
+router.get(`${ADMIN_API}/ai/general`, getAdminGeneralAiResponses as any);
+router.get(`${ADMIN_API}/ai/general/responses/:id`, getAdminGeneralAiResponseById as any);
+router.get(`${ADMIN_API}/ai/topics/dashboard`, getAdminTopicAiDashboard as any);
+router.get(`${ADMIN_API}/ai/topics`, getAdminTopicAiResponses as any);
+router.get(`${ADMIN_API}/ai/topics/responses/:id`, getAdminTopicAiResponseById as any);
+
+// Curriculums
+router.get(`${ADMIN_API}/curriculums/dashboard`, getAdminCurriculumsDashboard as any);
+router.post(`${ADMIN_API}/curriculums/grades`, createAdminGrade as any);
+router.patch(`${ADMIN_API}/curriculums/grades/:id`, updateAdminGrade as any);
+router.delete(`${ADMIN_API}/curriculums/grades/:id`, deleteAdminGrade as any);
+router.post(`${ADMIN_API}/curriculums/subjects`, createAdminSubject as any);
+router.patch(`${ADMIN_API}/curriculums/subjects/:id`, updateAdminSubject as any);
+router.delete(`${ADMIN_API}/curriculums/subjects/:id`, deleteAdminSubject as any);
+router.post(`${ADMIN_API}/curriculums/lessons`, createAdminLesson as any);
+router.patch(`${ADMIN_API}/curriculums/lessons/:id`, updateAdminLesson as any);
+router.delete(`${ADMIN_API}/curriculums/lessons/:id`, deleteAdminLesson as any);
+router.post(`${ADMIN_API}/curriculums/topics`, createAdminTopic as any);
+router.put(`${ADMIN_API}/curriculums/topics/:id`, updateAdminTopicComponent as any);
+router.patch(`${ADMIN_API}/curriculums/topics/:id`, updateAdminTopic as any);
+router.delete(`${ADMIN_API}/curriculums/topics/:id`, deleteAdminTopic as any);
+
+// Database
+router.get(`${ADMIN_API}/database/dashboard`, getDatabaseDashboard as any);
+router.get(`${ADMIN_API}/database/schema`, getAdminSchemaData as any);
+router.get(`${ADMIN_API}/database/users`, getAdminDatabaseUsers as any);
+router.post(`${ADMIN_API}/database/users`, createAdminDatabaseUser as any);
+router.put(`${ADMIN_API}/database/users/:username`, updateAdminDatabaseUser as any);
+router.delete(`${ADMIN_API}/database/users/:username`, deleteAdminDatabaseUser as any);
+router.get(`${ADMIN_API}/database/roles`, getAdminDatabaseRoles as any);
+router.post(`${ADMIN_API}/database/roles`, createAdminDatabaseRole as any);
+router.put(`${ADMIN_API}/database/roles/:rolename`, updateAdminDatabaseRoleName as any);
+router.delete(`${ADMIN_API}/database/roles/:rolename`, deleteAdminDatabaseRole as any);
+router.put(`${ADMIN_API}/database/roles/:rolename/privileges`, updateAdminDatabaseRolePrivileges as any);
+router.put(`${ADMIN_API}/database/roles/:rolename/tables`, updateAdminDatabaseRoleTableAccess as any);
+router.get(`${ADMIN_API}/database/privileges`, getAdminDatabasePrivileges as any);
+router.get(`${ADMIN_API}/database/tables`, getAdminDatabaseTables as any);
+router.post(`${ADMIN_API}/database/console`, executeAdminDatabaseConsole as any);
+
+// Library
+router.get(`${ADMIN_API}/library/books`, getAdminAllBooks as any);
+router.post(`${ADMIN_API}/library/books`, createAdminBook as any);
+router.get(`${ADMIN_API}/library/books/:id`, getAdminBookById as any);
+router.put(`${ADMIN_API}/library/books/:id`, updateAdminBook as any);
+router.delete(`${ADMIN_API}/library/books/:id`, deleteAdminBook as any);
+
+// Upload
+router.post(`${ADMIN_API}/upload/file`, uploadAdminFile as any);
 
 export default router;
