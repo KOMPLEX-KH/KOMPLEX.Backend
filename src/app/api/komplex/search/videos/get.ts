@@ -5,7 +5,7 @@ import { db } from "@/db/index.js";
 import { videos } from "@/db/models/videos.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedVideos, videoLikes } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export const searchVideos = async (

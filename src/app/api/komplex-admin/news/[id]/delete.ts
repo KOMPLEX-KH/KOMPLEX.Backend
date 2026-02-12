@@ -6,7 +6,7 @@ import { db } from "@/db/index.js";
 import { news, newsMedia, userSavedNews } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 
 export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
   try {

@@ -14,7 +14,7 @@ import {
   userVideoHistory,
 } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { deleteVideoCommentInternal } from "./comments/[id]/delete.js";
 

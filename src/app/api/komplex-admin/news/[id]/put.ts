@@ -9,7 +9,7 @@ import {
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 
 export const updateNews = async (req: AuthenticatedRequest, res: Response) => {

@@ -6,7 +6,7 @@ import { newsMedia } from "@/db/models/news_medias.js";
 import { news } from "@/db/models/news.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedNews } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export const searchNews = async (

@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { newsMedia } from "@/db/models/news_medias.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 
 export const postNews = async (req: AuthenticatedRequest, res: Response) => {
@@ -38,9 +38,8 @@ export const postNews = async (req: AuthenticatedRequest, res: Response) => {
     if (req.files) {
       for (const file of req.files as Express.Multer.File[]) {
         try {
-          const uniqueKey = `${newNews.id}-${crypto.randomUUID()}-${
-            file.originalname
-          }`;
+          const uniqueKey = `${newNews.id}-${crypto.randomUUID()}-${file.originalname
+            }`;
           const url = await uploadImageToCloudflare(
             uniqueKey,
             file.buffer,

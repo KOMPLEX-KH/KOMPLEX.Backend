@@ -5,7 +5,7 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { forums, forumMedias, users } from "@/db/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import crypto from "crypto";
 
@@ -40,9 +40,8 @@ export const postForum = async (
     if (files) {
       for (const file of files) {
         try {
-          const uniqueKey = `${newForum.id}-${crypto.randomUUID()}-${
-            file.originalname
-          }`;
+          const uniqueKey = `${newForum.id}-${crypto.randomUUID()}-${file.originalname
+            }`;
           const url = await uploadImageToCloudflare(
             uniqueKey,
             file.buffer,

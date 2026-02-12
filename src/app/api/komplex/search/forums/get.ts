@@ -6,7 +6,7 @@ import { forumMedias } from "@/db/models/forum_medias.js";
 import { forums } from "@/db/models/forums.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { followers, forumLikes, users } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 export const searchForums = async (req: AuthenticatedRequest, res: Response) => {

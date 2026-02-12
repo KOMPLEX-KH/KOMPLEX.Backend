@@ -10,7 +10,7 @@ import {
   forumReplies,
 } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { deleteReply } from "./comments/[id]/replies/[id]/delete.js";
 import { deleteComment } from "./comments/[id]/delete.js";

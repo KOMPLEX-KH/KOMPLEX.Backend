@@ -13,7 +13,7 @@ import {
   choices,
 } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 
 export const updateVideo = async (
@@ -50,7 +50,7 @@ export const updateVideo = async (
         if (video.videoUrlForDeletion) {
           await deleteFromCloudflare("komplex-video", video.videoUrlForDeletion);
         }
-      } catch {}
+      } catch { }
       updateData.videoUrl = `${process.env.R2_VIDEO_PUBLIC_URL}/${videoKey}`;
       updateData.videoUrlForDeletion = videoKey;
     }
@@ -63,7 +63,7 @@ export const updateVideo = async (
             video.thumbnailUrlForDeletion
           );
         }
-      } catch {}
+      } catch { }
       updateData.thumbnailUrl = `${process.env.R2_PHOTO_PUBLIC_URL}/${thumbnailKey}`;
       updateData.thumbnailUrlForDeletion = thumbnailKey;
     }

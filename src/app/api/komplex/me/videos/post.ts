@@ -10,7 +10,7 @@ import {
   questions as questionsTable,
   choices,
 } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 
 export const postVideo = async (
