@@ -11,10 +11,40 @@ import {
   videoReplies,
 } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGetVideosQuerySchema = z
+  .object({
+    page: z.string().optional(),
+  })
+  .openapi("AdminGetVideosQuery");
+
+export const AdminVideoWithStatsSchema = z
+  .object({
+    id: z.number(),
+    title: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    viewCount: z.number(),
+    duration: z.number(),
+    videoUrl: z.string().nullable().optional(),
+    thumbnailUrl: z.string().nullable().optional(),
+    likeCount: z.number(),
+    commentCount: z.number(),
+    replyCount: z.number(),
+    saveCount: z.number(),
+    username: z.string().nullable().optional(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  })
+  .openapi("AdminVideoWithStatsItem");
+
+export const AdminGetVideosResponseSchema = z
+  .array(AdminVideoWithStatsSchema)
+  .openapi("AdminGetVideosResponse");
 
 export const getAllVideos = async (req: Request, res: Response) => {
   try {
-    const { page } = req.query;
+    const { page } = await AdminGetVideosQuerySchema.parseAsync(req.query);
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
@@ -156,7 +186,9 @@ export const getAllVideos = async (req: Request, res: Response) => {
       })
     );
 
-    return res.status(200).json(videosWithStats);
+    const responseBody = AdminGetVideosResponseSchema.parse(videosWithStats);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

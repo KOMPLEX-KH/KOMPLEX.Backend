@@ -4,15 +4,27 @@ import { db } from "@/db/index.js";
 import { grades } from "@/db/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateGradeParamsSchema = z.object({
+  id: z.number(),
+}).openapi("UpdateGradeParams");
+
+export const UpdateGradeBodySchema = z.object({
+  id: z.number(),
+  newName: z.string(),
+  orderIndex: z.number().optional(),
+  insertType: z.string().optional(),
+}).openapi("UpdateGradeBody");
+
+export const UpdateGradeResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateGradeResponse");
 
 export const updateGrade = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { newName, orderIndex, insertType } = req.body as {
-      newName: string;
-      orderIndex?: number;
-      insertType?: string;
-    };
+    const { id } = await UpdateGradeParamsSchema.parseAsync(req.params);
+    const { newName, orderIndex, insertType } = await UpdateGradeBodySchema.parseAsync(req.body);
 
     if (!newName) {
       throw new ResponseError("Missing required fields", 400);
@@ -67,7 +79,7 @@ export const updateGrade = async (req: Request, res: Response) => {
     await redis.del("curriculums:dashboard");
     await redis.del("allGrades");
 
-    return res.status(200).json({ message: "grade updated successfully" });
+    return res.status(200).json(UpdateGradeResponseSchema.parse({ message: "grade updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

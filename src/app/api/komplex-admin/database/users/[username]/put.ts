@@ -2,19 +2,26 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateUserParamsSchema = z.object({
+  username: z.string(),
+}).openapi("UpdateUserParams");
+
+export const UpdateUserBodySchema = z.object({
+  username: z.string(),
+  password: z.string().optional(),
+  role: z.string().optional(),
+}).openapi("UpdateUserBody");
+
+export const UpdateUserResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateUserResponse");
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const { username } = req.params;
-    const { username: newUsername, password, role } = req.body as {
-      username?: string;
-      password?: string;
-      role?: string;
-    };
-
-    if (!username) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+    const { username } = await UpdateUserParamsSchema.parseAsync(req.params);
+    const { username: newUsername, password, role } = await UpdateUserBodySchema.parseAsync(req.body);
 
     if (password !== undefined && password !== "") {
       await db.execute(
@@ -52,7 +59,7 @@ export const updateUser = async (req: Request, res: Response) => {
       );
     }
 
-    return res.status(200).json({ message: "User updated successfully" });
+    return res.status(200).json(UpdateUserResponseSchema.parse({ message: "User updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -3,10 +3,21 @@ import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { forums } from "@/db/schema.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGetForumByIdParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminGetForumByIdParams");
+
+export const AdminGetForumByIdResponseSchema = z
+  .any()
+  .openapi("AdminGetForumByIdResponse");
 
 export const getForumById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await AdminGetForumByIdParamsSchema.parseAsync(req.params);
 
     const forum = await db
       .select()
@@ -27,7 +38,9 @@ export const getForumById = async (req: Request, res: Response) => {
       .where(eq(forums.id, Number(id)))
       .returning();
 
-    return res.status(200).json(forum[0]);
+    const responseBody = AdminGetForumByIdResponseSchema.parse(forum[0]);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

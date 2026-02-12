@@ -2,22 +2,28 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
-interface DashboardData {
-  numOfUsers: number;
-  numOfRoles: number;
-  databaseSize: string;
-  totalBackups: number;
-  numOfTables: number;
-  numOfViews: number;
-  numOfIndexes: number;
-  numOfTriggers: number;
-  recentActivities: any[];
-}
+export const DatabaseDashboardResponseSchema = z.object({
+  numOfUsers: z.number(),
+  numOfRoles: z.number(),
+  databaseSize: z.string(),
+  totalBackups: z.number(),
+  numOfTables: z.number(),
+  numOfViews: z.number(),
+  numOfIndexes: z.number(),
+  numOfTriggers: z.number(),
+  recentActivities: z.array(z.object({
+    usename: z.string(),
+    ip: z.string(),
+    status: z.string(),
+    backend_start: z.date(),
+  })),
+}).openapi("DatabaseDashboardResponse");
 
 export const getDatabaseDashboard = async (req: Request, res: Response) => {
   try {
-    let data: DashboardData = {
+    let data = {
       numOfUsers: 0,
       numOfRoles: 0,
       databaseSize: "0 MB",
@@ -89,10 +95,10 @@ export const getDatabaseDashboard = async (req: Request, res: Response) => {
       numOfViews,
       numOfIndexes,
       numOfTriggers,
-      recentActivities,
+      recentActivities: recentActivities as any,
     };
 
-    return res.status(200).json(data);
+    return res.status(200).json(DatabaseDashboardResponseSchema.parse(data));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

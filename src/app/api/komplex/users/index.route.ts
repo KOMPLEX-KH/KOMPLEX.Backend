@@ -5,9 +5,11 @@ import {
     getVideoRateLimiter,
     getBigContentRateLimiter,
 } from "@/middleware/rateLimiter.js";
-import { getUserProfile } from "../users/[id]/profile/get.js";
-import { getUserVideos } from "../users/[id]/videos/get.js";
-import { getUserForums } from "../users/[id]/forums/get.js";
+import { getUserProfile, UserProfileResponseSchema } from "../users/[id]/profile/get.js";
+import { getUserVideos, UserVideosResponseSchema } from "../users/[id]/videos/get.js";
+import { getUserForums, UserForumsResponseSchema } from "../users/[id]/forums/get.js";
+import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
 
 const router = Router();
 
@@ -32,5 +34,56 @@ router.get(
     getBigContentRateLimiter,
     getUserForums as any
 );
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/users/:id/profile",
+    summary: "Get user profile",
+    tag: "Users",
+    responses: {
+        200: {
+            description: "User profile retrieved successfully",
+            schema: getResponseSuccessSchema(UserProfileResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/users/:id/videos",
+    summary: "Get user videos",
+    tag: "Users",
+    responses: {
+        200: {
+            description: "User videos retrieved successfully",
+            schema: getResponseSuccessSchema(UserVideosResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/users/:id/forums",
+    summary: "Get user forums",
+    tag: "Users",
+    responses: {
+        200: {
+            description: "User forums retrieved successfully",
+            schema: getResponseSuccessSchema(UserForumsResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
 
 export default router;

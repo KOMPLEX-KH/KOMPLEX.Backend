@@ -4,8 +4,16 @@ import { db } from "@/db/index.js";
 import { books } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+import { AdminBookItemSchema } from "../get.js";
 
 const BOOK_CACHE_PREFIX = "book:";
+
+export const AdminBookByIdResponseSchema = z
+  .object({
+    data: AdminBookItemSchema,
+  })
+  .openapi("AdminBookByIdResponse");
 
 export const getBookById = async (req: Request, res: Response) => {
   try {
@@ -17,7 +25,10 @@ export const getBookById = async (req: Request, res: Response) => {
     const cacheKey = `${BOOK_CACHE_PREFIX}${id}`;
     const cached = await redis.get(cacheKey);
     if (cached) {
-      return res.status(200).json({ data: JSON.parse(cached) });
+      const responseBody = AdminBookByIdResponseSchema.parse({
+        data: JSON.parse(cached),
+      });
+      return res.status(200).json(responseBody);
     }
 
     const result = await db
@@ -30,7 +41,12 @@ export const getBookById = async (req: Request, res: Response) => {
     }
 
     await redis.set(cacheKey, JSON.stringify(result[0]), { EX: 60 * 60 });
-    return res.status(200).json({ data: result[0] });
+
+    const responseBody = AdminBookByIdResponseSchema.parse({
+      data: result[0],
+    });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -10,14 +10,29 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminPostNewsBodySchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    type: z.string().optional(),
+    topic: z.string().optional(),
+  })
+  .openapi("AdminPostNewsBody");
+
+export const AdminPostNewsResponseSchema = z
+  .object({
+    success: z.literal(true),
+    newNews: z.any(),
+    newNewsMedia: z.array(z.any()),
+  })
+  .openapi("AdminPostNewsResponse");
+
 export const postNews = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user.userId;
-    const { title, description, type, topic } = req.body;
-
-    if (!userId || !title || !description) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+    const { title, description, type, topic } = await AdminPostNewsBodySchema.parseAsync(req.body);
 
     const [newNews] = await db
       .insert(news)
@@ -105,7 +120,7 @@ export const postNews = async (req: AuthenticatedRequest, res: Response) => {
     await redis.set(redisKey, JSON.stringify(newsWithMedia), { EX: 600 });
     await redis.del(`dashboardData:${userId}`);
 
-    return res.status(201).json({ success: true, newNews, newNewsMedia });
+    return res.status(201).json(AdminPostNewsResponseSchema.parse({ success: true, newNews, newNewsMedia }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -8,18 +8,18 @@ import {
     adminSmallDeleteRateLimiter,
 } from "@/middleware/rateLimiter.js";
 import { getDatabaseDashboard } from "../database/dashboard/get.js";
-import { getSchemaData as getAdminSchemaData } from "../database/schema/get.js";
+import { GetSchemaData as getAdminSchemaData } from "../database/schema/get.js";
 import { getUsers as getAdminDatabaseUsers } from "../database/users/get.js";
 import { createUser as createAdminDatabaseUser } from "../database/users/post.js";
 import { updateUser as updateAdminDatabaseUser } from "../database/users/[username]/put.js";
 import { deleteUser as deleteAdminDatabaseUser } from "../database/users/[username]/delete.js";
-import { getRoles as getAdminDatabaseRoles } from "../database/roles/get.js";
-import { createRole as createAdminDatabaseRole } from "../database/roles/post.js";
+import { GetRoles as getAdminDatabaseRoles } from "../database/roles/get.js";
+import { CreateRole as createAdminDatabaseRole } from "../database/roles/post.js";
 import { updateRoleName as updateAdminDatabaseRoleName } from "../database/roles/[rolename]/put.js";
 import { deleteRole as deleteAdminDatabaseRole } from "../database/roles/[rolename]/delete.js";
 import { updateRolePrivileges as updateAdminDatabaseRolePrivileges } from "../database/roles/[rolename]/privileges/put.js";
 import { updateRoleTableAccess as updateAdminDatabaseRoleTableAccess } from "../database/roles/[rolename]/tables/put.js";
-import { getPrivileges as getAdminDatabasePrivileges } from "../database/privileges/get.js";
+import { GetPrivileges as getAdminDatabasePrivileges } from "../database/privileges/get.js";
 import { getTables as getAdminDatabaseTables } from "../database/tables/get.js";
 import { executeConsoleCommand as executeAdminDatabaseConsole } from "../database/console/post.js";
 

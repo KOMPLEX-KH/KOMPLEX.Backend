@@ -10,6 +10,34 @@ import {
   uploadImageToCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateForumCommentParamsSchema = z.object({
+  id: z.string(),
+}).openapi("UpdateForumCommentParams");
+
+export const UpdateForumCommentBodySchema = z.object({
+  description: z.string(),
+  photosToRemove: z.string().optional(),
+}).openapi("UpdateForumCommentBody");
+
+export const UpdateForumCommentResponseSchema = z.object({
+  updateComment: z.object({
+    id: z.number(),
+    userId: z.number(),
+    forumId: z.number(),
+    description: z.string(),
+  }),
+  newCommentMedia: z.array(z.object({
+    id: z.number(),
+    url: z.string(),
+    urlForDeletion: z.string(),
+    mediaType: z.string(),
+  })),
+  deleteMedia: z.array(z.object({
+    id: z.number(),
+  })),
+}).openapi("UpdateForumCommentResponseSchema");
 
 export const updateForumComment = async (
   req: AuthenticatedRequest,
@@ -17,8 +45,8 @@ export const updateForumComment = async (
 ) => {
   try {
     const { userId } = req.user;
-    const { id } = req.params;
-    const { description, photosToRemove } = req.body;
+    const { id } = await UpdateForumCommentParamsSchema.parseAsync(req.params);
+    const { description, photosToRemove } = await UpdateForumCommentBodySchema.parseAsync(req.body);
 
     const doesUserOwnThisComment = await db
       .select()
@@ -112,11 +140,16 @@ export const updateForumComment = async (
       .where(eq(forumComments.id, Number(id)))
       .returning();
 
-    return res.status(200).json({
-      updateComment,
+    return res.status(200).json(UpdateForumCommentResponseSchema.parse({
+      updateComment: {
+        id: updateComment.id,
+        userId: updateComment.userId,
+        forumId: updateComment.forumId,
+        description: updateComment.description,
+      },
       newCommentMedia,
       deleteMedia,
-    });
+    }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

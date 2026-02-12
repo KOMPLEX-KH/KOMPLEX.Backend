@@ -3,6 +3,17 @@ import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { userAIHistory, userAITopicHistory } from "@/db/schema.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AiDashboardResponseSchema = z.object({
+  totalPrompts: z.number(),
+  averagePromptsPerUser: z.number(),
+  averageRating: z.number().nullable(),
+  responseTypeDistribution: z.object({
+    normal: z.number(),
+    komplex: z.number(),
+  }),
+}).openapi("AiDashboardResponse");
 
 export const getAiDashboard = async (req: Request, res: Response) => {
   try {
@@ -93,7 +104,7 @@ export const getAiDashboard = async (req: Request, res: Response) => {
     });
 
     return res.status(200).json({
-      data: {
+      data: AiDashboardResponseSchema.parse({
         totalPrompts,
         averagePromptsPerUser:
           Math.round(averagePromptsPerUser * 100) / 100,
@@ -106,7 +117,7 @@ export const getAiDashboard = async (req: Request, res: Response) => {
           komplex:
             Math.round(responseTypeDistribution.komplex * 100) / 100,
         },
-      },
+      }),
     });
   } catch (error) {
     return getResponseError(res, error as Error);

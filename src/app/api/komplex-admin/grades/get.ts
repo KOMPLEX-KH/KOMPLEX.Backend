@@ -3,13 +3,22 @@ import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { grades } from "@/db/schema.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGradesResponseSchema = z
+  .object({
+    grade: z.string(),
+  })
+  .array()
+  .openapi("AdminGradesResponse");
 
 export const getGrades = async (req: Request, res: Response) => {
   try {
     const cacheKey = `allGrades`;
     const cacheData = await redis.get(cacheKey);
     if (cacheData) {
-      return res.status(200).json(JSON.parse(cacheData));
+      const parsed = AdminGradesResponseSchema.parse(JSON.parse(cacheData));
+      return res.status(200).json(parsed);
     }
 
     const result = await db
@@ -18,8 +27,9 @@ export const getGrades = async (req: Request, res: Response) => {
       })
       .from(grades);
 
-    await redis.set(cacheKey, JSON.stringify(result), { EX: 60 * 60 * 24 });
-    return res.status(200).json(result);
+    const parsed = AdminGradesResponseSchema.parse(result);
+    await redis.set(cacheKey, JSON.stringify(parsed), { EX: 60 * 60 * 24 });
+    return res.status(200).json(parsed);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

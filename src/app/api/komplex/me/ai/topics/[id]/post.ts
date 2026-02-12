@@ -7,6 +7,33 @@ import { topics, userAITopicHistory } from "@/db/schema.js";
 import { eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeCallAiTopicParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeCallAiTopicParams");
+
+export const MeCallAiTopicBodySchema = z
+  .object({
+    prompt: z.string(),
+    responseType: z.string(),
+  })
+  .openapi("MeCallAiTopicBody");
+
+export const MeCallAiTopicResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      prompt: z.string(),
+      responseType: z.string(),
+      aiResult: z.string(),
+      id: z.number(),
+    }),
+  })
+  .openapi("MeCallAiTopicResponse");
 
 export const callAiTopic = async (
   req: AuthenticatedRequest,
@@ -14,12 +41,9 @@ export const callAiTopic = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { prompt, responseType } = req.body;
-    const { id } = req.params;
-
-    if (!prompt) {
-      return getResponseError(res, new ResponseError("Prompt is required", 400));
-    }
+    const { prompt, responseType } =
+      await MeCallAiTopicBodySchema.parseAsync(req.body);
+    const { id } = await MeCallAiTopicParamsSchema.parseAsync(req.params);
 
     const result = await callAiTopicAndWriteToTopicHistory(
       prompt,
@@ -27,11 +51,12 @@ export const callAiTopic = async (
       Number(userId),
       id
     );
-    return res.status(200).json({
+    const responseBody = MeCallAiTopicResponseSchema.parse({
       success: true,
       message: "AI topic called successfully",
       data: result,
     });
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

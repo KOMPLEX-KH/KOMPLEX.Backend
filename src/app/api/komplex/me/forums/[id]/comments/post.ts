@@ -7,6 +7,41 @@ import { forumComments, forumCommentMedias, users } from "@/db/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostForumCommentParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MePostForumCommentParams");
+
+export const MePostForumCommentBodySchema = z
+  .object({
+    description: z.string(),
+  })
+  .openapi("MePostForumCommentBody");
+
+export const MePostForumCommentResponseSchema = z
+  .object({
+    data: z.object({
+      id: z.number(),
+      userId: z.number(),
+      description: z.string(),
+      createdAt: z.date(),
+      updatedAt: z.date(),
+      username: z.string(),
+      profileImage: z.string().nullable().optional(),
+      isSave: z.boolean(),
+      media: z.array(
+        z.object({
+          url: z.string(),
+          type: z.string(),
+        })
+      ),
+    }),
+    success: z.literal(true),
+  })
+  .openapi("MePostForumCommentResponse");
 
 export const postForumComment = async (
   req: AuthenticatedRequest,
@@ -14,13 +49,15 @@ export const postForumComment = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
-    const { description } = req.body;
+    const { id } = await MePostForumCommentParamsSchema.parseAsync(req.params);
+    const { description } = await MePostForumCommentBodySchema.parseAsync(
+      req.body
+    );
     const files = req.files as Express.Multer.File[] | undefined;
     const limit = 40;
 
-    if (!userId || !id || !description) {
-      throw new ResponseError("Missing required fields", 400);
+    if (!userId) {
+      throw new ResponseError("Missing required user", 400);
     }
 
     const [newForumComment] = await db
@@ -121,10 +158,12 @@ export const postForumComment = async (
       }
     );
 
-    return res.status(201).json({
+    const responseBody = MePostForumCommentResponseSchema.parse({
       data: forumCommentWithMedia,
       success: true,
     });
+
+    return res.status(201).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

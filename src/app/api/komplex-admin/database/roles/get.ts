@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
 interface TablePrivileges {
   name: string;
@@ -13,7 +14,17 @@ interface RolesData {
   tables: TablePrivileges[];
 }
 
-export const getRoles = async (req: Request, res: Response) => {
+export const GetRolesResponseSchema = z.object({
+  roles: z.array(z.object({
+    role: z.string(),
+    tables: z.array(z.object({
+      name: z.string(),
+      privileges: z.array(z.string()),
+    })),
+  })),
+}).openapi("GetRolesResponse");
+
+export const GetRoles = async (req: Request, res: Response) => {
   try {
     const data: RolesData[] = [];
 
@@ -60,7 +71,7 @@ export const getRoles = async (req: Request, res: Response) => {
 
     data.push(...Array.from(roleMap.values()));
 
-    return res.status(200).json(data);
+    return res.status(200).json(GetRolesResponseSchema.parse(data));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

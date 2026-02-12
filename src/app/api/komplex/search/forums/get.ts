@@ -8,6 +8,37 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { followers, forumLikes, users } from "@/db/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const ForumSearchMediaSchema = z.object({
+  url: z.string(),
+  type: z.string(),
+});
+
+const ForumSearchItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  media: z.array(ForumSearchMediaSchema),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+});
+
+export const SearchForumsResponseSchema = z
+  .object({
+    data: z.array(ForumSearchItemSchema),
+    hasMore: z.boolean(),
+    isMatch: z.boolean(),
+  })
+  .openapi("SearchForumsResponse");
 
 export const searchForums = async (req: AuthenticatedRequest, res: Response) => {
   try {

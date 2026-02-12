@@ -12,6 +12,36 @@ import {
 } from "@/db/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostVideoQuestionChoiceSchema = z.object({
+  text: z.string(),
+  isCorrect: z.boolean(),
+});
+
+export const MePostVideoQuestionSchema = z.object({
+  title: z.string(),
+  choices: z.array(MePostVideoQuestionChoiceSchema),
+});
+
+export const MePostVideoBodySchema = z
+  .object({
+    videoKey: z.string(),
+    title: z.string(),
+    description: z.string(),
+    topic: z.string().optional(),
+    type: z.string().optional(),
+    thumbnailKey: z.string(),
+    duration: z.number().optional(),
+    questions: z.array(MePostVideoQuestionSchema).optional(),
+  })
+  .openapi("MePostVideoBody");
+
+export const MePostVideoResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+  })
+  .openapi("MePostVideoResponse");
 
 export const postVideo = async (
   req: AuthenticatedRequest,
@@ -28,10 +58,10 @@ export const postVideo = async (
       thumbnailKey,
       duration,
       questions,
-    } = req.body;
+    } = await MePostVideoBodySchema.parseAsync(req.body);
 
-    if (!userId || !videoKey || !title || !description) {
-      throw new ResponseError("Missing required fields", 400);
+    if (!userId) {
+      throw new ResponseError("Missing required user", 400);
     }
 
     const videoUrl = `${process.env.R2_VIDEO_PUBLIC_URL}/${videoKey}`;
@@ -186,9 +216,11 @@ export const postVideo = async (
       await redis.del(myVideoKeys);
     }
 
-    return res.status(201).json({
+    const responseBody = MePostVideoResponseSchema.parse({
       data: newVideo,
     });
+
+    return res.status(201).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

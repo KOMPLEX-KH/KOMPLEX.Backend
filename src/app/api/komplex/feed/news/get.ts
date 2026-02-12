@@ -12,6 +12,37 @@ import {
 } from "@/db/schema.js";
 import { ResponseError } from "@/utils/responseError.js";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+const FeedNewsMediaSchema = z.object({
+  url: z.string(),
+  type: z.string(),
+});
+
+const FeedNewsItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  media: z.array(FeedNewsMediaSchema),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  isSaved: z.boolean(),
+  isFollowing: z.boolean(),
+});
+
+export const FeedNewsResponseSchema = z
+  .object({
+    data: z.array(FeedNewsItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("FeedNewsResponse");
 
 export const getAllNews = async (
   req: AuthenticatedRequest,
@@ -84,7 +115,11 @@ export const getAllNews = async (
     );
 
     if (!newsIdRows.length) {
-      return res.status(200).json({ data: [], hasMore: false });
+      const emptyBody = FeedNewsResponseSchema.parse({
+        data: [],
+        hasMore: false,
+      });
+      return res.status(200).json(emptyBody);
     }
 
     const cachedResults = (await redis.mGet(
@@ -216,10 +251,12 @@ export const getAllNews = async (
       isFollowing: newsUserIdRows.some((b) => b.userId === newsItem.userId),
     }));
 
-    return res.status(200).json({
+    const responseBody = FeedNewsResponseSchema.parse({
       data: newsWithMediaAndIsFollowing,
       hasMore: allNews.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -5,21 +5,43 @@ import { db } from "@/db/index.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import { ResponseError } from "@/utils/responseError.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeRateAiTopicParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeRateAiTopicParams");
+
+export const MeRateAiTopicBodySchema = z
+  .object({
+    rating: z.number(),
+    ratingFeedback: z.string().optional(),
+  })
+  .openapi("MeRateAiTopicBody");
+
+export const MeRateAiTopicResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+  })
+  .openapi("MeRateAiTopicResponse");
 
 export const rateAiTopicResponse = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
-    const { rating, ratingFeedback } = req.body;
+    const { id } = await MeRateAiTopicParamsSchema.parseAsync(req.params);
+    const { rating, ratingFeedback } =
+      await MeRateAiTopicBodySchema.parseAsync(req.body);
 
     const result = await rateAiTopicResponseInternal(
       id,
       Number(rating),
-      ratingFeedback
+      ratingFeedback ?? ""
     );
-    return res.status(200).json(result);
+    const responseBody = MeRateAiTopicResponseSchema.parse(result);
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

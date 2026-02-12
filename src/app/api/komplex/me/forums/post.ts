@@ -8,6 +8,26 @@ import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostForumBodySchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    type: z.string().optional(),
+    topic: z.string().optional(),
+  })
+  .openapi("MePostForumBody");
+
+export const MePostForumResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+      newForum: z.any(),
+      newForumMedia: z.array(z.any()),
+    }),
+  })
+  .openapi("MePostForumResponse");
 
 export const postForum = async (
   req: AuthenticatedRequest,
@@ -15,11 +35,12 @@ export const postForum = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { title, description, type, topic } = req.body;
+    const { title, description, type, topic } =
+      await MePostForumBodySchema.parseAsync(req.body);
     const files = req.files as Express.Multer.File[] | undefined;
 
-    if (!userId || !title || !description) {
-      throw new ResponseError("Missing required fields", 400);
+    if (!userId) {
+      throw new ResponseError("Missing required user", 400);
     }
 
     const [newForum] = await db
@@ -106,9 +127,11 @@ export const postForum = async (
       await redis.del(myForumKeys);
     }
 
-    return res.status(201).json({
+    const responseBody = MePostForumResponseSchema.parse({
       data: { success: true, newForum, newForumMedia },
     });
+
+    return res.status(201).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

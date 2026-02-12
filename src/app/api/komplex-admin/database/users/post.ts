@@ -2,20 +2,21 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
-interface CreateUserBody {
-  username: string;
-  password: string;
-  role?: string;
-}
+export const CreateUserBodySchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  role: z.string().optional(),
+}).openapi("CreateUserBody");
+
+export const CreateUserResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateUserResponse");
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const { username, password, role }: CreateUserBody = req.body;
-
-    if (!username || !password) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+    const { username, password, role } = await CreateUserBodySchema.parseAsync(req.body);
 
     const restrictedUsernames = [
       "michael",
@@ -43,7 +44,7 @@ export const createUser = async (req: Request, res: Response) => {
       );
     }
 
-    return res.status(201).json({ message: "User created successfully" });
+    return res.status(201).json(CreateUserResponseSchema.parse({ message: "User created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

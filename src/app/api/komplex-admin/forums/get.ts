@@ -13,13 +13,49 @@ import {
 } from "@/db/schema.js";
 import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
 import { forumReplyMedias } from "@/db/models/forum_reply_media.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGetForumsQuerySchema = z
+  .object({
+    type: z.string().optional(),
+    topic: z.string().optional(),
+  })
+  .openapi("AdminGetForumsQuery");
+
+export const AdminForumItemSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  description: z.string(),
+  type: z.string().nullable().optional(),
+  topic: z.string().nullable().optional(),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  commentCount: z.number(),
+  replyCount: z.number(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string().nullable().optional(),
+  media: z.array(
+    z.object({
+      id: z.number(),
+      url: z.string().nullable().optional(),
+      mediaType: z.string().nullable().optional(),
+    })
+  ),
+});
+
+export const AdminGetForumsResponseSchema = z
+  .array(AdminForumItemSchema)
+  .openapi("AdminGetForumsResponse");
 
 export const getAllForums = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { type, topic } = req.query;
+    const { type, topic } = await AdminGetForumsQuerySchema.parseAsync(
+      req.query
+    );
 
     const conditions = [];
     if (type) conditions.push(eq(forums.type, type as string));
@@ -90,7 +126,10 @@ export const getAllForums = async (
       })
     );
 
-    return res.status(200).json(forumsWithDetails);
+    const responseBody =
+      AdminGetForumsResponseSchema.parse(forumsWithDetails);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

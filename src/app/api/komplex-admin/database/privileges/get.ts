@@ -2,8 +2,13 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
-export const getPrivileges = async (req: Request, res: Response) => {
+export const GetPrivilegesResponseSchema = z.object({
+  privileges: z.array(z.string()),
+}).openapi("GetPrivilegesResponse");
+
+export const GetPrivileges = async (req: Request, res: Response) => {
   try {
     const privilegesResult = await db.execute(
       sql`SELECT DISTINCT privilege_type 
@@ -16,7 +21,7 @@ export const getPrivileges = async (req: Request, res: Response) => {
       (row: any) => row.privilege_type
     );
 
-    return res.status(200).json(privileges);
+    return res.status(200).json(GetPrivilegesResponseSchema.parse(privileges));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

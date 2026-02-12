@@ -10,6 +10,28 @@ import {
   uploadImageToCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminUpdateForumReplyParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminUpdateForumReplyParams");
+
+export const AdminUpdateForumReplyBodySchema = z
+  .object({
+    description: z.string(),
+    photosToRemove: z.string().optional(),
+  })
+  .openapi("AdminUpdateForumReplyBody");
+
+export const AdminUpdateForumReplyResponseSchema = z
+  .object({
+    updateReply: z.any(),
+    newReplyMedia: z.array(z.any()),
+    deleteMedia: z.any(),
+  })
+  .openapi("AdminUpdateForumReplyResponse");
 
 export const updateForumReply = async (
   req: AuthenticatedRequest,
@@ -17,13 +39,21 @@ export const updateForumReply = async (
 ) => {
   try {
     const { userId } = req.user;
-    const { id } = req.params;
-    const { description, photosToRemove } = req.body;
+    const { id } = await AdminUpdateForumReplyParamsSchema.parseAsync(
+      req.params
+    );
+    const { description, photosToRemove } =
+      await AdminUpdateForumReplyBodySchema.parseAsync(req.body);
 
     const doesUserOwnThisReply = await db
       .select()
       .from(forumReplies)
-      .where(and(eq(forumReplies.id, Number(id)), eq(forumReplies.userId, Number(userId))))
+      .where(
+        and(
+          eq(forumReplies.id, Number(id)),
+          eq(forumReplies.userId, Number(userId))
+        )
+      )
       .limit(1);
 
     if (doesUserOwnThisReply.length === 0) {
@@ -112,11 +142,13 @@ export const updateForumReply = async (
       .where(eq(forumReplies.id, Number(id)))
       .returning();
 
-    return res.status(200).json({
+    const responseBody = AdminUpdateForumReplyResponseSchema.parse({
       updateReply,
       newReplyMedia,
       deleteMedia,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

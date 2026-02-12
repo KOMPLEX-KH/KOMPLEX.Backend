@@ -2,6 +2,11 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetTablesResponseSchema = z.object({
+  tables: z.array(z.string()),
+}).openapi("GetTablesResponse");
 
 export const getTables = async (req: Request, res: Response) => {
   try {
@@ -11,7 +16,7 @@ export const getTables = async (req: Request, res: Response) => {
 
     const tables = tablesResult.rows.map((row: any) => row.table_name);
 
-    return res.status(200).json(tables);
+    return res.status(200).json(GetTablesResponseSchema.parse(tables));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

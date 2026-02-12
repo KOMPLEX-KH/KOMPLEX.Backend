@@ -12,11 +12,33 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminUpdateNewsParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminUpdateNewsParams");
+
+export const AdminUpdateNewsBodySchema = z
+  .object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    type: z.string().optional(),
+    topic: z.string().optional(),
+    photosToRemove: z.string().optional(), // stays JSON string you parse later
+  })
+  .openapi("AdminUpdateNewsBody");
+
+export const AdminUpdateNewsResponseSchema = z
+  .array(z.any())
+  .openapi("AdminUpdateNewsResponse");
+
 export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
-    const { userId } = req.user;
-    const { title, description, type, topic, photosToRemove } = req.body;
+    const { id } = await AdminUpdateNewsParamsSchema.parseAsync(req.params);
+    const userId = req.user.userId;
+    const { title, description, type, topic, photosToRemove } = await AdminUpdateNewsBodySchema.parseAsync(req.body);
 
     const doesUserOwnThisNews = await db
       .select()
@@ -161,7 +183,9 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
     };
     await meilisearch.index("news").addDocuments([meilisearchData]);
 
-    return res.status(200).json(updatedNews);
+    const responseBody = AdminUpdateNewsResponseSchema.parse(updatedNews);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

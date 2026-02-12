@@ -14,6 +14,26 @@ import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { deleteReply } from "./comments/[id]/replies/[id]/delete.js";
 import { deleteComment } from "./comments/[id]/delete.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeDeleteForumParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeDeleteForumParams");
+
+export const MeDeleteForumResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+      message: z.string(),
+      deletedForum: z.any(),
+      deletedMedia: z.any(),
+      deleteReplies: z.any(),
+      deleteComments: z.any(),
+    }),
+  })
+  .openapi("MeDeleteForumResponse");
 
 export const deleteForum = async (
   req: AuthenticatedRequest,
@@ -21,7 +41,7 @@ export const deleteForum = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
+    const { id } = await MeDeleteForumParamsSchema.parseAsync(req.params);
 
     const doesUserOwnThisForum = await db
       .select()
@@ -83,7 +103,7 @@ export const deleteForum = async (
 
     await meilisearch.index("forums").deleteDocument(String(id));
 
-    return res.status(200).json({
+    const responseBody = MeDeleteForumResponseSchema.parse({
       data: {
         success: true,
         message: "Forum deleted successfully",
@@ -93,6 +113,8 @@ export const deleteForum = async (
         deleteComments,
       },
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

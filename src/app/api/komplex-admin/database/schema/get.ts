@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
 interface TableColumn {
   column_name: string;
@@ -14,7 +15,18 @@ interface Table {
   columns: TableColumn[];
 }
 
-export const getSchemaData = async (req: Request, res: Response) => {
+export const GetSchemaDataResponseSchema = z.object({
+  tables: z.array(z.object({
+    rowCount: z.number(),
+    name: z.string(),
+    columns: z.array(z.object({
+      column_name: z.string(),
+      data_type: z.string(),
+    })),
+  })),
+}).openapi("GetSchemaDataResponse");
+
+export const GetSchemaData = async (req: Request, res: Response) => {
   try {
     const tableNamesResult = await db.execute(
       sql`SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = 'public'`
@@ -54,7 +66,7 @@ export const getSchemaData = async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(200).json(tablesData);
+    return res.status(200).json(GetSchemaDataResponseSchema.parse(tablesData));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

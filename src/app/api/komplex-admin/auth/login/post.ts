@@ -4,6 +4,19 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const LoginBodySchema = z.object({
+  uid: z.string(),
+}).openapi("AdminLoginBody");
+
+export const LoginResponseSchema = z.object({
+  id: z.number(),
+  uid: z.string(),
+  username: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+}).openapi("AdminLoginResponse");
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -18,7 +31,7 @@ export const login = async (req: Request, res: Response) => {
     const parsedCache = cacheData ? JSON.parse(cacheData) : null;
 
     if (parsedCache) {
-      return res.status(200).json(parsedCache);
+      return res.status(200).json(LoginResponseSchema.parse(parsedCache));
     }
 
     const [user] = await db
@@ -30,7 +43,7 @@ export const login = async (req: Request, res: Response) => {
       throw new ResponseError("Invalid credentials", 401);
     }
 
-    return res.status(200).json(user);
+    return res.status(200).json(LoginResponseSchema.parse(user));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

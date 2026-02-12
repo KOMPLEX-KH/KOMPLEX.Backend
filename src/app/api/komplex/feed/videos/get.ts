@@ -11,6 +11,36 @@ import {
   followers,
 } from "@/db/schema.js";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+const FeedVideoItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  duration: z.number().nullable().optional(),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  saveCount: z.number(),
+  isLiked: z.boolean(),
+  isSaved: z.boolean(),
+  isFollowing: z.boolean(),
+});
+
+export const FeedVideosResponseSchema = z
+  .object({
+    data: z.array(FeedVideoItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("FeedVideosResponse");
 
 export const getAllVideos = async (
   req: AuthenticatedRequest,
@@ -81,7 +111,11 @@ export const getAllVideos = async (
     ).map((id) => ({ id }));
 
     if (!videoIdRows.length) {
-      return res.status(200).json({ data: [], hasMore: false });
+      const emptyBody = FeedVideosResponseSchema.parse({
+        data: [],
+        hasMore: false,
+      });
+      return res.status(200).json(emptyBody);
     }
 
     const cachedResults = (await redis.mGet(
@@ -211,10 +245,12 @@ export const getAllVideos = async (
       isFollowing: videoUserIdRows.some((b) => b.userId === video.userId),
     }));
 
-    return res.status(200).json({
+    const responseBody = FeedVideosResponseSchema.parse({
       data: videosWithMediaAndIsFollowing,
       hasMore: allVideos.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -53,6 +53,14 @@ export const getResponseError = (res: Response, err: unknown) => {
 		}
 		return res.status(err.code).json(response);
 	}
+	if (err instanceof z.ZodError) {
+		const response: ResponseErrorWrapper = {
+			success: false,
+			error: isProd ? getGenericErrorMessage("400") : err.issues.map((issue) => issue.message).join(", "),
+		}
+		return res.status(400).json(response);
+	}
+
 	const response: ResponseErrorWrapper = {
 		success: false,
 		error: isProd ? getGenericErrorMessage("500") : (err instanceof Error ? err.message : "Internal Server Error"),
@@ -82,6 +90,6 @@ export const getResponseErrorSchema = (
 ) => {
 	return z.object({
 		success: z.literal(false),
-		error: errorSchema ? errorSchema : z.any(),
+		error: errorSchema ? errorSchema : z.string(),
 	});
 };

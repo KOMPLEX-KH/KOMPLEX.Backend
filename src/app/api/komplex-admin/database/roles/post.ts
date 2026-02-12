@@ -2,20 +2,28 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
-interface TablePrivileges {
-  name: string;
-  privileges: string[];
-}
+export const CreateRoleBodySchema = z.object({
+  role: z.string(),
+  tableAndPrivileges: z.array(z.object({
+    name: z.string(),
+    privileges: z.array(z.string()),
+  })),
+}).openapi("CreateRoleBody");
 
-export const createRole = async (req: Request, res: Response) => {
+export const CreateRoleResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateRoleResponse");
+
+export const CreateRole = async (req: Request, res: Response) => {
   try {
     const {
       role,
       tableAndPrivileges,
-    }: { role: string; tableAndPrivileges: TablePrivileges[] } = req.body;
+    }: { role: string; tableAndPrivileges: Array<{ name: string; privileges: string[] }> } = await CreateRoleBodySchema.parseAsync(req.body);
 
-    if (!role) {
+    if (!role || !tableAndPrivileges) {
       throw new ResponseError("Missing required fields", 400);
     }
 
@@ -31,7 +39,7 @@ export const createRole = async (req: Request, res: Response) => {
       }
     }
 
-    return res.status(201).json({ message: "Role created successfully" });
+    return res.status(201).json(CreateRoleResponseSchema.parse({ message: "Role created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

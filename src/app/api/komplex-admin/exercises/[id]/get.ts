@@ -4,14 +4,43 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { exercises, questions, choices } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetExerciseParamsSchema = z.object({
+  id: z.string(),
+}).openapi("GetExerciseParams");
+
+export const GetExerciseResponseSchema = z.object({
+  exercise: z.object({
+    id: z.number(),
+    title: z.string(),
+    description: z.string(),
+    subject: z.string(),
+    grade: z.string(),
+    duration: z.number(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }),
+  questions: z.array(z.object({
+    id: z.number(),
+    title: z.string(),
+    imageUrl: z.string(),
+    section: z.string(),
+    choices: z.array(z.object({
+      id: z.number(),
+      text: z.string(),
+      isCorrect: z.boolean(),
+    })),
+  })),
+}).openapi("GetExerciseResponse");
 
 export const getExercise = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await GetExerciseParamsSchema.parseAsync(req.params);
     const cacheKey = `exercise:${id}`;
     const cacheData = await redis.get(cacheKey);
     if (cacheData) {
-      return res.status(200).json(JSON.parse(cacheData));
+      return res.status(200).json(GetExerciseResponseSchema.parse(JSON.parse(cacheData)));
     }
 
     const exerciseResult = await db
@@ -69,7 +98,7 @@ export const getExercise = async (req: Request, res: Response) => {
       EX: 60 * 60 * 24,
     });
 
-    return res.status(200).json(exerciseWithQuestions);
+    return res.status(200).json(GetExerciseResponseSchema.parse(exerciseWithQuestions));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

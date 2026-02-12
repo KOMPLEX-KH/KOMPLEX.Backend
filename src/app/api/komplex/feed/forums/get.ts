@@ -11,6 +11,37 @@ import {
   followers,
 } from "@/db/schema.js";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+const FeedForumMediaSchema = z.object({
+  url: z.string(),
+  type: z.string(),
+});
+
+const FeedForumItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  media: z.array(FeedForumMediaSchema),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+  isFollowing: z.boolean(),
+});
+
+export const FeedForumsResponseSchema = z
+  .object({
+    data: z.array(FeedForumItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("FeedForumsResponse");
 
 export const getAllForums = async (
   req: AuthenticatedRequest,
@@ -75,7 +106,11 @@ export const getAllForums = async (
     ).map((id) => ({ id }));
 
     if (!forumIdRows.length) {
-      return res.status(200).json({ data: [], hasMore: false });
+      const emptyBody = FeedForumsResponseSchema.parse({
+        data: [],
+        hasMore: false,
+      });
+      return res.status(200).json(emptyBody);
     }
 
     const cachedResults = (await redis.mGet(
@@ -232,10 +267,12 @@ export const getAllForums = async (
       isFollowing: forumUserIdRows.some((b) => b.userId === forum.userId),
     }));
 
-    return res.status(200).json({
+    const responseBody = FeedForumsResponseSchema.parse({
       data: forumsWithMediaAndIsFollowing,
       hasMore: allForums.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

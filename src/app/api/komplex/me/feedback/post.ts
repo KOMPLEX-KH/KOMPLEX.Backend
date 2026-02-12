@@ -4,6 +4,18 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { ResponseError, getResponseError } from "@/utils/responseError.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostFeedbackBodySchema = z
+  .object({
+    content: z.string(),
+    type: z.string(),
+  })
+  .openapi("MePostFeedbackBody");
+
+export const MePostFeedbackResponseSchema = z
+  .array(z.any())
+  .openapi("MePostFeedbackResponse");
 
 export const postFeedback = async (
   req: AuthenticatedRequest,
@@ -11,7 +23,9 @@ export const postFeedback = async (
 ) => {
   try {
     const { userId } = req.user;
-    const { content, type } = req.body;
+    const { content, type } = await MePostFeedbackBodySchema.parseAsync(
+      req.body
+    );
     const userID = Number(userId) === 0 ? null : Number(userId);
     const feedback = await db
       .insert(feedbacks)
@@ -26,7 +40,10 @@ export const postFeedback = async (
       .returning();
     const cacheKey = `feedback:${feedback[0].id}`;
     await redis.set(cacheKey, JSON.stringify(feedback[0]), { EX: 600 });
-    return res.status(201).json(feedback);
+
+    const responseBody = MePostFeedbackResponseSchema.parse(feedback);
+
+    return res.status(201).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

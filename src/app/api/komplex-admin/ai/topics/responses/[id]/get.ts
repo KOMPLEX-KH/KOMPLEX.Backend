@@ -3,6 +3,18 @@ import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { userAITopicHistory } from "@/db/schema.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const TopicAiResponseByIdResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  prompt: z.string(),
+  response: z.string(),
+  rating: z.number().nullable(),
+  ratingFeedback: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+}).openapi("TopicAiResponseByIdResponse");
 
 export const getTopicAiResponseById = async (req: Request, res: Response) => {
   try {
@@ -21,7 +33,7 @@ export const getTopicAiResponseById = async (req: Request, res: Response) => {
       throw new ResponseError("AI topic response not found", 404);
     }
 
-    return res.status(200).json({ data: result[0] });
+    return res.status(200).json({ data: TopicAiResponseByIdResponseSchema.parse(result[0]) });
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -2,15 +2,18 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
 
-interface UserData {
-  username: string;
-  isSuperuser: boolean;
-  isCreateDB: boolean;
-  isReplicable: boolean;
-  byPassRLS: boolean;
-  passwordExpire: string | null;
-}
+export const GetUsersResponseSchema = z.object({
+  users: z.array(z.object({
+    username: z.string(),
+    isSuperuser: z.boolean(),
+    isCreateDB: z.boolean(),
+    isReplicable: z.boolean(),
+    byPassRLS: z.boolean(),
+    passwordExpire: z.string().nullable(),
+  })),
+}).openapi("GetUsersResponse");
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -19,7 +22,7 @@ export const getUsers = async (req: Request, res: Response) => {
       AND usename NOT IN ('michael', 'emily', 'john', 'donald', 'maria', 'jessica', 'henry', 'gemma', 'jerry')`
     );
 
-    const data: UserData[] = usersResult.rows.map((user: any) => ({
+    const data = usersResult.rows.map((user: any) => ({
       username: user.usename,
       isSuperuser: user.usesuper || false,
       isCreateDB: user.usecreatedb || false,
@@ -28,7 +31,7 @@ export const getUsers = async (req: Request, res: Response) => {
       passwordExpire: user.valuntil || null,
     }));
 
-    return res.status(200).json(data);
+    return res.status(200).json(GetUsersResponseSchema.parse(data));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

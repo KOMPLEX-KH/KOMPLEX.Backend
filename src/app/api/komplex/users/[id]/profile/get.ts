@@ -13,6 +13,13 @@ import {
   videoLikes,
 } from "@/db/schema.js";
 import { count, eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UserProfileResponseSchema = z
+  .object({
+    data: z.any(),
+  })
+  .openapi("UserProfileResponse");
 
 export const getUserProfile = async (
   req: AuthenticatedRequest,
@@ -54,9 +61,11 @@ export const getUserProfile = async (
 
     await redis.set(cacheKey, JSON.stringify(profileData), { EX: 300 });
 
-    return res.status(200).json({
+    const responseBody = UserProfileResponseSchema.parse({
       data: profileData,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

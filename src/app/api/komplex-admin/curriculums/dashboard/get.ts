@@ -4,6 +4,13 @@ import { db } from "@/db/index.js";
 import { grades, subjects, lessons, topics } from "@/db/schema.js";
 import { isNull, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+export const CurriculumsDashboardResponseSchema = z.object({
+  numberOfGrades: z.number(),
+  numberOfSubjects: z.number(),
+  numberOfLessons: z.number(),
+  numberOfTopics: z.number(),
+}).openapi("CurriculumsDashboardResponse");
 
 export const getCurriculumsDashboard = async (
   req: Request,
@@ -12,7 +19,7 @@ export const getCurriculumsDashboard = async (
   try {
     const cached = await redis.get("curriculums:dashboard");
     if (cached) {
-      return res.status(200).json(JSON.parse(cached));
+      return res.status(200).json(CurriculumsDashboardResponseSchema.parse(JSON.parse(cached)));
     }
 
     const numberOfGrades = await db
@@ -40,7 +47,7 @@ export const getCurriculumsDashboard = async (
       EX: 60 * 60 * 24,
     });
 
-    return res.status(200).json(data);
+    return res.status(200).json(CurriculumsDashboardResponseSchema.parse(data));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

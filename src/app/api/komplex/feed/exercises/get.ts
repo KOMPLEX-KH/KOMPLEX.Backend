@@ -9,6 +9,22 @@ import {
   userExerciseHistory,
 } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+const ExerciseItemSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  duration: z.number().nullable().optional(),
+  subject: z.string(),
+  grade: z.string(),
+  numberOfQuestions: z.number(),
+  numberOfAttempts: z.number().nullable().optional(),
+  highestScore: z.number().nullable().optional(),
+});
+
+export const FeedExercisesResponseSchema = z
+  .record(z.array(ExerciseItemSchema))
+  .openapi("FeedExercisesResponse");
 
 export const getExercises = async (
   req: AuthenticatedRequest,
@@ -97,7 +113,7 @@ export const getExercises = async (
       ...new Set(userExerciseWithProgress.map((exercise) => exercise.subject)),
     ];
 
-    let response: any = {};
+    let response: Record<string, any[]> = {};
 
     for (const subject of subjects) {
       response[subject] = userExerciseWithProgress.filter(
@@ -105,7 +121,9 @@ export const getExercises = async (
       );
     }
 
-    return res.status(200).json(response);
+    const responseBody = FeedExercisesResponseSchema.parse(response);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

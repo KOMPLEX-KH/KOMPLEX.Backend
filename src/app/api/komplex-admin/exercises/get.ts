@@ -4,16 +4,35 @@ import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { exercises, questions, userExerciseHistory } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetExercisesQuerySchema = z.object({
+  grade: z.string().optional(),
+}).openapi("GetExercisesQuery");
+
+export const GetExercisesResponse = z.object({
+  exercises: z.array(z.object({
+    id: z.number(),
+    duration: z.number(),
+    title: z.string(),
+    subject: z.string(),
+    grade: z.string(),
+    createdAt: z.string(),
+    questionCount: z.number(),
+    attemptCount: z.number(),
+    averageScore: z.number(),
+  })),
+}).openapi("GetExercisesResponseSchema");
 
 export const getExercises = async (req: Request, res: Response) => {
   try {
-    const { grade } = req.query;
+    const { grade } = await GetExercisesQuerySchema.parseAsync(req.query);
     const cacheKey = `exercises:${grade || "all"}`;
     await redis.del(cacheKey);
 
     const cacheData = await redis.get(cacheKey);
     if (cacheData) {
-      return res.status(200).json(JSON.parse(cacheData));
+      return res.status(200).json(GetExercisesResponse.parse(JSON.parse(cacheData)));
     }
 
     const baseQuery = db
@@ -39,7 +58,7 @@ export const getExercises = async (req: Request, res: Response) => {
     const result = await baseQuery.groupBy(exercises.id);
     await redis.set(cacheKey, JSON.stringify(result), { EX: 1 });
 
-    return res.status(200).json(result);
+    return res.status(200).json(GetExercisesResponse.parse(result));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

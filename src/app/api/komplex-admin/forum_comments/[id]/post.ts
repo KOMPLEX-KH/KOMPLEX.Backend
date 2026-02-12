@@ -6,15 +6,38 @@ import { forumComments } from "@/db/schema.js";
 import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
 
+export const PostForumCommentParamsSchema = z.object({
+  id: z.string(),
+}).openapi("PostForumCommentParams");
+
+export const PostForumCommentBodySchema = z.object({
+  description: z.string(),
+}).openapi("PostForumCommentBody");
+
+export const PostForumCommentResponseSchema = z.object({
+  comment: z.object({
+    id: z.number(),
+    userId: z.number(),
+    forumId: z.number(),
+    description: z.string(),
+  }),
+  newCommentMedia: z.array(z.object({
+    id: z.number(),
+    url: z.string(),
+    urlForDeletion: z.string(),
+    mediaType: z.string(),
+  })),
+}).openapi("PostForumCommentResponseSchema");
 export const postForumComment = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
     const { userId } = req.user;
-    const { description } = req.body;
-    const { id } = req.params;
+    const { description } = await PostForumCommentBodySchema.parseAsync(req.body);
+    const { id } = await PostForumCommentParamsSchema.parseAsync(req.params);
 
     if (!userId || !id || !description) {
       throw new ResponseError("Missing required fields", 400);
@@ -35,9 +58,8 @@ export const postForumComment = async (
     if (req.files) {
       for (const file of req.files as Express.Multer.File[]) {
         try {
-          const uniqueKey = `${
-            insertedForumComment.id
-          }-${crypto.randomUUID()}-${file.originalname}`;
+          const uniqueKey = `${insertedForumComment.id
+            }-${crypto.randomUUID()}-${file.originalname}`;
           const url = await uploadImageToCloudflare(
             uniqueKey,
             file.buffer,
@@ -61,11 +83,16 @@ export const postForumComment = async (
       }
     }
 
-    return res.status(201).json({
+    return res.status(201).json(PostForumCommentResponseSchema.parse({
       success: true,
-      comment: insertedForumComment,
+      comment: {
+        id: insertedForumComment.id,
+        userId: insertedForumComment.userId,
+        forumId: insertedForumComment.forumId,
+        description: insertedForumComment.description,
+      },
       newCommentMedia,
-    });
+    }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }
