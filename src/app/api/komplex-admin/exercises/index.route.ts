@@ -6,12 +6,14 @@ import {
     adminSmallUpdateRateLimiter,
     adminSmallDeleteRateLimiter,
 } from "@/middleware/rateLimiter.js";
-import { getExercises as getAdminExercises } from "../exercises/get.js";
-import { createExercise } from "../exercises/post.js";
-import { getExercise as getAdminExercise } from "../exercises/[id]/get.js";
-import { updateExercise } from "../exercises/[id]/put.js";
-import { deleteExercise } from "../exercises/[id]/delete.js";
-import { getExerciseDashboard } from "../exercises/dashboard/get.js";
+import { getExercises as getAdminExercises, GetExercisesQuerySchema, GetExercisesResponse } from "../exercises/get.js";
+import { createExercise, CreateExerciseBodySchema, CreateExerciseResponseSchema } from "../exercises/post.js";
+import { getExercise as getAdminExercise, GetExerciseParamsSchema, GetExerciseResponseSchema } from "../exercises/[id]/get.js";
+import { updateExercise, UpdateExerciseParamsSchema, UpdateExerciseBodySchema, UpdateExerciseResponseSchema } from "../exercises/[id]/put.js";
+import { deleteExercise, DeleteExerciseParamsSchema, DeleteExerciseResponseSchema } from "../exercises/[id]/delete.js";
+import { getExerciseDashboard, GetExerciseDashboardResponseSchema } from "../exercises/dashboard/get.js";
+import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
 
 const router = Router();
 
@@ -49,5 +51,110 @@ router.get(
     adminGetSmallContentRateLimiter,
     getExerciseDashboard as any
 );
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex-admin/exercises",
+    summary: "Get all exercises",
+    tag: "Admin Exercises",
+    query: GetExercisesQuerySchema,
+    responses: {
+        200: {
+            description: "Exercises retrieved successfully",
+            schema: getResponseSuccessSchema(GetExercisesResponse),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.POST,
+    path: "/komplex-admin/exercises",
+    summary: "Create a new exercise",
+    tag: "Admin Exercises",
+    body: CreateExerciseBodySchema,
+    responses: {
+        201: {
+            description: "Exercise created successfully",
+            schema: getResponseSuccessSchema(CreateExerciseResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex-admin/exercises/:id",
+    summary: "Get exercise by ID",
+    tag: "Admin Exercises",
+    responses: {
+        200: {
+            description: "Exercise retrieved successfully",
+            schema: getResponseSuccessSchema(GetExerciseResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.PUT,
+    path: "/komplex-admin/exercises/:id",
+    summary: "Update an exercise",
+    tag: "Admin Exercises",
+    body: UpdateExerciseBodySchema,
+    responses: {
+        200: {
+            description: "Exercise updated successfully",
+            schema: getResponseSuccessSchema(UpdateExerciseResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.DELETE,
+    path: "/komplex-admin/exercises/:id",
+    summary: "Delete an exercise",
+    tag: "Admin Exercises",
+    responses: {
+        200: {
+            description: "Exercise deleted successfully",
+            schema: getResponseSuccessSchema(DeleteExerciseResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex-admin/exercises/dashboard",
+    summary: "Get exercise dashboard",
+    tag: "Admin Exercises",
+    responses: {
+        200: {
+            description: "Exercise dashboard retrieved successfully",
+            schema: getResponseSuccessSchema(GetExerciseDashboardResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
 
 export default router;

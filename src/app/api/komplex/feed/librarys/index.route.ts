@@ -20,6 +20,7 @@ import {
 } from "../../feed/librarys/filter/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();
 
@@ -39,6 +40,23 @@ router.get(
 );
 router.get("/:id", verifyFirebaseTokenOptional as any, getFeedBookById as any);
 router.post("/filter", verifyFirebaseTokenOptional as any, filterBooks as any);
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/feed/librarys/:id",
+    summary: "Get book by ID",
+    tag: "Feed",
+    responses: {
+        200: {
+            description: "Book retrieved successfully",
+            schema: getResponseSuccessSchema(z.any()),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
