@@ -4,10 +4,21 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGetAdminsQuerySchema = z
+  .object({
+    page: z.string().optional(),
+  })
+  .openapi("AdminGetAdminsQuery");
+
+export const AdminGetAdminsResponseSchema = z
+  .array(z.any())
+  .openapi("AdminGetAdminsResponse");
 
 export const getAllAdmins = async (req: Request, res: Response) => {
   try {
-    const { page } = req.query;
+    const { page } = await AdminGetAdminsQuerySchema.parseAsync(req.query);
     const pageNumber = Number(page) || 1;
     const limit = 100;
     const offset = (pageNumber - 1) * limit;
@@ -56,7 +67,9 @@ export const getAllAdmins = async (req: Request, res: Response) => {
     missedUsers.forEach((user) => allAdminsMap.set(user.id, user));
     const allAdmins = result.map((r) => allAdminsMap.get(r.userId));
 
-    return res.status(200).json(allAdmins);
+    const responseBody = AdminGetAdminsResponseSchema.parse(allAdmins);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

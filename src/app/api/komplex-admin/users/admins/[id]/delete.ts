@@ -4,16 +4,32 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminDeleteAdminParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminDeleteAdminParams");
+
+export const AdminDeleteAdminResponseSchema = z
+  .array(z.any())
+  .openapi("AdminDeleteAdminResponse");
 
 export const deleteAdmin = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await AdminDeleteAdminParamsSchema.parseAsync(req.params);
 
-    const result = await db.delete(users).where(eq(users.id, Number(id))).returning();
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, Number(id)))
+      .returning();
 
     await redis.del(`users:${id}`);
 
-    return res.status(200).json(result);
+    const responseBody = AdminDeleteAdminResponseSchema.parse(result);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

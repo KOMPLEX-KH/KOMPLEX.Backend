@@ -2,16 +2,36 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { exercises, questions, choices } from "@/db/schema.js";
+import { z } from "@/config/openapi/openapi.js";
+import { AuthenticatedRequest } from "@/types/request.js";
 
-export const createExercise = async (req: Request, res: Response) => {
+export const CreateExerciseBodySchema = z.object({
+  duration: z.number(),
+  title: z.string(),
+  description: z.string(),
+  subject: z.string(),
+  grade: z.string(),
+  exerciseQuestions: z.array(z.object({
+    title: z.string(),
+    questionType: z.string(),
+    section: z.string(),
+    imageUrl: z.string(),
+    choices: z.array(z.object({
+      text: z.string(),
+      isCorrect: z.boolean(),
+    })),
+  })),
+}).openapi("CreateExerciseBody");
+
+export const CreateExerciseResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateExerciseResponse");
+
+export const createExercise = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = 1;
+    const userId = req.user.userId;
     const { duration, title, description, subject, grade, exerciseQuestions } =
-      req.body;
-
-    if (!title || !description || !subject || !grade || !exerciseQuestions) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+      await CreateExerciseBodySchema.parseAsync(req.body);
 
     const exercise = await db
       .insert(exercises)
@@ -42,14 +62,14 @@ export const createExercise = async (req: Request, res: Response) => {
       for (let choice of question.choices) {
         await db.insert(choices).values({
           questionId,
-          text: choice.choice,
+          text: choice.text,
           isCorrect: choice.isCorrect,
           createdAt: new Date(),
         });
       }
     }
 
-    return res.status(201).json({ message: "Exercise created successfully" });
+    return res.status(201).json(CreateExerciseResponseSchema.parse({ message: "Exercise created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

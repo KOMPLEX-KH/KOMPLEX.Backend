@@ -5,6 +5,31 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { videos, users } from "@/db/schema.js";
 import { desc, eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const UserVideoItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  duration: z.number().nullable().optional(),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string().nullable().optional(),
+  viewCount: z.number(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  userFirstName: z.string(),
+  userLastName: z.string(),
+});
+
+export const UserVideosResponseSchema = z
+  .object({
+    data: z.array(UserVideoItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("UserVideosResponse");
 
 export const getUserVideos = async (
   req: AuthenticatedRequest,
@@ -26,10 +51,12 @@ export const getUserVideos = async (
     const cachedVideos = await redis.get(cacheKey);
     const parsedData = cachedVideos ? JSON.parse(cachedVideos) : null;
     if (parsedData) {
-      return res.status(200).json({
+      const responseBody = UserVideosResponseSchema.parse({
         data: parsedData,
         hasMore: parsedData.length === limit,
       });
+
+      return res.status(200).json(responseBody);
     }
 
     const userVideos = await db
@@ -60,10 +87,12 @@ export const getUserVideos = async (
       EX: 300,
     });
 
-    return res.status(200).json({
+    const responseBody = UserVideosResponseSchema.parse({
       data: userVideos,
       hasMore: userVideos.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

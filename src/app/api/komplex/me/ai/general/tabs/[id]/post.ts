@@ -8,6 +8,33 @@ import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { and, eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostAiGeneralParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MePostAiGeneralParams");
+
+export const MePostAiGeneralBodySchema = z
+  .object({
+    prompt: z.string(),
+    responseType: z.string(),
+  })
+  .openapi("MePostAiGeneralBody");
+
+export const MePostAiGeneralResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      prompt: z.string(),
+      aiResult: z.string(),
+      responseType: z.string(),
+      id: z.number().optional(),
+    }),
+  })
+  .openapi("MePostAiGeneralResponse");
 
 export const postAiGeneral = async (
   req: AuthenticatedRequest,
@@ -15,12 +42,10 @@ export const postAiGeneral = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { prompt, responseType } = req.body;
-    const { id } = req.params;
-
-    if (!prompt || !id) {
-      return getResponseError(res, new ResponseError("Prompt is required", 400));
-    }
+    const { prompt, responseType } = await MePostAiGeneralBodySchema.parseAsync(
+      req.body
+    );
+    const { id } = await MePostAiGeneralParamsSchema.parseAsync(req.params);
 
     const result = await callAiGeneralServiceInternal(
       prompt,
@@ -29,11 +54,13 @@ export const postAiGeneral = async (
       Number(id)
     );
 
-    return res.status(200).json({
+    const responseBody = MePostAiGeneralResponseSchema.parse({
       success: true,
       message: "AI general called successfully",
       data: result,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

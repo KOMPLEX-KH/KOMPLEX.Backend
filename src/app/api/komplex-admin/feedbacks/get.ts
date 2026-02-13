@@ -4,10 +4,26 @@ import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { feedbacks, feedbackMedia, users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetFeedbacksQuerySchema = z.object({
+  page: z.number().optional(),
+  status: z.string().optional(),
+  type: z.string().optional(),
+}).openapi("GetFeedbacksQuery");
+
+export const GetFeedbacksResponseSchema = z.object({
+  feedbacksWithMedia: z.array(z.object({
+    id: z.number(),
+    userId: z.number(),
+    content: z.string(),
+  })),
+  hasMore: z.boolean(),
+}).openapi("GetFeedbacksResponse");
 
 export const getFeedbacks = async (req: Request, res: Response) => {
   try {
-    const { page, status, type } = req.query;
+    const { page, status, type } = await GetFeedbacksQuerySchema.parseAsync(req.query);
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
@@ -22,7 +38,7 @@ export const getFeedbacks = async (req: Request, res: Response) => {
     const feedbackIdRows = feedbackIds.map((f) => ({ id: f.id }));
 
     if (!feedbackIdRows.length)
-      return res.status(200).json({ feedbacksWithMedia: [], hasMore: false });
+      return res.status(200).json(GetFeedbacksResponseSchema.parse({ feedbacksWithMedia: [], hasMore: false }));
 
     const cachedResults = (await redis.mGet(
       feedbackIdRows.map((b) => `feedbacks:${b.id}`)
@@ -70,10 +86,14 @@ export const getFeedbacks = async (req: Request, res: Response) => {
     missedFeedbacks.forEach((user) => allFeedbackMap.set(user.id, user));
     const allFeedbacks = feedbackIds.map((r) => allFeedbackMap.get(r.id));
 
-    return res.status(200).json({
-      feedbacksWithMedia: allFeedbacks,
-      hasMore: allFeedbacks.length === limit,
-    });
+    return res.status(200).json(GetFeedbacksResponseSchema.parse({
+      feedbacksWithMedia: allFeedbacks.map((f) => ({
+        id: f.id as number,
+        userId: f.userId as number,
+        content: f.content as string,
+      })),
+      hasMore: feedbackIds.length === limit,
+    }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

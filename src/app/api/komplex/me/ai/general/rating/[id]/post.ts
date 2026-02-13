@@ -5,21 +5,43 @@ import { db } from "@/db/index.js";
 import { userAIHistory } from "@/db/schema.js";
 import { ResponseError } from "@/utils/responseError.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeRateAiGeneralParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeRateAiGeneralParams");
+
+export const MeRateAiGeneralBodySchema = z
+  .object({
+    rating: z.number(),
+    ratingFeedback: z.string().optional(),
+  })
+  .openapi("MeRateAiGeneralBody");
+
+export const MeRateAiGeneralResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+  })
+  .openapi("MeRateAiGeneralResponse");
 
 export const rateAiGeneralResponse = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
-    const { rating, ratingFeedback } = req.body;
+    const { id } = await MeRateAiGeneralParamsSchema.parseAsync(req.params);
+    const { rating, ratingFeedback } =
+      await MeRateAiGeneralBodySchema.parseAsync(req.body);
 
     const result = await rateAiResponseInternal(
       id,
       Number(rating),
-      ratingFeedback
+      ratingFeedback ?? ""
     );
-    return res.status(200).json(result);
+    const responseBody = MeRateAiGeneralResponseSchema.parse(result);
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

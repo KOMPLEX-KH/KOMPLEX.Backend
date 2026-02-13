@@ -3,8 +3,35 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { forums, forumMedias, users, followers } from "@/db/schema.js";
+import { forums, forumMedias, users } from "@/db/schema.js";
 import { desc, eq, sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const UserForumMediaSchema = z.object({
+  url: z.string(),
+  type: z.string(),
+});
+
+const UserForumItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  viewCount: z.number(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  media: z.array(UserForumMediaSchema),
+});
+
+export const UserForumsResponseSchema = z
+  .object({
+    data: z.array(UserForumItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("UserForumsResponse");
 
 export const getUserForums = async (
   req: AuthenticatedRequest,
@@ -25,10 +52,12 @@ export const getUserForums = async (
     const cacheData = await redis.get(cacheKey);
     const parse = cacheData ? JSON.parse(cacheData) : null;
     if (parse) {
-      return res.status(200).json({
+      const responseBody = UserForumsResponseSchema.parse({
         data: parse,
         hasMore: parse.length === limit,
       });
+
+      return res.status(200).json(responseBody);
     }
 
     const userForums = await db
@@ -85,10 +114,12 @@ export const getUserForums = async (
 
     await redis.set(cacheKey, JSON.stringify(forumsWithMedia), { EX: 300 });
 
-    return res.status(200).json({
+    const responseBody = UserForumsResponseSchema.parse({
       data: forumsWithMedia,
       hasMore: forumsWithMedia.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

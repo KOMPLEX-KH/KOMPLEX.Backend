@@ -6,11 +6,22 @@ import { db } from "@/db/index.js";
 import { news, newsMedia, userSavedNews } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redisConfig.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminDeleteNewsParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminDeleteNewsParams");
+
+export const AdminDeleteNewsResponseSchema = z
+  .array(z.any())
+  .openapi("AdminDeleteNewsResponse");
 
 export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await AdminDeleteNewsParamsSchema.parseAsync(req.params);
     const { userId } = req.user;
 
     const mediaToDelete = await db
@@ -45,7 +56,9 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
 
     await meilisearch.index("news").deleteDocument(String(id));
 
-    return res.status(200).json(deletedNews);
+    const responseBody = AdminDeleteNewsResponseSchema.parse(deletedNews);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -6,13 +6,33 @@ import { db } from "@/db/index.js";
 import { forumComments, users } from "@/db/schema.js";
 import { forumCommentLikes } from "@/db/models/forum_comment_like.js";
 import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetAllCommentsForAForumParamsSchema = z.object({
+  id: z.string(),
+}).openapi("GetAllCommentsForAForumParams");
+
+export const GetAllCommentsForAForumResponseSchema = z.object({
+  comments: z.array(z.object({
+    id: z.number(),
+    userId: z.number(),
+    forumId: z.number(),
+    description: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    mediaUrl: z.string(),
+    mediaType: z.string(),
+    username: z.string(),
+    isLike: z.boolean(),
+  })),
+}).openapi("GetAllCommentsForAForumResponseSchema");
 
 export const getAllCommentsForAForum = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { id } = await GetAllCommentsForAForumParamsSchema.parseAsync(req.params);
     const { userId } = req.user;
 
     const comments = await db
@@ -44,7 +64,7 @@ export const getAllCommentsForAForum = async (
       .where(eq(forumComments.forumId, Number(id)));
 
     if (!comments || comments.length === 0) {
-      return res.status(200).json([]);
+      return res.status(200).json(GetAllCommentsForAForumResponseSchema.parse({ comments: [] }));
     }
 
     const commentsWithMedia = Object.values(
@@ -72,7 +92,7 @@ export const getAllCommentsForAForum = async (
       }, {} as { [key: number]: any })
     ) as Record<number, any>[];
 
-    return res.status(200).json(commentsWithMedia);
+    return res.status(200).json(GetAllCommentsForAForumResponseSchema.parse({ comments: commentsWithMedia }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

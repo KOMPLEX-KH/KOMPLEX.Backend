@@ -4,14 +4,28 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { videos } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminGetVideoByIdParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminGetVideoByIdParams");
+
+export const AdminGetVideoByIdResponseSchema = z
+  .array(z.any())
+  .openapi("AdminGetVideoByIdResponse");
 
 export const getVideoById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await AdminGetVideoByIdParamsSchema.parseAsync(req.params);
     const cacheKey = `videos:${id}`;
     const cachedVideo = await redis.get(cacheKey);
     if (cachedVideo) {
-      return res.status(200).json(JSON.parse(cachedVideo));
+      const parsed = AdminGetVideoByIdResponseSchema.parse(
+        JSON.parse(cachedVideo)
+      );
+      return res.status(200).json(parsed);
     }
 
     const video = await db
@@ -29,7 +43,9 @@ export const getVideoById = async (req: Request, res: Response) => {
 
     await redis.set(cacheKey, JSON.stringify(video), { EX: 600 });
 
-    return res.status(200).json(video);
+    const responseBody = AdminGetVideoByIdResponseSchema.parse(video);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -4,16 +4,41 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { exercises, questions, choices } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateExerciseParamsSchema = z.object({
+  id: z.string(),
+}).openapi("UpdateExerciseParams");
+
+export const UpdateExerciseBodySchema = z.object({
+  duration: z.number(),
+  title: z.string(),
+  description: z.string(),
+  subject: z.string(),
+  grade: z.string(),
+  exerciseQuestions: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    questionType: z.string(),
+    section: z.string(),
+    imageUrl: z.string(),
+    choices: z.array(z.object({
+      id: z.string(),
+      text: z.string(),
+      isCorrect: z.boolean(),
+    })),
+  })),
+}).openapi("UpdateExerciseBody");
+
+export const UpdateExerciseResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateExerciseResponse");
 
 export const updateExercise = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await UpdateExerciseParamsSchema.parseAsync(req.params);
     const { duration, title, description, subject, grade, exerciseQuestions } =
-      req.body;
-
-    if (!title || !description || !subject || !grade) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+      await UpdateExerciseBodySchema.parseAsync(req.body);
 
     const cacheKey = `exercise:${id}`;
 
@@ -49,7 +74,7 @@ export const updateExercise = async (req: Request, res: Response) => {
     }
 
     await redis.del(cacheKey);
-    return res.status(200).json({ message: "Exercise updated successfully" });
+    return res.status(200).json(UpdateExerciseResponseSchema.parse({ message: "Exercise updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

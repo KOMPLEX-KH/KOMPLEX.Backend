@@ -5,8 +5,38 @@ import { db } from "@/db/index.js";
 import { videos } from "@/db/models/videos.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedVideos, videoLikes } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const VideoSearchItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  duration: z.number().nullable().optional(),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  saveCount: z.number(),
+  isLiked: z.boolean(),
+  isSaved: z.boolean(),
+});
+
+export const SearchVideosResponseSchema = z
+  .object({
+    data: z.array(VideoSearchItemSchema),
+    hasMore: z.boolean(),
+    isMatch: z.boolean(),
+  })
+  .openapi("SearchVideosResponse");
 
 export const searchVideos = async (
   req: AuthenticatedRequest,

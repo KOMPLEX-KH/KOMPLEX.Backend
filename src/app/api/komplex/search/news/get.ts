@@ -6,8 +6,39 @@ import { newsMedia } from "@/db/models/news_medias.js";
 import { news } from "@/db/models/news.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { followers, users, userSavedNews } from "@/db/schema.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const NewsSearchMediaSchema = z.object({
+  url: z.string(),
+  type: z.string(),
+});
+
+const NewsSearchItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  media: z.array(NewsSearchMediaSchema),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  isSaved: z.boolean(),
+});
+
+export const SearchNewsResponseSchema = z
+  .object({
+    data: z.array(NewsSearchItemSchema),
+    hasMore: z.boolean(),
+    isMatch: z.boolean(),
+  })
+  .openapi("SearchNewsResponse");
 
 export const searchNews = async (
   req: AuthenticatedRequest,

@@ -18,13 +18,33 @@ import {
   forumLikes,
 } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const DashboardResponseSchema = z.object({
+  totalUsers: z.number(),
+  activeUsers: z.number(),
+  totalContent: z.number(),
+  completionRate: z.number(),
+  totalNews: z.number(),
+  totalVideos: z.number(),
+  totalExercises: z.number(),
+  totalForums: z.number(),
+  totalViews: z.number(),
+  totalLikes: z.number(),
+  totalComments: z.number(),
+  totalReplies: z.number(),
+  recentActivities: z.array(z.object({
+    type: z.string(),
+    description: z.string(),
+  })),
+}).openapi("DashboardResponse");
 
 export const getDashboard = async (req: Request, res: Response) => {
   try {
     const cacheKey = `dashboard:totalUsers`;
     const cachedData = await redis.get(cacheKey);
     if (cachedData) {
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(DashboardResponseSchema.parse(JSON.parse(cachedData)));
     }
 
     const totalUsersResult = await db
@@ -251,7 +271,7 @@ export const getDashboard = async (req: Request, res: Response) => {
       EX: 60 * 60 * 24,
     });
 
-    return res.status(200).json(dashboardData);
+    return res.status(200).json(DashboardResponseSchema.parse(dashboardData));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

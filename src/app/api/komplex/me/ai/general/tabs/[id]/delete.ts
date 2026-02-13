@@ -6,24 +6,44 @@ import { userAIHistory } from "@/db/schema.js";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { and, eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeDeleteAiGeneralTabParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeDeleteAiGeneralTabParams");
+
+export const MeDeleteAiGeneralTabResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      data: z.array(z.any()),
+    }),
+  })
+  .openapi("MeDeleteAiGeneralTabResponse");
 
 export const deleteAiGeneralTab = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { id } = await MeDeleteAiGeneralTabParamsSchema.parseAsync(
+      req.params
+    );
     const { userId } = req.user;
 
     const result = await deleteAiGeneralTabInternal(
       Number(userId),
       Number(id)
     );
-    return res.status(200).json({
+    const responseBody = MeDeleteAiGeneralTabResponseSchema.parse({
       success: true,
       message: "AI general tab deleted successfully",
       data: result,
     });
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

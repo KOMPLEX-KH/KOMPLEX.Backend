@@ -14,9 +14,22 @@ import {
   userVideoHistory,
 } from "@/db/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { deleteVideoCommentInternal } from "./comments/[id]/delete.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeDeleteVideoParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeDeleteVideoParams");
+
+export const MeDeleteVideoResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+  })
+  .openapi("MeDeleteVideoResponse");
 
 export const deleteVideo = async (
   req: AuthenticatedRequest,
@@ -24,7 +37,7 @@ export const deleteVideo = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
+    const { id } = await MeDeleteVideoParamsSchema.parseAsync(req.params);
 
     const [doesThisUserOwnThisVideo] = await db
       .select({
@@ -133,9 +146,11 @@ export const deleteVideo = async (
 
     await meilisearch.index("videos").deleteDocument(String(id));
 
-    return res.status(200).json({
+    const responseBody = MeDeleteVideoResponseSchema.parse({
       data: deletedVideo,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

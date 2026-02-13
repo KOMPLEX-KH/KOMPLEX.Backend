@@ -5,24 +5,42 @@ import { db } from "@/db/index.js";
 import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { and, eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeDeleteAiTopicParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeDeleteAiTopicParams");
+
+export const MeDeleteAiTopicResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      data: z.array(z.any()),
+    }),
+  })
+  .openapi("MeDeleteAiTopicResponse");
 
 export const deleteAiTopic = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { id } = await MeDeleteAiTopicParamsSchema.parseAsync(req.params);
     const { userId } = req.user;
 
     const result = await deleteAiTopicTabInternal(
       Number(userId),
       Number(id)
     );
-    return res.status(200).json({
+    const responseBody = MeDeleteAiTopicResponseSchema.parse({
       success: true,
       message: "AI topic tab deleted successfully",
       data: result,
     });
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

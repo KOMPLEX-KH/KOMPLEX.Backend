@@ -6,20 +6,31 @@ import {
   uploadImageToCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { imageMimeTypes } from "@/utils/imageMimeTypes.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminUploadFileBodySchema = z
+  .object({
+    fileName: z.string(),
+    fileType: z.string(),
+  })
+  .openapi("AdminUploadFileBody");
+
+export const AdminUploadFileResponseSchema = z
+  .object({
+    key: z.string(),
+    url: z.string(),
+  })
+  .openapi("AdminUploadFileResponse");
 
 export const uploadFile = async (req: Request, res: Response) => {
   try {
     const file = (req as any).file as Express.Multer.File | undefined;
-    const { fileName, fileType } = req.body as {
-      fileName: string;
-      fileType: string;
-    };
+    const { fileName, fileType } = await AdminUploadFileBodySchema.parseAsync(
+      req.body
+    );
 
     if (!file) {
       throw new ResponseError("No file uploaded", 400);
-    }
-    if (!fileName || !fileType) {
-      throw new ResponseError("fileName and fileType are required", 400);
     }
 
     const safeFileName = fileName
@@ -36,7 +47,9 @@ export const uploadFile = async (req: Request, res: Response) => {
       throw new ResponseError("Unsupported file type", 400);
     }
 
-    return res.status(200).json({ key, url });
+    const responseBody = AdminUploadFileResponseSchema.parse({ key, url });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

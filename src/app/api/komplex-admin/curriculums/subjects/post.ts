@@ -4,16 +4,23 @@ import { db } from "@/db/index.js";
 import { subjects } from "@/db/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const CreateSubjectBodySchema = z.object({
+  title: z.string(),
+  icon: z.string(),
+  gradeId: z.number(),
+  orderIndex: z.number(),
+  insertType: z.string().optional(),
+}).openapi("CreateSubjectBody");
+
+export const CreateSubjectResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateSubjectResponse");
 
 export const createSubject = async (req: Request, res: Response) => {
   try {
-    const { title, icon, gradeId, orderIndex, insertType } = req.body as {
-      title: string;
-      icon: string;
-      gradeId: number;
-      orderIndex: number;
-      insertType?: string;
-    };
+    const { title, icon, gradeId, orderIndex, insertType } = await CreateSubjectBodySchema.parseAsync(req.body);
 
     if (!title || !icon || gradeId === undefined || orderIndex === undefined) {
       throw new ResponseError("Missing required fields", 400);
@@ -45,7 +52,7 @@ export const createSubject = async (req: Request, res: Response) => {
     await redis.del("curriculums");
     await redis.del("curriculums:dashboard");
 
-    return res.status(201).json({ message: "subject created successfully" });
+    return res.status(201).json(CreateSubjectResponseSchema.parse({ message: "subject created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -5,6 +5,26 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { asc, eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeAiGeneralTabsQuerySchema = z
+  .object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  })
+  .openapi("MeAiGeneralTabsQuery");
+
+export const MeAiGeneralTabItemSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+export const MeAiGeneralTabsResponseSchema = z
+  .object({
+    data: z.array(MeAiGeneralTabItemSchema),
+    hasMore: z.boolean().optional(),
+  })
+  .openapi("MeAiGeneralTabsResponse");
 
 export const getAllAiGeneralTabs = async (
   req: AuthenticatedRequest,
@@ -12,14 +32,19 @@ export const getAllAiGeneralTabs = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { page, limit } = req.query;
+    const { page, limit } = await MeAiGeneralTabsQuerySchema.parseAsync(
+      req.query
+    );
 
     const result = await getAllAiTabNamesService(
       Number(userId),
-      Number(page),
-      Number(limit)
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined
     );
-    return res.status(200).json(result);
+
+    const responseBody = MeAiGeneralTabsResponseSchema.parse(result);
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

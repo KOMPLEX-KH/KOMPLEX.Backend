@@ -3,14 +3,26 @@ import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { users } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminCreateAdminBodySchema = z
+  .object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string().email(),
+    phone: z.string(),
+    uid: z.string(),
+  })
+  .openapi("AdminCreateAdminBody");
+
+export const AdminCreateAdminResponseSchema = z
+  .any()
+  .openapi("AdminCreateAdminResponse");
 
 export const createAdmin = async (req: Request, res: Response) => {
   try {
-    const { firstName, lastName, email, phone, uid } = req.body;
-
-    if (!firstName || !lastName || !email || !phone || !uid) {
-      throw new ResponseError("Missing required fields", 400);
-    }
+    const { firstName, lastName, email, phone, uid } =
+      await AdminCreateAdminBodySchema.parseAsync(req.body);
 
     const result = await db
       .insert(users)
@@ -33,7 +45,9 @@ export const createAdmin = async (req: Request, res: Response) => {
     const cacheKey = `users:${createdUser.id}`;
     await redis.set(cacheKey, JSON.stringify(createdUser), { EX: 600 });
 
-    return res.status(201).json(createdUser);
+    const responseBody = AdminCreateAdminResponseSchema.parse(createdUser);
+
+    return res.status(201).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

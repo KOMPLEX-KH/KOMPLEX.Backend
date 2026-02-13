@@ -4,10 +4,19 @@ import { db } from "@/db/index.js";
 import { topics } from "@/db/schema.js";
 import { eq, gt, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const DeleteTopicParamsSchema = z.object({
+  id: z.number(),
+}).openapi("DeleteTopicParams");
+
+export const DeleteTopicResponseSchema = z.object({
+  message: z.string(),
+}).openapi("DeleteTopicResponse");  
 
 export const deleteTopic = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await DeleteTopicParamsSchema.parseAsync(req.params);
 
     const [oldOrderIndex] = await db
       .select({ orderIndex: topics.orderIndex })
@@ -27,7 +36,7 @@ export const deleteTopic = async (req: Request, res: Response) => {
     await redis.del("curriculums");
     await redis.del("curriculums:dashboard");
 
-    return res.status(200).json({ message: "topic deleted successfully" });
+    return res.status(200).json(DeleteTopicResponseSchema.parse({ message: "topic deleted successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

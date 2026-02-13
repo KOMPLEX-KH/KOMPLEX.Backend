@@ -5,6 +5,27 @@ import { db } from "@/db/index.js";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import axios from "axios";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeCreateAiGeneralTabBodySchema = z
+  .object({
+    prompt: z.string(),
+    responseType: z.string(),
+  })
+  .openapi("MeCreateAiGeneralTabBody");
+
+export const MeCreateAiGeneralTabResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+    data: z.object({
+      prompt: z.string(),
+      responseType: z.string(),
+      id: z.number(),
+      name: z.string(),
+    }),
+  })
+  .openapi("MeCreateAiGeneralTabResponse");
 
 export const createAiGeneralTab = async (
   req: AuthenticatedRequest,
@@ -12,22 +33,20 @@ export const createAiGeneralTab = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { prompt, responseType } = req.body;
-
-    if (!prompt || !responseType) {
-      return getResponseError(res, new ResponseError("Prompt and response type are required", 400));
-    }
+    const { prompt, responseType } =
+      await MeCreateAiGeneralTabBodySchema.parseAsync(req.body);
 
     const result = await callAiFirstTimeService(
       prompt,
       responseType,
       Number(userId)
     );
-    return res.status(200).json({
+    const responseBody = MeCreateAiGeneralTabResponseSchema.parse({
       success: true,
       message: "AI general first time called successfully",
       data: result,
     });
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

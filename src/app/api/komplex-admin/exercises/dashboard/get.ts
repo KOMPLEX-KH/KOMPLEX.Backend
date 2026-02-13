@@ -4,13 +4,20 @@ import { count, avg } from "drizzle-orm";
 import { db } from "@/db/index.js";
 import { exercises, userExerciseHistory } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetExerciseDashboardResponseSchema = z.object({
+  totalExercises: z.number(),
+  totalAttempts: z.number(),
+  averageScore: z.number(),
+}).openapi("GetExerciseDashboardResponse");
 
 export const getExerciseDashboard = async (req: Request, res: Response) => {
   try {
     const cacheKey = `exercise:dashboard`;
     const cachedData = await redis.get(cacheKey);
     if (cachedData) {
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status(200).json(GetExerciseDashboardResponseSchema.parse(JSON.parse(cachedData)));
     }
 
     const result = await db
@@ -43,7 +50,7 @@ export const getExerciseDashboard = async (req: Request, res: Response) => {
     };
     await redis.set(cacheKey, JSON.stringify(cacheData), { EX: 60 * 60 * 24 });
 
-    return res.status(200).json(cacheData);
+    return res.status(200).json(GetExerciseDashboardResponseSchema.parse(cacheData));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -2,11 +2,24 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateRoleTableAccessParamsSchema = z.object({
+  rolename: z.string(),
+}).openapi("UpdateRoleTableAccessParams");
+
+export const UpdateRoleTableAccessBodySchema = z.object({
+  updatedTables: z.array(z.string()),
+}).openapi("UpdateRoleTableAccessBody");
+
+export const UpdateRoleTableAccessResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateRoleTableAccessResponse");
 
 export const updateRoleTableAccess = async (req: Request, res: Response) => {
   try {
-    const { rolename } = req.params;
-    const { updatedTables } = req.body as { updatedTables: string[] };
+    const { rolename } = await UpdateRoleTableAccessParamsSchema.parseAsync(req.params);
+    const { updatedTables } = await UpdateRoleTableAccessBodySchema.parseAsync(req.body);
 
     if (!rolename || !Array.isArray(updatedTables)) {
       throw new ResponseError("Missing required fields", 400);
@@ -35,7 +48,7 @@ export const updateRoleTableAccess = async (req: Request, res: Response) => {
 
       return res
         .status(200)
-        .json({ message: "Table access of role updated successfully" });
+        .json(UpdateRoleTableAccessResponseSchema.parse({ message: "Table access of role updated successfully" }));
     }
 
     const removedTables = currentTablesNames.filter(
@@ -52,7 +65,7 @@ export const updateRoleTableAccess = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .json({ message: "Table access of role updated successfully" });
+      .json(UpdateRoleTableAccessResponseSchema.parse({ message: "Table access of role updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

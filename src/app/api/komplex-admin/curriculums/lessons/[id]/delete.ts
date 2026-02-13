@@ -4,10 +4,19 @@ import { db } from "@/db/index.js";
 import { lessons } from "@/db/schema.js";
 import { eq, gt, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const DeleteLessonParamsSchema = z.object({
+  id: z.number(),
+}).openapi("DeleteLessonParams");
+
+export const DeleteLessonResponseSchema = z.object({
+  message: z.string(),
+}).openapi("DeleteLessonResponse");
 
 export const deleteLesson = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await DeleteLessonParamsSchema.parseAsync(req.params);
 
     const [oldOrderIndex] = await db
       .select({ orderIndex: lessons.orderIndex })
@@ -26,7 +35,7 @@ export const deleteLesson = async (req: Request, res: Response) => {
     await redis.del("curriculums");
     await redis.del("curriculums:dashboard");
 
-    return res.status(200).json({ message: "lesson deleted successfully" });
+    return res.status(200).json(DeleteLessonResponseSchema.parse({ message: "lesson deleted successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

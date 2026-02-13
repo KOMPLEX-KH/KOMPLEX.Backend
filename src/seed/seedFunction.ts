@@ -1,4 +1,4 @@
-import { meilisearch } from "@/config/meilisearchConfig.js";
+import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { db } from "@/db/index.js";
 import {
   newsMedia,

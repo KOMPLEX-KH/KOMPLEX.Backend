@@ -5,6 +5,25 @@ import { db } from "@/db/index.js";
 import { topics, users, videos } from "@/db/schema.js";
 import { userAiTabs } from "@/db/models/user_ai_tabs.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+const LastAccessedItemSchema = z.object({
+  id: z.number(),
+  name: z.string().optional(),
+  title: z.string().optional(),
+});
+
+export const MeLastAccessedResponseSchema = z
+  .object({
+    data: z
+      .object({
+        lastTopic: LastAccessedItemSchema.nullable(),
+        lastVideo: LastAccessedItemSchema.nullable(),
+        lastAiTab: LastAccessedItemSchema.nullable(),
+      })
+      .nullable(),
+  })
+  .openapi("MeLastAccessedResponse");
 
 export const getLastAccessed = async (
   req: AuthenticatedRequest,
@@ -33,10 +52,11 @@ export const getLastAccessed = async (
       .limit(1);
 
     if (!lastAccessed || lastAccessed.length === 0) {
-      return res.status(200).json({ data: null });
+      const emptyBody = MeLastAccessedResponseSchema.parse({ data: null });
+      return res.status(200).json(emptyBody);
     }
 
-    return res.status(200).json({
+    const responseBody = MeLastAccessedResponseSchema.parse({
       data: {
         lastTopic: lastAccessed[0].lastTopicId
           ? {
@@ -58,6 +78,8 @@ export const getLastAccessed = async (
           : null,
       },
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

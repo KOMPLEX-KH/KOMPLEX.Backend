@@ -5,6 +5,8 @@ import morgan from "morgan";
 import { redis } from "./db/redis/redisConfig.js";
 import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/rateLimiter.js";
+import { generateOpenAPIDocument, registry } from "./config/openapi/swagger.js";
+import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
 
@@ -59,6 +61,11 @@ app.use(
   })
 );
 
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(null, {
+  swaggerOptions: { url: "/open.json" }
+}));
+
+
 app.use(morgan(process.env.ENVIRONMENT === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(globalRateLimiter);
@@ -74,6 +81,12 @@ app.get("/ping", async (req, res) => {
 });
 
 app.use("/", routes);
+
+// Documentation
+
+app.get("/open.json", (req, res) => {
+  res.json(generateOpenAPIDocument());
+});
 
 // ! ERROR HANDLERS =================================
 

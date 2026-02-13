@@ -5,6 +5,47 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { forums, forumMedias, users, forumLikes } from "@/db/schema.js";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeGetForumsQuerySchema = z
+  .object({
+    type: z.string().optional(),
+    topic: z.string().optional(),
+    page: z.string().optional(),
+  })
+  .openapi("MeGetForumsQuery");
+
+export const MeForumItemSchema = z
+  .object({
+    id: z.number(),
+    userId: z.number(),
+    title: z.string(),
+    description: z.string(),
+    type: z.string().nullable().optional(),
+    topic: z.string().nullable().optional(),
+    viewCount: z.number(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    likeCount: z.number(),
+    media: z
+      .array(
+        z.object({
+          url: z.string(),
+          type: z.string(),
+        })
+      )
+      .default([]),
+    username: z.string(),
+    profileImage: z.string().nullable().optional(),
+  })
+  .openapi("MeForumItem");
+
+export const MeGetForumsResponseSchema = z
+  .object({
+    data: z.array(MeForumItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("MeGetForumsResponse");
 
 export const getAllForums = async (
   req: AuthenticatedRequest,
@@ -12,7 +53,9 @@ export const getAllForums = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { type, topic, page } = req.query;
+    const { type, topic, page } = await MeGetForumsQuerySchema.parseAsync(
+      req.query
+    );
 
     const conditions = [];
     conditions.push(eq(forums.userId, userId));
@@ -49,10 +92,12 @@ export const getAllForums = async (
         })
       );
 
-      return res.status(200).json({
+      const responseBody = MeGetForumsResponseSchema.parse({
         data: [...dataToSend],
         hasMore: parseData.length === limit,
       });
+
+      return res.status(200).json(responseBody);
     }
 
     const forumRecords = await db
@@ -143,10 +188,12 @@ export const getAllForums = async (
       }
     );
 
-    return res.status(200).json({
+    const responseBody = MeGetForumsResponseSchema.parse({
       data: forumsWithMedia,
       hasMore: forumsWithMedia.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

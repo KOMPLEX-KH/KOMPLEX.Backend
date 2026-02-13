@@ -4,6 +4,43 @@ import { db } from "@/db/index.js";
 import { eq } from "drizzle-orm";
 import { grades, lessons, subjects, topics } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+const TopicSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  exerciseId: z.number().nullable().optional(),
+  orderIndex: z.number().nullable().optional(),
+});
+
+const LessonSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  icon: z.string().nullable().optional(),
+  topics: z.array(TopicSchema),
+  orderIndex: z.number().nullable().optional(),
+});
+
+const SubjectSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  icon: z.string().nullable().optional(),
+  orderIndex: z.number().nullable().optional(),
+  lessons: z.array(LessonSchema),
+});
+
+const GradeSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  orderIndex: z.number().nullable().optional(),
+  subjects: z.array(SubjectSchema),
+});
+
+export const FeedCurriculumsResponseSchema = z
+  .object({
+    data: z.array(GradeSchema),
+  })
+  .openapi("FeedCurriculumsResponse");
 
 export const getCurriculums = async (req: Request, res: Response) => {
   try {
@@ -129,7 +166,11 @@ export const getCurriculums = async (req: Request, res: Response) => {
       EX: 60 * 60 * 24,
     });
 
-    return res.status(200).json({ data: structuredData });
+    const responseBody = FeedCurriculumsResponseSchema.parse({
+      data: structuredData,
+    });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

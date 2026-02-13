@@ -4,16 +4,23 @@ import { db } from "@/db/index.js";
 import { lessons } from "@/db/schema.js";
 import { gt, gte, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const CreateLessonBodySchema = z.object({
+  title: z.string(),
+  icon: z.string(),
+  subjectId: z.number(),
+  orderIndex: z.number(),
+  insertType: z.string().optional(),
+}).openapi("CreateLessonBody");
+
+export const CreateLessonResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateLessonResponse");
 
 export const createLesson = async (req: Request, res: Response) => {
   try {
-    const { title, icon, subjectId, orderIndex, insertType } = req.body as {
-      title: string;
-      icon: string;
-      subjectId: number;
-      orderIndex: number;
-      insertType?: string;
-    };
+    const { title, icon, subjectId, orderIndex, insertType } = await CreateLessonBodySchema.parseAsync(req.body);
 
     if (!title || !icon || subjectId === undefined || orderIndex === undefined) {
       throw new ResponseError("Missing required fields", 400);
@@ -44,7 +51,7 @@ export const createLesson = async (req: Request, res: Response) => {
     await redis.del("curriculums");
     await redis.del("curriculums:dashboard");
 
-    return res.status(201).json({ message: "lesson created successfully" });
+    return res.status(201).json(CreateLessonResponseSchema.parse({ message: "lesson created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

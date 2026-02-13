@@ -5,6 +5,27 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { ResponseError, getResponseError } from "@/utils/responseError.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
+import { z } from "@/config/openapi/openapi.js";
+
+const DashboardStatsSchema = z.object({
+  numOfNews: z.number(),
+  numOfVideos: z.number(),
+  numOfExercises: z.number(),
+  numOfForums: z.number(),
+});
+
+const DashboardActivityItemSchema = z.object({
+  title: z.string(),
+  createdAt: z.date(),
+  contentType: z.enum(["news", "video", "exercise", "forum"]),
+});
+
+export const MeDashboardResponseSchema = z
+  .object({
+    dashboardData: DashboardStatsSchema,
+    recentActivities: z.array(DashboardActivityItemSchema),
+  })
+  .openapi("MeDashboardResponse");
 
 export const getMeDashboard = async (
   req: AuthenticatedRequest,
@@ -15,7 +36,8 @@ export const getMeDashboard = async (
     const cacheKey = `dashboardData:${userId}`;
     const cached = await redis.get(cacheKey);
     if (cached) {
-      return res.status(200).json(JSON.parse(cached));
+      const parsed = MeDashboardResponseSchema.parse(JSON.parse(cached));
+      return res.status(200).json(parsed);
     }
 
     const dashboardData = {
@@ -88,13 +110,13 @@ export const getMeDashboard = async (
       .limit(5);
 
     const recentActivities = [
-      ...recentNews.map((newsItem) => ({ ...newsItem, contentType: "news" })),
-      ...recentVideos.map((video) => ({ ...video, contentType: "video" })),
+      ...recentNews.map((newsItem) => ({ ...newsItem, contentType: "news" as const })),
+      ...recentVideos.map((video) => ({ ...video, contentType: "video" as const })),
       ...recentExercises.map((exercise) => ({
         ...exercise,
-        contentType: "exercise",
+        contentType: "exercise" as const,
       })),
-      ...recentForums.map((forum) => ({ ...forum, contentType: "forum" })),
+      ...recentForums.map((forum) => ({ ...forum, contentType: "forum" as const })),
     ];
 
     const sortedRecentActivities = recentActivities
@@ -104,11 +126,16 @@ export const getMeDashboard = async (
       )
       .slice(0, 5);
 
-    const responseData = { dashboardData, recentActivities: sortedRecentActivities };
-    await redis.set(cacheKey, JSON.stringify(responseData), { EX: 60 * 60 * 24 });
+    const responseData = {
+      dashboardData,
+      recentActivities: sortedRecentActivities,
+    };
 
-    return res.status(200).json(responseData);
+    const parsed = MeDashboardResponseSchema.parse(responseData);
+    await redis.set(cacheKey, JSON.stringify(parsed), { EX: 60 * 60 * 24 });
+
+    return res.status(200).json(parsed);
   } catch (error) {
-    return getResponseError(res, error );
+    return getResponseError(res, error);
   }
 };

@@ -6,6 +6,32 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { users, userAIHistory } from "@/db/schema.js";
 import { and, eq, asc } from "drizzle-orm";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeAiGeneralTabHistoryParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeAiGeneralTabHistoryParams");
+
+export const MeAiGeneralTabHistoryQuerySchema = z
+  .object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  })
+  .openapi("MeAiGeneralTabHistoryQuery");
+
+export const MeAiGeneralTabHistoryItemSchema = z.object({
+  prompt: z.string(),
+  aiResult: z.string(),
+  responseType: z.string(),
+});
+
+export const MeAiGeneralTabHistoryResponseSchema = z
+  .object({
+    data: z.array(MeAiGeneralTabHistoryItemSchema),
+  })
+  .openapi("MeAiGeneralTabHistoryResponse");
 
 export const getAiGeneralTabHistory = async (
   req: AuthenticatedRequest,
@@ -13,16 +39,23 @@ export const getAiGeneralTabHistory = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
-    const { page, limit } = req.query;
+    const { id } = await MeAiGeneralTabHistoryParamsSchema.parseAsync(
+      req.params
+    );
+    const { page, limit } = await MeAiGeneralTabHistoryQuerySchema.parseAsync(
+      req.query
+    );
 
     const result = await getAiHistoryByTabServiceInternal(
       Number(userId),
       Number(id),
-      Number(page),
-      Number(limit)
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined
     );
-    return res.status(200).json(result);
+
+    const responseBody =
+      MeAiGeneralTabHistoryResponseSchema.parse(result);
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

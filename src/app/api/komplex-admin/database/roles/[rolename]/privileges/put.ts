@@ -2,14 +2,25 @@ import { Request, Response } from "express";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
 import { db } from "@/db/index.js";
 import { sql } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateRolePrivilegesParamsSchema = z.object({
+  rolename: z.string(),
+}).openapi("UpdateRolePrivilegesParams");
+
+export const UpdateRolePrivilegesBodySchema = z.object({
+  table: z.string(),
+  updatedPrivileges: z.array(z.string()),
+}).openapi("UpdateRolePrivilegesBody");
+
+export const UpdateRolePrivilegesResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateRolePrivilegesResponse");
 
 export const updateRolePrivileges = async (req: Request, res: Response) => {
   try {
-    const { rolename } = req.params;
-    const { table, updatedPrivileges } = req.body as {
-      table: string;
-      updatedPrivileges: string[];
-    };
+    const { rolename } = await UpdateRolePrivilegesParamsSchema.parseAsync(req.params);
+    const { table, updatedPrivileges } = await UpdateRolePrivilegesBodySchema.parseAsync(req.body);
 
     if (!rolename || !table) {
       throw new ResponseError("Missing required fields", 400);
@@ -31,7 +42,7 @@ export const updateRolePrivileges = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .json({ message: "Privileges of role updated successfully" });
+      .json(UpdateRolePrivilegesResponseSchema.parse({ message: "Privileges of role updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

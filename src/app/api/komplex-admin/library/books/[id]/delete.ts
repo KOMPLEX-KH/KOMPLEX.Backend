@@ -4,15 +4,27 @@ import { db } from "@/db/index.js";
 import { books } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+import { AdminBookItemSchema } from "../get.js";
 
 const BOOK_CACHE_PREFIX = "book:";
 
+export const AdminDeleteBookParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminDeleteBookParams");
+
+export const AdminDeleteBookResponseSchema = z
+  .object({
+    message: z.string(),
+    data: AdminBookItemSchema,
+  })
+  .openapi("AdminDeleteBookResponse");
+
 export const deleteBook = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    if (!id) {
-      throw new ResponseError("Invalid ID parameter", 400);
-    }
+    const { id } = await AdminDeleteBookParamsSchema.parseAsync(req.params);
 
     const result = await db
       .delete(books)
@@ -26,7 +38,12 @@ export const deleteBook = async (req: Request, res: Response) => {
     await redis.del(`${BOOK_CACHE_PREFIX}${id}`);
     await redis.del("books:all");
 
-    return res.status(200).json({ message: "Book deleted", data: result[0] });
+    const responseBody = AdminDeleteBookResponseSchema.parse({
+      message: "Book deleted",
+      data: result[0],
+    });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -3,6 +3,21 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/index.js";
 import { forumLikes } from "@/db/schema.js";
 import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeLikeForumParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeLikeForumParams");
+
+export const MeLikeForumResponseSchema = z
+  .object({
+    data: z.object({
+      like: z.array(z.any()),
+    }),
+  })
+  .openapi("MeLikeForumResponse");
 
 export const likeForum = async (
   req: AuthenticatedRequest,
@@ -10,7 +25,7 @@ export const likeForum = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
+    const { id } = await MeLikeForumParamsSchema.parseAsync(req.params);
 
     if (!userId) {
       throw new ResponseError("Unauthorized", 401);
@@ -26,7 +41,9 @@ export const likeForum = async (
       })
       .returning();
 
-    return res.status(200).json({ data: { like } });
+    const responseBody = MeLikeForumResponseSchema.parse({ data: { like } });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -4,16 +4,23 @@ import { db } from "@/db/index.js";
 import { topics } from "@/db/schema.js";
 import { gt, gte, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const CreateTopicBodySchema = z.object({
+  title: z.string(),
+  lessonId: z.number(),
+  orderIndex: z.number(),
+  insertType: z.string().optional(),
+  exerciseId: z.number().optional(),
+}).openapi("CreateTopicBody");
+
+export const CreateTopicResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateTopicResponse");
 
 export const createTopic = async (req: Request, res: Response) => {
   try {
-    const { title, lessonId, orderIndex, insertType, exerciseId } = req.body as {
-      title: string;
-      lessonId: number;
-      orderIndex: number;
-      insertType?: string;
-      exerciseId?: number;
-    };
+    const { title, lessonId, orderIndex, insertType, exerciseId } = await CreateTopicBodySchema.parseAsync(req.body);
 
     if (!title || lessonId === undefined || orderIndex === undefined) {
       throw new ResponseError("Missing required fields", 400);
@@ -50,7 +57,7 @@ export const createTopic = async (req: Request, res: Response) => {
     await db.insert(topics).values(topicData);
     await redis.del("curriculums:dashboard");
 
-    return res.status(201).json({ message: "topic created successfully" });
+    return res.status(201).json(CreateTopicResponseSchema.parse({ message: "topic created successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

@@ -4,14 +4,21 @@ import { db } from "@/db/index.js";
 import { grades } from "@/db/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const CreateGradeBodySchema = z.object({
+  gradeKhmer: z.string(),
+  orderIndex: z.number(),
+  insertType: z.string().optional(),
+}).openapi("CreateGradeBody");
+
+export const CreateGradeResponseSchema = z.object({
+  message: z.string(),
+}).openapi("CreateGradeResponse");
 
 export const createGrade = async (req: Request, res: Response) => {
   try {
-    const { gradeKhmer, orderIndex, insertType } = req.body as {
-      gradeKhmer: string;
-      orderIndex: number;
-      insertType?: string;
-    };
+    const { gradeKhmer, orderIndex, insertType } = await CreateGradeBodySchema.parseAsync(req.body);
 
     if (!gradeKhmer || orderIndex === undefined) {
       throw new ResponseError("Missing required fields", 400);

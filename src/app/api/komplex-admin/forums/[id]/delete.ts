@@ -11,11 +11,25 @@ import {
 } from "@/db/schema.js";
 import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
 import { forumReplyMedias } from "@/db/models/forum_reply_media.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const AdminDeleteForumParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("AdminDeleteForumParams");
+
+export const AdminDeleteForumResponseSchema = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+  })
+  .openapi("AdminDeleteForumResponse");
 
 export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.user ?? {};
-    const { id } = req.params;
+    const { id } = await AdminDeleteForumParamsSchema.parseAsync(req.params);
 
     const getCorrectUser = await db
       .select()
@@ -124,7 +138,12 @@ export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
         .where(inArray(forumReplyMedias.forumReplyId, replyIds));
     }
 
-    return res.status(200).json({ success: true, message: "Forum deleted successfully" });
+    const responseBody = AdminDeleteForumResponseSchema.parse({
+      success: true,
+      message: "Forum deleted successfully",
+    });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error as Error);
   }

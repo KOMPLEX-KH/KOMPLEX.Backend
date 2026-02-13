@@ -4,10 +4,19 @@ import { db } from "@/db/index.js";
 import { grades } from "@/db/schema.js";
 import { eq, gt, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const DeleteGradeBodySchema = z.object({
+  id: z.number(),
+}).openapi("DeleteGradeBody");
+
+export const DeleteGradeResponseSchema = z.object({
+  message: z.string(),
+}).openapi("DeleteGradeResponse");
 
 export const deleteGrade = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = await DeleteGradeBodySchema.parseAsync(req.params);
 
     const [oldOrderIndex] = await db
       .select({ orderIndex: grades.orderIndex })
@@ -27,7 +36,7 @@ export const deleteGrade = async (req: Request, res: Response) => {
     await redis.del("curriculums:dashboard");
     await redis.del("allGrades");
 
-    return res.status(200).json({ message: "grade deleted successfully" });
+    return res.status(200).json(DeleteGradeResponseSchema.parse({ message: "grade deleted successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

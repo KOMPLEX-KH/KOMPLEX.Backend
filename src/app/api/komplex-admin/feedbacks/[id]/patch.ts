@@ -2,30 +2,38 @@ import { Request, Response } from "express";
 import { getResponseError } from "@/utils/responseError.js";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/index.js";
-import { feedbacks } from "@/db/models/feedbacks.js";
+import { feedbacks } from "@/db/schema.js";
 import { redis } from "@/db/redis/redisConfig.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const UpdateFeedbackStatusParamsSchema = z.object({
+  id: z.string(),
+}).openapi("UpdateFeedbackStatusParams");
+
+export const UpdateFeedbackStatusBodySchema = z.object({
+  status: z.string(),
+}).openapi("UpdateFeedbackStatusBody");
+
+export const UpdateFeedbackStatusResponseSchema = z.object({
+  message: z.string(),
+}).openapi("UpdateFeedbackStatusResponse");
 
 export const updateFeedbackStatus = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { id } = await UpdateFeedbackStatusParamsSchema.parseAsync(req.params);
+    const { status } = await UpdateFeedbackStatusBodySchema.parseAsync(req.body);
 
-    if (!status || !["resolved", "unresolved", "dismissed"].includes(status)) {
-      throw new Error("Invalid status");
-    }
-
-    const result = await db
+    await db
       .update(feedbacks)
-      .set({ status })
-      .where(eq(feedbacks.id, Number(id)))
-      .returning();
+      .set({ status: status as "resolved" | "unresolved" | "dismissed" })
+      .where(eq(feedbacks.id, Number(id)));
 
     const cacheKey = `feedbacks:${id}`;
-    await redis.set(cacheKey, JSON.stringify({ ...result, status }), {
+    await redis.set(cacheKey, JSON.stringify({ status }), {
       EX: 600,
     });
 
-    return res.status(200).json(result);
+    return res.status(200).json(UpdateFeedbackStatusResponseSchema.parse({ message: "Feedback status updated successfully" }));
   } catch (error) {
     return getResponseError(res, error as Error);
   }

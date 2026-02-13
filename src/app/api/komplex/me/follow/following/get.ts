@@ -5,6 +5,20 @@ import { redis } from "@/db/redis/redisConfig.js";
 import { followers } from "@/db/schema.js";
 import { eq } from "drizzle-orm";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeFollowingQuerySchema = z
+  .object({
+    page: z.string().optional(),
+  })
+  .openapi("MeFollowingQuery");
+
+export const MeFollowingResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+    hasMore: z.boolean(),
+  })
+  .openapi("MeFollowingResponse");
 
 export const getFollowing = async (
   req: AuthenticatedRequest,
@@ -12,7 +26,7 @@ export const getFollowing = async (
 ) => {
   try {
     const { userId } = req.user;
-    const { page } = req.query;
+    const { page } = await MeFollowingQuerySchema.parseAsync(req.query);
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
@@ -21,10 +35,11 @@ export const getFollowing = async (
     const redisData = await redis.get(cacheKey);
     if (redisData) {
       const data = JSON.parse(redisData);
-      return res.status(200).json({
+      const responseBody = MeFollowingResponseSchema.parse({
         data,
         hasMore: data.length === limit,
       });
+      return res.status(200).json(responseBody);
     }
 
     const followingList = await db
@@ -38,10 +53,12 @@ export const getFollowing = async (
       EX: 60 * 60 * 24,
     });
 
-    return res.status(200).json({
+    const responseBody = MeFollowingResponseSchema.parse({
       data: followingList,
       hasMore: followingList.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

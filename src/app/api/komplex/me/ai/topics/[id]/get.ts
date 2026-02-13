@@ -5,6 +5,28 @@ import { db } from "@/db/index.js";
 import { redis } from "@/db/redis/redisConfig.js";
 import { userAITopicHistory } from "@/db/schema.js";
 import { and, eq, desc } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeAiTopicHistoryParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeAiTopicHistoryParams");
+
+export const MeAiTopicHistoryQuerySchema = z
+  .object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    offset: z.string().optional(),
+  })
+  .openapi("MeAiTopicHistoryQuery");
+
+export const MeAiTopicHistoryResponseSchema = z
+  .object({
+    data: z.array(z.any()),
+    hasMore: z.boolean(),
+  })
+  .openapi("MeAiTopicHistoryResponse");
 
 export const getAiTopicHistory = async (
   req: AuthenticatedRequest,
@@ -12,17 +34,19 @@ export const getAiTopicHistory = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
-    const { page, limit, offset } = req.query;
+    const { id } = await MeAiTopicHistoryParamsSchema.parseAsync(req.params);
+    const { page, limit, offset } =
+      await MeAiTopicHistoryQuerySchema.parseAsync(req.query);
 
     const result = await getAiTopicHistoryInternal(
       Number(userId),
       Number(id),
-      Number(page),
-      Number(limit),
-      Number(offset)
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined,
+      offset ? Number(offset) : undefined
     );
-    return res.status(200).json(result);
+    const responseBody = MeAiTopicHistoryResponseSchema.parse(result);
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

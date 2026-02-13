@@ -10,6 +10,47 @@ import {
   videoLikes,
 } from "@/db/schema.js";
 import { getResponseError } from "@/utils/responseError.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeGetMyVideosQuerySchema = z
+  .object({
+    topic: z.string().optional(),
+    type: z.string().optional(),
+    page: z.string().optional(),
+  })
+  .openapi("MeGetMyVideosQuery");
+
+export const MeMyVideoItemSchema = z
+  .object({
+    id: z.number(),
+    userId: z.number(),
+    title: z.string(),
+    topic: z.string().nullable().optional(),
+    type: z.string().nullable().optional(),
+    description: z.string(),
+    duration: z.number(),
+    videoUrl: z.string(),
+    thumbnailUrl: z.string(),
+    videoUrlForDeletion: z.string().nullable().optional(),
+    thumbnailUrlForDeletion: z.string().nullable().optional(),
+    viewCount: z.number(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+    username: z.string(),
+    profileImage: z.string().nullable().optional(),
+    isSaved: z.any(),
+    isLiked: z.any(),
+    likeCount: z.any(),
+    saveCount: z.any(),
+  })
+  .openapi("MeMyVideoItem");
+
+export const MeGetMyVideosResponseSchema = z
+  .object({
+    data: z.array(MeMyVideoItemSchema),
+    hasMore: z.boolean(),
+  })
+  .openapi("MeGetMyVideosResponse");
 
 export const getAllMyVideos = async (
   req: AuthenticatedRequest,
@@ -17,7 +58,9 @@ export const getAllMyVideos = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { topic, type, page } = req.query;
+    const { topic, type, page } = await MeGetMyVideosQuerySchema.parseAsync(
+      req.query
+    );
 
     const conditions = [];
     conditions.push(eq(videos.userId, userId));
@@ -54,10 +97,12 @@ export const getAllMyVideos = async (
         })
       );
 
-      return res.status(200).json({
+      const responseBody = MeGetMyVideosResponseSchema.parse({
         data: [...dataToSend],
         hasMore: parsedData.length === limit,
       });
+
+      return res.status(200).json(responseBody);
     }
 
     const videoRows = await db
@@ -125,10 +170,12 @@ export const getAllMyVideos = async (
       }
     );
 
-    return res.status(200).json({
+    const responseBody = MeGetMyVideosResponseSchema.parse({
       data: videoRows,
       hasMore: videoRows.length === limit,
     });
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }
