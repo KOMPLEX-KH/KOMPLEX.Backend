@@ -23,7 +23,7 @@ const ExerciseItemSchema = z.object({
 });
 
 export const FeedExercisesResponseSchema = z
-  .record(z.array(ExerciseItemSchema))
+  .record(z.string(), z.array(ExerciseItemSchema))
   .openapi("FeedExercisesResponse");
 
 export const getExercises = async (
