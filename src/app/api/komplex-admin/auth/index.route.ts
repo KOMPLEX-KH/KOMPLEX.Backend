@@ -16,6 +16,7 @@ const router = Router();
 router.post("/login", adminLoginRateLimiter, login as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/auth/login",
     summary: "Login",

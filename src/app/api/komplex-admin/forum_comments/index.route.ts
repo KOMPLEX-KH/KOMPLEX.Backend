@@ -22,6 +22,7 @@ router.post("/:id", verifyFirebaseTokenAdmin as any, adminBigPostRateLimiter, po
 router.patch("/:id", verifyFirebaseTokenAdmin as any, adminBigUpdateRateLimiter, updateAdminForumComment as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/forum_comments/:id",
     summary: "Get all comments for a forum",
@@ -39,6 +40,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/forum_comments/:id",
     summary: "Post a forum comment",
@@ -57,6 +59,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/forum_comments/:id",
     summary: "Update a forum comment",

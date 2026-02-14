@@ -31,6 +31,7 @@ router.delete(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/news",
     summary: "Create a new news item",
@@ -49,6 +50,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/news/:id",
     summary: "Update a news item",
@@ -67,6 +69,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/news/:id",
     summary: "Delete a news item",

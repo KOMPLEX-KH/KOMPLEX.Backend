@@ -53,6 +53,7 @@ router.get(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/exercises",
     summary: "Get all exercises",
@@ -71,6 +72,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/exercises",
     summary: "Create a new exercise",
@@ -89,6 +91,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/exercises/:id",
     summary: "Get exercise by ID",
@@ -106,6 +109,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/exercises/:id",
     summary: "Update an exercise",
@@ -124,6 +128,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/exercises/:id",
     summary: "Delete an exercise",
@@ -141,6 +146,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/exercises/dashboard",
     summary: "Get exercise dashboard",

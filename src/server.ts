@@ -5,7 +5,7 @@ import morgan from "morgan";
 import { redis } from "./db/redis/redisConfig.js";
 import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/rateLimiter.js";
-import { generateOpenAPIDocument, registry } from "./config/openapi/swagger.js";
+import { generateAdminOpenAPIDocument, generateUserOpenAPIDocument, userApiRegistry } from "./config/openapi/swagger.js";
 import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
@@ -61,8 +61,11 @@ app.use(
   })
 );
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(null, {
+app.use("/docs/user", swaggerUi.serve, swaggerUi.setup(null, {
   swaggerOptions: { url: "/open.json" }
+}));
+app.use("/docs/admin", swaggerUi.serve, swaggerUi.setup(null, {
+  swaggerOptions: { url: "/open-admin.json" }
 }));
 
 
@@ -85,7 +88,10 @@ app.use("/", routes);
 // Documentation
 
 app.get("/open.json", (req, res) => {
-  res.json(generateOpenAPIDocument());
+  res.json(generateUserOpenAPIDocument());
+});
+app.get("/open-admin.json", (req, res) => {
+  res.json(generateAdminOpenAPIDocument());
 });
 
 // ! ERROR HANDLERS =================================

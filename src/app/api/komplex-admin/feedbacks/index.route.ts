@@ -28,6 +28,7 @@ router.patch(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/feedbacks",
     summary: "Get all feedbacks",
@@ -46,6 +47,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/feedbacks/:id",
     summary: "Update feedback status",

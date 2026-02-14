@@ -12,6 +12,7 @@ const router = Router();
 router.post("/file", verifyFirebaseTokenAdmin as any, uploadAdminFile as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/upload/file",
     summary: "Upload a file",

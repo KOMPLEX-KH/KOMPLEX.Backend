@@ -20,6 +20,7 @@ router.get("/books/:id", verifyFirebaseTokenAdmin as any, getAdminBookById as an
 router.delete("/books/:id", verifyFirebaseTokenAdmin as any, deleteAdminBook as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/library/books",
     summary: "Get all books",
@@ -37,6 +38,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/library/books",
     summary: "Create a new book",
@@ -55,6 +57,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/library/books/:id",
     summary: "Get book by ID",
@@ -74,6 +77,7 @@ registerOpenApiRoute({
 // Note: Update book endpoint schemas not yet implemented
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/library/books/:id",
     summary: "Delete a book",

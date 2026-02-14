@@ -87,6 +87,7 @@ router.delete(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/curriculums/dashboard",
     summary: "Get curriculums dashboard",
@@ -104,6 +105,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/curriculums/grades",
     summary: "Create a grade",
@@ -122,6 +124,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/curriculums/grades/:id",
     summary: "Update a grade",
@@ -140,6 +143,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/curriculums/grades/:id",
     summary: "Delete a grade",
@@ -157,6 +161,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/curriculums/subjects",
     summary: "Create a subject",
@@ -175,6 +180,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/curriculums/subjects/:id",
     summary: "Update a subject",
@@ -193,6 +199,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/curriculums/subjects/:id",
     summary: "Delete a subject",
@@ -210,6 +217,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/curriculums/lessons",
     summary: "Create a lesson",
@@ -228,6 +236,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/curriculums/lessons/:id",
     summary: "Update a lesson",
@@ -246,6 +255,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/curriculums/lessons/:id",
     summary: "Delete a lesson",
@@ -263,6 +273,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/curriculums/topics",
     summary: "Create a topic",
@@ -281,6 +292,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/curriculums/topics/:id",
     summary: "Update topic component",
@@ -299,6 +311,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/curriculums/topics/:id",
     summary: "Update a topic",
@@ -317,6 +330,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/curriculums/topics/:id",
     summary: "Delete a topic",

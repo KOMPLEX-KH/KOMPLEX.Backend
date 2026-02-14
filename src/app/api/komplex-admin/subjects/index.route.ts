@@ -18,6 +18,7 @@ router.get(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/subjects",
     summary: "Get all subjects",

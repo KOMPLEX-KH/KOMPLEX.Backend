@@ -55,6 +55,7 @@ router.get(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/dashboard",
     summary: "Get AI dashboard",
@@ -72,6 +73,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/general/dashboard",
     summary: "Get general AI dashboard",
@@ -89,6 +91,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/general",
     summary: "Get all general AI responses",
@@ -106,6 +109,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/general/responses/:id",
     summary: "Get general AI response by ID",
@@ -123,6 +127,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/topics/dashboard",
     summary: "Get topic AI dashboard",
@@ -140,6 +145,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/topics",
     summary: "Get all topic AI responses",
@@ -157,6 +163,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/ai/topics/responses/:id",
     summary: "Get topic AI response by ID",

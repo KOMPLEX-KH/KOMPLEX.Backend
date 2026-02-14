@@ -43,6 +43,7 @@ router.delete(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/forums",
     summary: "Get all forums",
@@ -61,6 +62,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/forums/:id",
     summary: "Get forum by ID",
@@ -78,6 +80,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/forums/:id",
     summary: "Update a forum",
@@ -96,6 +99,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/forums/:id",
     summary: "Delete a forum",
