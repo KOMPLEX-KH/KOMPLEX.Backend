@@ -9,7 +9,7 @@ import { postNews, AdminPostNewsBodySchema, AdminPostNewsResponseSchema } from "
 import { updateNews, AdminUpdateNewsParamsSchema, AdminUpdateNewsBodySchema, AdminUpdateNewsResponseSchema } from "../news/[id]/put.js";
 import { deleteNews, AdminDeleteNewsParamsSchema, AdminDeleteNewsResponseSchema } from "../news/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

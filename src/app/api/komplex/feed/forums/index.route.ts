@@ -2,11 +2,11 @@ import Router from "express";
 import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { getBigContentRateLimiter } from "@/middleware/rateLimiter.js";
 import { getAllForums as getAllFeedForums, FeedForumsResponseSchema } from "../../feed/forums/get.js";
-import { getForumById } from "../../feed/forums/[id]/get.js";
+import { getForumById, ForumPostResponseSchema } from "../../feed/forums/[id]/get.js";
 import { getForumComments } from "../../feed/forums/[id]/comments/get.js";
 import { getForumReplies } from "../../feed/forums/[id]/comments/[id]/replies/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();
@@ -44,7 +44,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Forum retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(ForumPostResponseSchema),
         },
         400: {
             description: "Invalid input",

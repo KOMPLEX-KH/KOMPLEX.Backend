@@ -12,7 +12,7 @@ import { updateForumReply as updateAdminForumReply, AdminUpdateForumReplyParamsS
 import { likeForumReply as likeAdminForumReply, AdminLikeForumReplyBodySchema, AdminLikeForumReplyResponseSchema } from "../forum_replies/[id]/like/post.js";
 import { unlikeForumReply as unlikeAdminForumReply, AdminUnlikeForumReplyBodySchema, AdminUnlikeForumReplyResponseSchema } from "../forum_replies/[id]/unlike/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

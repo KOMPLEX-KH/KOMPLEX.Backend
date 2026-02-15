@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ResponseError, getResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
 import { eq } from "drizzle-orm";
-import { grades, lessons, subjects, topics } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { grades, lessons, subjects, topics } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const TopicSchema = z.object({
@@ -46,7 +46,8 @@ export const getCurriculums = async (req: Request, res: Response) => {
   try {
     const cached = await redis.get("curriculums");
     if (cached) {
-      return res.status(200).json({ data: JSON.parse(cached) });
+      const responseBody = FeedCurriculumsResponseSchema.parse(JSON.parse(cached));
+      return getResponseSuccess(res, responseBody);
     }
     const allData = await db
       .select({
@@ -170,7 +171,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
       data: structuredData,
     });
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

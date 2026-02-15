@@ -6,7 +6,7 @@ import { getFollowing, MeFollowingQuerySchema, MeFollowingResponseSchema } from 
 import { followUser, MeFollowUserParamsSchema, MeFollowUserResponseSchema } from "../../me/follow/follow/[id]/post.js";
 import { unfollowUser, MeUnfollowUserParamsSchema, MeUnfollowUserResponseSchema } from "../../me/follow/unfollow/[id]/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

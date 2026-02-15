@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { subjects } from "@/db/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { subjects } from "@/db/drizzle/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
-import { redis } from "@/db/redis/redisConfig.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const CreateSubjectBodySchema = z.object({

@@ -1,15 +1,15 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
 import {
   forumReplies,
   forumReplyMedias,
   users,
   forumReplyLikes,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
 
 export const getForumReplies = async (
   req: AuthenticatedRequest,

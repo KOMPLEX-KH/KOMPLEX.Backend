@@ -1,15 +1,15 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   videoComments,
   videoCommentMedias,
   videoCommentLike,
   users,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { redis } from "@/db/redis/redisConfig.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { redis } from "@/db/redis/redis.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const getVideoComments = async (
   req: AuthenticatedRequest,
@@ -22,15 +22,15 @@ export const getVideoComments = async (
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
- 
+
     const cacheKey = `videoComments:video:${id}:page:${pageNumber}`;
     const cached = await redis.get(cacheKey);
- 
+
     let cachedComments: any[] = [];
     if (cached) {
       cachedComments = JSON.parse(cached);
     }
- 
+
     const dynamicData = await db
       .select({
         id: videoComments.id,
@@ -55,7 +55,7 @@ export const getVideoComments = async (
       )
       .offset(offset)
       .limit(limit);
- 
+
     if (!cachedComments.length) {
       const commentRows = await db
         .select({
@@ -103,7 +103,7 @@ export const getVideoComments = async (
         )
         .offset(offset)
         .limit(limit);
- 
+
       cachedComments = Object.values(
         commentRows.reduce((acc, comment) => {
           if (!acc[comment.id]) {
@@ -128,10 +128,10 @@ export const getVideoComments = async (
           return acc;
         }, {} as { [key: number]: any })
       );
- 
+
       await redis.set(cacheKey, JSON.stringify(cachedComments), { EX: 60 });
     }
- 
+
     const commentsWithMedia = cachedComments.map((c) => {
       const dynamic = dynamicData.find((d) => d.id === c.id);
       return {
@@ -141,7 +141,7 @@ export const getVideoComments = async (
         profileImage: dynamic?.profileImage || c.profileImage,
       };
     });
- 
+
     return res.status(200).json({
       data: commentsWithMedia,
       hasMore: commentsWithMedia.length === limit,

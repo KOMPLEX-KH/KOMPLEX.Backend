@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
 import { sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -14,7 +14,7 @@ export const ExecuteConsoleCommandResponseSchema = z.object({
 
 export const ExecuteConsoleCommandResultSchema = z.object({
   rows: z.array(z.any()),
-}).openapi("ExecuteConsoleCommandResult");  
+}).openapi("ExecuteConsoleCommandResult");
 
 export const executeConsoleCommand = async (req: Request, res: Response) => {
   try {

@@ -4,7 +4,7 @@ import { getSmallContentRateLimiter } from "@/middleware/rateLimiter.js";
 import { getExercises, FeedExercisesResponseSchema } from "../../feed/exercises/get.js";
 import { getExerciseById } from "../../feed/exercises/[id]/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();

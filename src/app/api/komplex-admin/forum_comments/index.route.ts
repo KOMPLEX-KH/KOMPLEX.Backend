@@ -10,7 +10,7 @@ import { getAllCommentsForAForum as getAllAdminCommentsForAForum, GetAllComments
 import { postForumComment as postAdminForumComment, PostForumCommentParamsSchema, PostForumCommentBodySchema, PostForumCommentResponseSchema } from "../forum_comments/[id]/post.js";
 import { updateForumComment as updateAdminForumComment, UpdateForumCommentParamsSchema, UpdateForumCommentBodySchema, UpdateForumCommentResponseSchema } from "../forum_comments/[id]/patch.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

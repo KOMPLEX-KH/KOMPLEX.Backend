@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { userAITopicHistory } from "@/db/schema.js";
+import { getResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { userAITopicHistory } from "@/db/drizzle/schema.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const TopicAiResponsesResponseSchema = z.object({

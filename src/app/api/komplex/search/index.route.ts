@@ -5,7 +5,7 @@ import { searchVideos, SearchVideosResponseSchema } from "../search/videos/get.j
 import { searchForums, SearchForumsResponseSchema } from "../search/forums/get.js";
 import { searchNews, SearchNewsResponseSchema } from "../search/news/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

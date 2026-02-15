@@ -3,7 +3,7 @@ import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { postSmallRateLimiter } from "@/middleware/rateLimiter.js";
 import { postFeedback, MePostFeedbackBodySchema, MePostFeedbackResponseSchema } from "../../me/feedback/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

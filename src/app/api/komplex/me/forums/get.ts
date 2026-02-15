@@ -1,10 +1,10 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { eq, sql, and } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { forums, forumMedias, users, forumLikes } from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { forums, forumMedias, users, forumLikes } from "@/db/drizzle/schema.js";
+import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeGetForumsQuerySchema = z
@@ -66,9 +66,8 @@ export const getAllForums = async (
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
 
-    const cacheKey = `userForums:${userId}:type:${type || "all"}:topic:${
-      topic || "all"
-    }:page:${pageNumber}`;
+    const cacheKey = `userForums:${userId}:type:${type || "all"}:topic:${topic || "all"
+      }:page:${pageNumber}`;
     const cached = await redis.get(cacheKey);
     const parseData = cached ? JSON.parse(cached) : null;
     if (parseData) {

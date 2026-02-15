@@ -13,7 +13,7 @@ import { updateExercise, UpdateExerciseParamsSchema, UpdateExerciseBodySchema, U
 import { deleteExercise, DeleteExerciseParamsSchema, DeleteExerciseResponseSchema } from "../exercises/[id]/delete.js";
 import { getExerciseDashboard, GetExerciseDashboardResponseSchema } from "../exercises/dashboard/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

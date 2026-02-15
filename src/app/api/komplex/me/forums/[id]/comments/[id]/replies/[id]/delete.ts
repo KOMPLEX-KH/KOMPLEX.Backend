@@ -1,15 +1,15 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
 import {
   forumReplies,
   forumReplyLikes,
   forumReplyMedias,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 
 export const deleteForumReply = async (
   req: AuthenticatedRequest,

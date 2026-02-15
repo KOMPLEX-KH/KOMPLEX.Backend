@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { forumComments } from "@/db/schema.js";
-import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumComments } from "@/db/drizzle/schema.js";
+import { forumCommentMedias } from "@/db/drizzle/models/forum_comment_media.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";

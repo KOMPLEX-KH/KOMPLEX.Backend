@@ -19,7 +19,7 @@ import { updateTopicComponent as updateAdminTopicComponent, UpdateTopicComponent
 import { updateTopic as updateAdminTopic, UpdateTopicParamsSchema, UpdateTopicBodySchema, UpdateTopicResponseSchema } from "../curriculums/topics/[id]/patch.js";
 import { deleteTopic as deleteAdminTopic, DeleteTopicParamsSchema, DeleteTopicResponseSchema } from "../curriculums/topics/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

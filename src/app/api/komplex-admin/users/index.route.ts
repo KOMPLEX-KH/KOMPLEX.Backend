@@ -7,7 +7,7 @@ import { createAdmin, AdminCreateAdminBodySchema, AdminCreateAdminResponseSchema
 import { updateAdmin, AdminUpdateAdminParamsSchema, AdminUpdateAdminBodySchema, AdminUpdateAdminResponseSchema } from "../users/admins/[id]/put.js";
 import { deleteAdmin, AdminDeleteAdminParamsSchema, AdminDeleteAdminResponseSchema } from "../users/admins/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

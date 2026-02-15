@@ -2,10 +2,9 @@ import Router from "express";
 import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { getSmallContentRateLimiter } from "@/middleware/rateLimiter.js";
 import { getCurriculums, FeedCurriculumsResponseSchema } from "../../feed/curriculums/get.js";
-import { getCurriculumTopic } from "../../feed/curriculums/[id]/get.js";
+import { getCurriculumTopic, CurriculumTopicResponseSchema } from "../../feed/curriculums/[id]/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
-import { z } from "@/config/openapi/openapi.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -40,7 +39,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Curriculum topic retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(CurriculumTopicResponseSchema),
         },
         400: {
             description: "Invalid input",

@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
-import { redis } from "./db/redis/redisConfig.js";
+import { redis } from "./db/redis/redis.js";
 import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/rateLimiter.js";
 import { generateAdminOpenAPIDocument, generateUserOpenAPIDocument, userApiRegistry } from "./config/openapi/swagger.js";
@@ -61,13 +61,14 @@ app.use(
   })
 );
 
-app.use("/docs/user", swaggerUi.serve, swaggerUi.setup(null, {
-  swaggerOptions: { url: "/open.json" }
-}));
-app.use("/docs/admin", swaggerUi.serve, swaggerUi.setup(null, {
-  swaggerOptions: { url: "/open-admin.json" }
-}));
-
+if (process.env.ENVIRONMENT === "development") {
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(null, {
+    swaggerOptions: { url: "/open.json" }
+  }));
+  app.use("/docs/admin", swaggerUi.serve, swaggerUi.setup(null, {
+    swaggerOptions: { url: "/open-admin.json" }
+  }));
+}
 
 app.use(morgan(process.env.ENVIRONMENT === "production" ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));
@@ -90,9 +91,12 @@ app.use("/", routes);
 app.get("/open.json", (req, res) => {
   res.json(generateUserOpenAPIDocument());
 });
-app.get("/open-admin.json", (req, res) => {
-  res.json(generateAdminOpenAPIDocument());
-});
+
+if (process.env.ENVIRONMENT === "development") {
+  app.get("/open-admin.json", (req, res) => {
+    res.json(generateAdminOpenAPIDocument());
+  });
+}
 
 // ! ERROR HANDLERS =================================
 

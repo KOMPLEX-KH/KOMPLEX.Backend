@@ -2,7 +2,7 @@ import Router from "express";
 import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
 import { adminGetSmallContentRateLimiter } from "@/middleware/rateLimiter.js";
 import { AdminSubjectsResponseSchema, getSubjects as getAdminSubjects } from "../subjects/get.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 
 const router = Router();

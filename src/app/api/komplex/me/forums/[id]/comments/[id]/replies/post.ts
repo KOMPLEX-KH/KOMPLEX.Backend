@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { forumReplies, forumReplyMedias, users } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { forumReplies, forumReplyMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const postForumReply = async (
@@ -38,9 +38,8 @@ export const postForumReply = async (
     if (files) {
       for (const file of files) {
         try {
-          const uniqueKey = `${insertedForumReply.id}-${crypto.randomUUID()}-${
-            file.originalname
-          }`;
+          const uniqueKey = `${insertedForumReply.id}-${crypto.randomUUID()}-${file.originalname
+            }`;
           const url = await uploadImageToCloudflare(
             uniqueKey,
             file.buffer,
@@ -90,7 +89,7 @@ export const postForumReply = async (
 
     let { currentReplyAmount, lastPage } = JSON.parse(
       (await redis.get(`forumReplies:comment:${id}:lastPage`)) ||
-        JSON.stringify({ currentReplyAmount: 0, lastPage: 1 })
+      JSON.stringify({ currentReplyAmount: 0, lastPage: 1 })
     );
 
     if (currentReplyAmount >= limit) {

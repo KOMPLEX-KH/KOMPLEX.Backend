@@ -9,7 +9,7 @@ import { getTopicAiDashboard as getAdminTopicAiDashboard, TopicAiDashboardRespon
 import { getTopicAiResponses as getAdminTopicAiResponses, TopicAiResponsesResponseSchema } from "../ai/topics/get.js";
 import { getTopicAiResponseById as getAdminTopicAiResponseById, TopicAiResponseByIdResponseSchema } from "../ai/topics/responses/[id]/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { userAITopicHistory } from "@/db/models/user_ai_topic_history.js";
-import { ResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { userAITopicHistory } from "@/db/drizzle/models/user_ai_topic_history.js";
+import { ResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 

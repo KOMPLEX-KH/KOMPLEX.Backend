@@ -1,22 +1,18 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, desc, sql, inArray } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
 import {
   forums,
   forumMedias,
   users,
   forumLikes,
   followers,
-} from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+} from "@/db/drizzle/schema.js";
+import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
-
-const FeedForumMediaSchema = z.object({
-  url: z.string(),
-  type: z.string(),
-});
+import { MediaSchema } from "@/types/zod-schemas/media.schema.js";
 
 const FeedForumItemSchema = z.object({
   id: z.number(),
@@ -29,7 +25,7 @@ const FeedForumItemSchema = z.object({
   updatedAt: z.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
-  media: z.array(FeedForumMediaSchema),
+  media: z.array(MediaSchema),
   viewCount: z.number(),
   likeCount: z.number(),
   isLiked: z.boolean(),

@@ -4,7 +4,7 @@ import { userLoginRateLimiter, userSignupRateLimiter } from "@/middleware/rateLi
 import { postSignup, SignupBodySchema, SignupResponseSchema } from "../auth/signup/post.js";
 import { postSocialLogIn } from "../auth/social-login/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

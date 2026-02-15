@@ -1,5 +1,5 @@
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   newsMedia,
   news,
@@ -14,7 +14,7 @@ import {
   videoComments,
   videoReplies,
   videos,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
 import {
   mockChoices,
   mockComments,

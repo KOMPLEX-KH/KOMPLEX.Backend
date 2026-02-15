@@ -20,7 +20,7 @@ export const generateUserOpenAPIDocument = () => {
 };
 
 export const generateAdminOpenAPIDocument = () => {
-    const generator = new OpenApiGeneratorV3(userApiRegistry.definitions);
+    const generator = new OpenApiGeneratorV3(adminApiRegistry.definitions);
 
     return generator.generateDocument({
         openapi: "3.0.0",

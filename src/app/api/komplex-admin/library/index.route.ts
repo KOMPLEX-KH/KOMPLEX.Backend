@@ -6,7 +6,7 @@ import { getBookById as getAdminBookById, AdminBookByIdResponseSchema } from "..
 // Note: Update book endpoint not yet implemented
 import { deleteBook as deleteAdminBook, AdminDeleteBookParamsSchema, AdminDeleteBookResponseSchema } from "../library/books/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

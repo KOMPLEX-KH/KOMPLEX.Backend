@@ -10,7 +10,7 @@ import { getForumById as getAdminForumById, AdminGetForumByIdParamsSchema, Admin
 import { updateForum as updateAdminForum, AdminUpdateForumParamsSchema, AdminUpdateForumBodySchema, AdminUpdateForumResponseSchema } from "../forums/[id]/put.js";
 import { deleteForum as deleteAdminForum, AdminDeleteForumParamsSchema, AdminDeleteForumResponseSchema } from "../forums/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

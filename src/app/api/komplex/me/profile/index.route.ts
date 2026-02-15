@@ -3,7 +3,7 @@ import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { getMe, MeResponseSchema } from "../../me/get.js";
 import { getMeProfile, MeProfileResponseSchema } from "../../me/profile/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

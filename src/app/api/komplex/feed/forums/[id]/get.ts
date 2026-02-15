@@ -1,10 +1,30 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { followers, forumLikes, forumMedias, forums, users } from "@/db/schema.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { redis } from "@/db/redis/redis.js";
+import { followers, forumLikes, forumMedias, forums, users } from "@/db/drizzle/schema.js";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
+import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod-schemas/media.schema.js";
+
+export const ForumPostResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string(),
+  topic: z.string().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  media: z.array(MediaSchema),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+  isFollowing: z.boolean(),
+}).openapi("ForumPostResponse");
 
 export const getForumById = async (
   req: AuthenticatedRequest,
@@ -114,9 +134,11 @@ export const getForumById = async (
       isLiked: !!dynamic[0]?.isLiked,
       profileImage: dynamic[0]?.profileImage || forumData.profileImage,
     };
-
-    return res.status(200).json({ data: forumWithMedia });
+    // parse first before response to ensure the response is valid
+    const responseBody = ForumPostResponseSchema.parse(forumWithMedia);
+    // wrap in success and data
+    return getResponseSuccess(res, responseBody);
   } catch (error) {
-    return getResponseError(res, error );
+    return getResponseError(res, error);
   }
 };

@@ -1,7 +1,7 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { getSignedUrlFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const UploadUrlBodySchema = z

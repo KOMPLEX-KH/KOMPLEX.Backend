@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   videos,
   users,
@@ -12,9 +12,9 @@ import {
   questions,
   choices,
   followers,
-} from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+} from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 
 export const getVideoById = async (
   req: AuthenticatedRequest,
@@ -30,13 +30,13 @@ export const getVideoById = async (
 
     const cacheVideoKey = `video:${videoId}`;
     const cacheExercisesKey = `exercises:videoId:${videoId}`;
-  
+
     const cacheVideoData = await redis.get(cacheVideoKey);
     const cacheExercisesData = await redis.get(cacheExercisesKey);
     if (cacheVideoData && cacheExercisesData) {
       let video = JSON.parse(cacheVideoData);
       const exercises = JSON.parse(cacheExercisesData);
-  
+
       if (!video.userId) {
         const [fullVideo] = await db
           .select({
@@ -60,12 +60,12 @@ export const getVideoById = async (
           .from(videos)
           .leftJoin(users, eq(videos.userId, users.id))
           .where(eq(videos.id, videoId));
-  
+
         if (fullVideo) {
           video = { ...video, ...fullVideo };
         }
       }
-  
+
       const isFollowing = await db
         .select()
         .from(followers)
@@ -118,7 +118,7 @@ export const getVideoById = async (
         .update(videos)
         .set({ viewCount: video.viewCount })
         .where(eq(videos.id, videoId));
-  
+
       if (userId !== 0) {
         const [updatedUser] = await db
           .update(users)
@@ -135,12 +135,12 @@ export const getVideoById = async (
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-  
+
       return res.status(200).json({
         data: { ...video, exercises, isFollowing: isFollowing.length > 0 },
       });
     }
-  
+
     const [videoRow] = await db
       .select({
         id: videos.id,
@@ -212,11 +212,11 @@ export const getVideoById = async (
       }),
       { EX: 600 }
     );
-  
+
     if (!videoRow) {
       throw new ResponseError("Video not found", 404);
     }
-  
+
     // get video exercises
     const videoExercisesRows = await db
       .select()
@@ -225,9 +225,9 @@ export const getVideoById = async (
       .leftJoin(questions, eq(exercises.id, questions.exerciseId))
       .leftJoin(choices, eq(questions.id, choices.questionId))
       .groupBy(exercises.id, questions.id, choices.id);
-  
+
     const videoExerciseMap = new Map();
-  
+
     for (const row of videoExercisesRows) {
       const exercise = row.exercises;
       if (!videoExerciseMap.has(exercise.id)) {
@@ -237,7 +237,7 @@ export const getVideoById = async (
         });
       }
       const exerciseObj = videoExerciseMap.get(exercise.id);
-  
+
       if (row.questions?.id) {
         let question = exerciseObj.questions.find(
           (q: any) => q.id === row.questions?.id
@@ -246,15 +246,15 @@ export const getVideoById = async (
           question = { ...row.questions, choices: [] };
           exerciseObj.questions.push(question);
         }
-  
+
         if (row.choices?.id) {
           question.choices.push(row.choices);
         }
       }
     }
-  
+
     const videoExercises = Array.from(videoExerciseMap.values());
-  
+
     // Always increment view count on every request
     await db
       .update(videos)
@@ -262,7 +262,7 @@ export const getVideoById = async (
         viewCount: sql`${videos.viewCount} + 1`,
       })
       .where(eq(videos.id, videoId));
-  
+
     // insert into history
     await db.insert(userVideoHistory).values({
       userId: Number(userId),
@@ -282,7 +282,7 @@ export const getVideoById = async (
           eq(followers.userId, userId)
         )
       );
-  
+
     const videoWithExercises = {
       ...videoRow,
       exercises: videoExercises,
@@ -291,7 +291,7 @@ export const getVideoById = async (
       likeCount: Number(videoRow.likeCount), // Convert to number
       saveCount: Number(videoRow.saveCount), // Convert to number
     };
-  
+
     if (userId !== 0) {
       const [updatedUser] = await db
         .update(users)
@@ -302,7 +302,7 @@ export const getVideoById = async (
         throw new ResponseError("Failed to update user last video", 500);
       }
     }
-  
+
     return res.status(200).json({ data: videoWithExercises });
   } catch (error) {
     return getResponseError(res, error);

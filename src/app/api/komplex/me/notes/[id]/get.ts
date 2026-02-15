@@ -1,8 +1,8 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { notes } from "@/db/models/notes.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { notes } from "@/db/drizzle/models/notes.js";
 import { and, eq } from "drizzle-orm";
 
 export const getMyNoteById = async (

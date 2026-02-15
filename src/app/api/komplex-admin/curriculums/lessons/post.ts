@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { lessons } from "@/db/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { lessons } from "@/db/drizzle/schema.js";
 import { gt, gte, sql } from "drizzle-orm";
-import { redis } from "@/db/redis/redisConfig.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const CreateLessonBodySchema = z.object({

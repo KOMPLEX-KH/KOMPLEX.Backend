@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
-import { users, videoLikes } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { users, videoLikes } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const getVideoLikes = async (
   req: AuthenticatedRequest,
@@ -17,7 +17,7 @@ export const getVideoLikes = async (
       .from(videoLikes)
       .leftJoin(users, eq(videoLikes.userId, users.id))
       .where(eq(videoLikes.videoId, Number(id)));
-  
+
     const data = likesOfVideo.map((like) => ({
       id: like.video_likes.id,
       userId: like.video_likes.userId,
@@ -27,7 +27,7 @@ export const getVideoLikes = async (
       createdAt: like.video_likes.createdAt,
       updatedAt: like.video_likes.updatedAt,
     }));
-  
+
     return res.status(200).json({ data });
   } catch (error) {
     return getResponseError(res, error);

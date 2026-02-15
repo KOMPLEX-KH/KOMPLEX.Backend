@@ -1,8 +1,8 @@
 import { Request } from "express";
 import { Response } from "express";
-import { db } from "@/db/index.js";
-import { users } from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { users } from "@/db/drizzle/schema.js";
+import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const SignupBodySchema = z

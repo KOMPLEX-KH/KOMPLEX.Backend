@@ -23,7 +23,7 @@ import { GetPrivileges as getAdminDatabasePrivileges, GetPrivilegesResponseSchem
 import { getTables as getAdminDatabaseTables, GetTablesResponseSchema } from "../database/tables/get.js";
 import { executeConsoleCommand as executeAdminDatabaseConsole, ExecuteConsoleCommandBodySchema, ExecuteConsoleCommandResponseSchema } from "../database/console/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
