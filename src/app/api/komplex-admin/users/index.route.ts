@@ -7,7 +7,7 @@ import { createAdmin, AdminCreateAdminBodySchema, AdminCreateAdminResponseSchema
 import { updateAdmin, AdminUpdateAdminParamsSchema, AdminUpdateAdminBodySchema, AdminUpdateAdminResponseSchema } from "../users/admins/[id]/put.js";
 import { deleteAdmin, AdminDeleteAdminParamsSchema, AdminDeleteAdminResponseSchema } from "../users/admins/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -21,6 +21,7 @@ router.put("/admins/:id", verifyFirebaseTokenAdmin as any, updateAdmin as any);
 router.delete("/admins/:id", verifyFirebaseTokenAdmin as any, deleteAdmin as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/users",
     summary: "Get all users",
@@ -39,6 +40,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/users/admins",
     summary: "Get all admin users",
@@ -57,6 +59,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/users/admins",
     summary: "Create a new admin user",
@@ -75,6 +78,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/users/admins/:id",
     summary: "Update an admin user",
@@ -93,6 +97,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/users/admins/:id",
     summary: "Delete an admin user",

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 import { eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   videoComments,
   videoLikes,
@@ -9,8 +9,8 @@ import {
   userSavedVideos,
   users,
   videoReplies,
-} from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+} from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const AdminGetVideosQuerySchema = z

@@ -9,7 +9,7 @@ import { getUserProfile, UserProfileResponseSchema } from "../users/[id]/profile
 import { getUserVideos, UserVideosResponseSchema } from "../users/[id]/videos/get.js";
 import { getUserForums, UserForumsResponseSchema } from "../users/[id]/forums/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

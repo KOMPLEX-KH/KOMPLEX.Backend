@@ -14,7 +14,7 @@ import { callAiTopic, MeCallAiTopicParamsSchema, MeCallAiTopicBodySchema, MeCall
 import { deleteAiTopic, MeDeleteAiTopicParamsSchema, MeDeleteAiTopicResponseSchema } from "../../me/ai/topics/[id]/delete.js";
 import { rateAiTopicResponse, MeRateAiTopicParamsSchema, MeRateAiTopicBodySchema, MeRateAiTopicResponseSchema } from "../../me/ai/topics/rating/[id]/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 

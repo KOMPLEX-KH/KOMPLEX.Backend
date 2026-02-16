@@ -4,12 +4,27 @@ import { z } from "@/config/openapi/openapi.js";
 export type ResponseErrorWrapper = {
 	success: boolean;
 	error?: string;
+	message?: string;
 	data?: any;
 }
 
 export type ResponseSuccessWrapper = {
 	success: true;
+	message?: string;
 	data: any;
+	hasMore?: boolean;
+}
+
+export class ResponseError extends Error {
+	code: number;
+
+	constructor(message: string, code: number) {
+		super(message);
+		this.code = code;
+
+		// Fix prototype chain (important)
+		Object.setPrototypeOf(this, ResponseError.prototype);
+	}
 }
 
 const getGenericErrorMessage = (code: string) => {
@@ -31,19 +46,8 @@ const getGenericErrorMessage = (code: string) => {
 	return errorMessages[code as keyof typeof errorMessages] || errorMessages["default"];
 }
 
-export class ResponseError extends Error {
-	code: number;
 
-	constructor(message: string, code: number) {
-		super(message);
-		this.code = code;
-
-		// Fix prototype chain (important)
-		Object.setPrototypeOf(this, ResponseError.prototype);
-	}
-}
-
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.ENVIRONMENT === "production";
 
 export const getResponseError = (res: Response, err: unknown) => {
 	if (err instanceof ResponseError) {
@@ -68,13 +72,17 @@ export const getResponseError = (res: Response, err: unknown) => {
 	return res.status(500).json(response);
 }
 
-export const getResponseSuccess = (res: Response, data: any) => {
+export const getResponseSuccess = (res: Response, data: any, message?: string, hasMore?: boolean) => {
 	const response: ResponseSuccessWrapper = {
 		success: true,
+		message: message? isProd ? "Success" : message : undefined,
 		data,
+		hasMore,
 	}
 	return res.status(200).json(response);
 }
+
+// used for openapi routes registration to wrap
 
 export const getResponseSuccessSchema = (
 	dataSchema: z.ZodTypeAny

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   forumComments,
   forumLikes,
@@ -10,9 +10,9 @@ import {
   forumReplies,
   forums,
   users,
-} from "@/db/schema.js";
-import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
-import { forumReplyMedias } from "@/db/models/forum_reply_media.js";
+} from "@/db/drizzle/schema.js";
+import { forumCommentMedias } from "@/db/drizzle/models/forum_comment_media.js";
+import { forumReplyMedias } from "@/db/drizzle/models/forum_reply_media.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const AdminGetForumsQuerySchema = z

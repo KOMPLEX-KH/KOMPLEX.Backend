@@ -3,7 +3,7 @@ import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
 import { adminGetBigContentRateLimiter } from "@/middleware/rateLimiter.js";
 import { getDashboard, DashboardResponseSchema } from "../dashboard/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -18,6 +18,7 @@ router.get(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/dashboard",
     summary: "Get admin dashboard",

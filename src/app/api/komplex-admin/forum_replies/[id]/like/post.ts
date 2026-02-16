@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { forumReplyLikes } from "@/db/models/forum_reply_like.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumReplyLikes } from "@/db/drizzle/models/forum_reply_like.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const AdminLikeForumReplyBodySchema = z

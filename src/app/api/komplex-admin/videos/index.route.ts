@@ -4,7 +4,7 @@ import { adminGetVideoRateLimiter } from "@/middleware/rateLimiter.js";
 import { getAllVideos as getAllAdminVideos, AdminGetVideosQuerySchema, AdminGetVideosResponseSchema } from "../videos/get.js";
 import { getVideoById as getAdminVideoById, AdminGetVideoByIdParamsSchema, AdminGetVideoByIdResponseSchema } from "../videos/[id]/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -20,6 +20,7 @@ router.get(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/videos",
     summary: "Get all videos",
@@ -38,6 +39,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/videos/:id",
     summary: "Get video by ID",

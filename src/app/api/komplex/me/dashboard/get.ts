@@ -1,8 +1,8 @@
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import { desc, eq } from "drizzle-orm";
-import { news, exercises, forums, videos } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { ResponseError, getResponseError } from "@/utils/responseError.js";
+import { news, exercises, forums, videos } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
+import { ResponseError, getResponseError } from "@/utils/response.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { z } from "@/config/openapi/openapi.js";

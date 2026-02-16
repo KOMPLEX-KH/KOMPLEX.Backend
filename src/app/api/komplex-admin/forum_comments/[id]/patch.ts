@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { eq, and } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { forumComments } from "@/db/schema.js";
-import { forumCommentMedias } from "@/db/models/forum_comment_media.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumComments } from "@/db/drizzle/schema.js";
+import { forumCommentMedias } from "@/db/drizzle/models/forum_comment_media.js";
 import {
   deleteFromCloudflare,
   uploadImageToCloudflare,

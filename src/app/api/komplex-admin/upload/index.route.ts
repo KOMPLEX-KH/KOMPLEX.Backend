@@ -2,7 +2,7 @@ import Router from "express";
 import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
 import { AdminUploadFileResponseSchema, uploadFile as uploadAdminFile } from "../upload/file/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -12,6 +12,7 @@ const router = Router();
 router.post("/file", verifyFirebaseTokenAdmin as any, uploadAdminFile as any);
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/upload/file",
     summary: "Upload a file",

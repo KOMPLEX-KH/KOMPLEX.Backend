@@ -2,14 +2,14 @@ import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { getLastAccessed, MeLastAccessedResponseSchema } from "../../me/last-accessed/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
 // ============================================================================
 // Me Last Accessed Routes
 // ============================================================================
-router.get("", verifyFirebaseToken as any, getLastAccessed as any);
+router.get("/", verifyFirebaseToken as any, getLastAccessed as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,

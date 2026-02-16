@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { news, newsMedia, users } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { news, newsMedia, users } from "@/db/drizzle/schema.js";
 import {
   uploadImageToCloudflare,
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { redis } from "@/db/redis/redis.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 

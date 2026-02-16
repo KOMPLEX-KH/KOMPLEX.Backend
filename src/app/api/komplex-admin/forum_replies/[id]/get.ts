@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { forumReplies } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumReplies } from "@/db/drizzle/schema.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const AdminGetForumRepliesParamsSchema = z

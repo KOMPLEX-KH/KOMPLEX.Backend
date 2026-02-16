@@ -1,24 +1,20 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, desc, sql, inArray } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
 import {
   forums,
   forumMedias,
   users,
   forumLikes,
   followers,
-} from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+} from "@/db/drizzle/schema.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-const FeedForumMediaSchema = z.object({
-  url: z.string(),
-  type: z.string(),
-});
-
-const FeedForumItemSchema = z.object({
+export const FeedForumItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -29,19 +25,12 @@ const FeedForumItemSchema = z.object({
   updatedAt: z.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
-  media: z.array(FeedForumMediaSchema),
+  media: z.array(MediaSchema),
   viewCount: z.number(),
   likeCount: z.number(),
   isLiked: z.boolean(),
   isFollowing: z.boolean(),
-});
-
-export const FeedForumsResponseSchema = z
-  .object({
-    data: z.array(FeedForumItemSchema),
-    hasMore: z.boolean(),
-  })
-  .openapi("FeedForumsResponse");
+}).openapi("FeedForumItemSchema");
 
 export const getAllForums = async (
   req: AuthenticatedRequest,
@@ -106,11 +95,8 @@ export const getAllForums = async (
     ).map((id) => ({ id }));
 
     if (!forumIdRows.length) {
-      const emptyBody = FeedForumsResponseSchema.parse({
-        data: [],
-        hasMore: false,
-      });
-      return res.status(200).json(emptyBody);
+      const emptyBody = FeedForumItemSchema.array().parse([]);
+      return getResponseSuccess(res, emptyBody, "No forums found", false);
     }
 
     const cachedResults = (await redis.mGet(
@@ -267,12 +253,9 @@ export const getAllForums = async (
       isFollowing: forumUserIdRows.some((b) => b.userId === forum.userId),
     }));
 
-    const responseBody = FeedForumsResponseSchema.parse({
-      data: forumsWithMediaAndIsFollowing,
-      hasMore: allForums.length === limit,
-    });
+    const responseBody = FeedForumItemSchema.array().parse(forumsWithMediaAndIsFollowing);
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

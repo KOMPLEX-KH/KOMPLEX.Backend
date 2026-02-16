@@ -1,34 +1,50 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
 import {
   forumReplies,
   forumReplyMedias,
   users,
   forumReplyLikes,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
+import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
+
+export const FeedForumReplyItemResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  forumCommentId: z.number(),
+  description: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  media: z.array(MediaSchema),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+}).openapi("FeedForumReplyItemResponseSchema");
 
 export const getForumReplies = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { commentId } = req.params;
     const userId = req.user.userId;
     const { page } = req.query;
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
 
-    const cacheKey = `forumReplies:comment:${id}:page:${pageNumber}`;
+    const cacheKey = `forumReplies:comment:${commentId}:page:${pageNumber}`;
     const cached = await redis.get(cacheKey);
 
     let cachedReplies: any[] = [];
     if (cached) {
-      cachedReplies = JSON.parse(cached).repliesWithMedia;
+      cachedReplies = FeedForumReplyItemResponseSchema.array().parse(JSON.parse(cached).repliesWithMedia);
     }
 
     const dynamicData = await db
@@ -47,7 +63,7 @@ export const getForumReplies = async (
         )
       )
       .leftJoin(users, eq(users.id, forumReplies.userId))
-      .where(eq(forumReplies.forumCommentId, Number(id)))
+      .where(eq(forumReplies.forumCommentId, Number(commentId)))
       .groupBy(forumReplies.id, forumReplyLikes.forumReplyId, users.profileImage)
       .offset(offset)
       .limit(limit);
@@ -76,7 +92,7 @@ export const getForumReplies = async (
           forumReplyLikes,
           eq(forumReplies.id, forumReplyLikes.forumReplyId)
         )
-        .where(eq(forumReplies.forumCommentId, Number(id)))
+        .where(eq(forumReplies.forumCommentId, Number(commentId)))
         .groupBy(
           forumReplies.id,
           forumReplies.userId,
@@ -142,10 +158,9 @@ export const getForumReplies = async (
       };
     });
 
-    return res.status(200).json({
-      data: repliesWithMedia,
-      hasMore: repliesWithMedia.length === limit,
-    });
+    const responseBody = FeedForumReplyItemResponseSchema.array().parse(repliesWithMedia);
+
+    return getResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

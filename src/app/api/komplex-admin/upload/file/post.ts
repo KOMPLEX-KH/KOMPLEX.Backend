@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import {
   uploadPdfToCloudflare,
   uploadImageToCloudflare,

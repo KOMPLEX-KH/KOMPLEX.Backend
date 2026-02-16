@@ -23,7 +23,7 @@ import { GetPrivileges as getAdminDatabasePrivileges, GetPrivilegesResponseSchem
 import { getTables as getAdminDatabaseTables, GetTablesResponseSchema } from "../database/tables/get.js";
 import { executeConsoleCommand as executeAdminDatabaseConsole, ExecuteConsoleCommandBodySchema, ExecuteConsoleCommandResponseSchema } from "../database/console/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -122,6 +122,7 @@ router.post(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/dashboard",
     summary: "Get database dashboard",
@@ -139,6 +140,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/schema",
     summary: "Get database schema",
@@ -156,6 +158,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/users",
     summary: "Get database users",
@@ -173,6 +176,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/database/users",
     summary: "Create a database user",
@@ -191,6 +195,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/database/users/:username",
     summary: "Update a database user",
@@ -209,6 +214,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/database/users/:username",
     summary: "Delete a database user",
@@ -226,6 +232,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/roles",
     summary: "Get database roles",
@@ -243,6 +250,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/database/roles",
     summary: "Create a database role",
@@ -261,6 +269,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/database/roles/:rolename",
     summary: "Update a database role name",
@@ -279,6 +288,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/database/roles/:rolename",
     summary: "Delete a database role",
@@ -296,6 +306,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/database/roles/:rolename/privileges",
     summary: "Update role privileges",
@@ -314,6 +325,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PUT,
     path: "/komplex-admin/database/roles/:rolename/tables",
     summary: "Update role table access",
@@ -332,6 +344,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/privileges",
     summary: "Get database privileges",
@@ -349,6 +362,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/database/tables",
     summary: "Get database tables",
@@ -366,6 +380,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/database/console",
     summary: "Execute console command",

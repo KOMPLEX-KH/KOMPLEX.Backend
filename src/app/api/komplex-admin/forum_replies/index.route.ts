@@ -12,7 +12,7 @@ import { updateForumReply as updateAdminForumReply, AdminUpdateForumReplyParamsS
 import { likeForumReply as likeAdminForumReply, AdminLikeForumReplyBodySchema, AdminLikeForumReplyResponseSchema } from "../forum_replies/[id]/like/post.js";
 import { unlikeForumReply as unlikeAdminForumReply, AdminUnlikeForumReplyBodySchema, AdminUnlikeForumReplyResponseSchema } from "../forum_replies/[id]/unlike/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -31,6 +31,7 @@ router.delete(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/forum_replies/:id",
     summary: "Get all replies for a comment",
@@ -48,6 +49,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/forum_replies/:id",
     summary: "Post a forum reply",
@@ -66,6 +68,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/forum_replies/:id",
     summary: "Update a forum reply",
@@ -84,6 +87,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.POST,
     path: "/komplex-admin/forum_replies/:id/like",
     summary: "Like a forum reply",
@@ -102,6 +106,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.DELETE,
     path: "/komplex-admin/forum_replies/:id/unlike",
     summary: "Unlike a forum reply",

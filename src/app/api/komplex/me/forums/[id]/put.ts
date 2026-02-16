@@ -1,15 +1,15 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { forums, forumMedias, users } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
 import {
   uploadImageToCloudflare,
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const updateForum = async (

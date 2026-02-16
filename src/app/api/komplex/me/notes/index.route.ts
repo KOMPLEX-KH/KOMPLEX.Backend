@@ -12,7 +12,7 @@ import { getMyNoteById } from "../../me/notes/[id]/get.js";
 import { updateMyNote } from "../../me/notes/[id]/put.js";
 import { deleteMyNote } from "../../me/notes/[id]/delete.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();

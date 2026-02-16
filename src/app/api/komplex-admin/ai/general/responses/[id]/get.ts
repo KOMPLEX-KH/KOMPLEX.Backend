@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { userAIHistory } from "@/db/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { userAIHistory } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 

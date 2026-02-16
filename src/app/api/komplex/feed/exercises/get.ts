@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { eq, count, max, and } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   exercises,
   questions,
   userExerciseHistory,
-} from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+} from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const ExerciseItemSchema = z.object({
@@ -23,7 +23,7 @@ const ExerciseItemSchema = z.object({
 });
 
 export const FeedExercisesResponseSchema = z
-  .record(z.array(ExerciseItemSchema))
+  .record(z.string(), z.array(ExerciseItemSchema))
   .openapi("FeedExercisesResponse");
 
 export const getExercises = async (

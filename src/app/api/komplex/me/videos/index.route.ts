@@ -27,7 +27,7 @@ import { deleteVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id
 import { likeVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/like/patch.js";
 import { unlikeVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/unlike/patch.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();

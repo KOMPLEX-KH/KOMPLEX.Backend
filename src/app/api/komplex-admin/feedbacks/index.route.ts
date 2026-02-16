@@ -7,7 +7,7 @@ import {
 import { getFeedbacks, GetFeedbacksQuerySchema, GetFeedbacksResponseSchema } from "../feedbacks/get.js";
 import { updateFeedbackStatus, UpdateFeedbackStatusParamsSchema, UpdateFeedbackStatusBodySchema, UpdateFeedbackStatusResponseSchema } from "../feedbacks/[id]/patch.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
-import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/responseError.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
 
@@ -28,6 +28,7 @@ router.patch(
 );
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.GET,
     path: "/komplex-admin/feedbacks",
     summary: "Get all feedbacks",
@@ -46,6 +47,7 @@ registerOpenApiRoute({
 });
 
 registerOpenApiRoute({
+    isAdminApi: true,
     method: HttpMethod.PATCH,
     path: "/komplex-admin/feedbacks/:id",
     summary: "Update feedback status",

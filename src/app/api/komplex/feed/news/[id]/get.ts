@@ -1,12 +1,12 @@
-import { followers, news, users, userSavedNews } from "@/db/schema.js";
-import { db } from "@/db/index.js";
+import { followers, news, users, userSavedNews } from "@/db/drizzle/schema.js";
+import { db } from "@/db/drizzle/index.js";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { newsMedia } from "@/db/schema.js";
+import { redis } from "@/db/redis/redis.js";
+import { newsMedia } from "@/db/drizzle/schema.js";
 import { and, sql } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import { Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const getNewsById = async (
   req: AuthenticatedRequest,

@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { eq } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { videoReplies, videoReplyMedias, users } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { videoReplies, videoReplyMedias, users } from "@/db/drizzle/schema.js";
 import { uploadVideoToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const postVideoReply = async (
@@ -37,9 +37,8 @@ export const postVideoReply = async (
     if (files) {
       for (const file of files) {
         try {
-          const uniqueKey = `${insertReply.id}-${crypto.randomUUID()}-${
-            file.originalname
-          }`;
+          const uniqueKey = `${insertReply.id}-${crypto.randomUUID()}-${file.originalname
+            }`;
           const url = await uploadVideoToCloudflare(
             uniqueKey,
             file.buffer,
@@ -89,7 +88,7 @@ export const postVideoReply = async (
     const limit = 20;
     let { currentReplyAmount, lastPage } = JSON.parse(
       (await redis.get(`videoReplies:comment:${id}:lastPage`)) ||
-        JSON.stringify({ currentReplyAmount: 0, lastPage: 1 })
+      JSON.stringify({ currentReplyAmount: 0, lastPage: 1 })
     );
 
     if (currentReplyAmount >= limit) {

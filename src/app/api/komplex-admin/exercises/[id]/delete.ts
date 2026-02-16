@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { eq, inArray } from "drizzle-orm";
-import { db } from "@/db/index.js";
+import { db } from "@/db/drizzle/index.js";
 import {
   exercises,
   questions,
   choices,
   exerciseQuestionHistory,
   userExerciseHistory,
-} from "@/db/schema.js";
+} from "@/db/drizzle/schema.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const DeleteExerciseParamsSchema = z.object({

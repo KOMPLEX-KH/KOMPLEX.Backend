@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { videos, users, userSavedVideos, videoLikes } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { videos, users, userSavedVideos, videoLikes } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const getRecommendedVideos = async (
   req: AuthenticatedRequest,

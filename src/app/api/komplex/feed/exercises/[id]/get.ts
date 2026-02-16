@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
 import { eq, inArray } from "drizzle-orm";
-import { exercises, questions, choices } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { exercises, questions, choices } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 
 export const getExerciseById = async (
   req: AuthenticatedRequest,

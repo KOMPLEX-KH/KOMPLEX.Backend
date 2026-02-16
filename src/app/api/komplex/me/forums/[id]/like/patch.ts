@@ -1,8 +1,8 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
-import { forumLikes } from "@/db/schema.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumLikes } from "@/db/drizzle/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeLikeForumParamsSchema = z

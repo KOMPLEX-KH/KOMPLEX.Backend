@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 import { desc, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { feedbacks, feedbackMedia, users } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { feedbacks, feedbackMedia, users } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const GetFeedbacksQuerySchema = z.object({

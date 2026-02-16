@@ -1,4 +1,4 @@
-import { redis } from "@/db/redis/redisConfig.js";
+import { redis } from "@/db/redis/redis.js";
 import { Request, Response, NextFunction } from "express";
 import { RateLimiterRedis, RateLimiterMemory } from "rate-limiter-flexible";
 

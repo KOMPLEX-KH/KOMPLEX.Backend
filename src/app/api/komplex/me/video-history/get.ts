@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { eq, desc } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { userVideoHistory, videos } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { userVideoHistory, videos } from "@/db/drizzle/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { ResponseError, getResponseError } from "@/utils/responseError.js";
+import { ResponseError, getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const VideoHistoryItemSchema = z.object({

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { exercises, questions, choices } from "@/db/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { exercises, questions, choices } from "@/db/drizzle/schema.js";
 import { z } from "@/config/openapi/openapi.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 

@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { followers } from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { followers } from "@/db/drizzle/schema.js";
+import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeFollowUserParamsSchema = z
@@ -51,4 +51,3 @@ export const followUser = async (
     return getResponseError(res, error);
   }
 };
-  

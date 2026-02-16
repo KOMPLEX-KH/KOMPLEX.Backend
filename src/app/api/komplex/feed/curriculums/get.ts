@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { ResponseError, getResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
 import { eq } from "drizzle-orm";
-import { grades, lessons, subjects, topics } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { grades, lessons, subjects, topics } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const TopicSchema = z.object({
@@ -11,7 +11,7 @@ const TopicSchema = z.object({
   name: z.string(),
   exerciseId: z.number().nullable().optional(),
   orderIndex: z.number().nullable().optional(),
-});
+}).openapi("TopicSchema");
 
 const LessonSchema = z.object({
   id: z.number(),
@@ -19,7 +19,7 @@ const LessonSchema = z.object({
   icon: z.string().nullable().optional(),
   topics: z.array(TopicSchema),
   orderIndex: z.number().nullable().optional(),
-});
+}).openapi("LessonSchema");
 
 const SubjectSchema = z.object({
   id: z.number(),
@@ -27,26 +27,27 @@ const SubjectSchema = z.object({
   icon: z.string().nullable().optional(),
   orderIndex: z.number().nullable().optional(),
   lessons: z.array(LessonSchema),
-});
+}).openapi("SubjectSchema");
 
 const GradeSchema = z.object({
   id: z.number(),
   name: z.string(),
   orderIndex: z.number().nullable().optional(),
   subjects: z.array(SubjectSchema),
-});
+}).openapi("GradeSchema");
 
 export const FeedCurriculumsResponseSchema = z
   .object({
     data: z.array(GradeSchema),
   })
-  .openapi("FeedCurriculumsResponse");
+  .openapi("FeedCurriculumsResponseSchema");
 
 export const getCurriculums = async (req: Request, res: Response) => {
   try {
     const cached = await redis.get("curriculums");
     if (cached) {
-      return res.status(200).json({ data: JSON.parse(cached) });
+      const responseBody = FeedCurriculumsResponseSchema.parse(JSON.parse(cached));
+      return getResponseSuccess(res, responseBody);
     }
     const allData = await db
       .select({
@@ -170,7 +171,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
       data: structuredData,
     });
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

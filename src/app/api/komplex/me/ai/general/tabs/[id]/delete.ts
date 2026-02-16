@@ -1,10 +1,10 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { userAIHistory } from "@/db/schema.js";
-import { userAiTabs } from "@/db/models/user_ai_tabs.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { userAIHistory } from "@/db/drizzle/schema.js";
+import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
+import { redis } from "@/db/redis/redis.js";
 import { and, eq } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 

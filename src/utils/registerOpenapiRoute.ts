@@ -1,4 +1,4 @@
-import { registry } from "@/config/openapi/swagger.js";
+import { adminApiRegistry, userApiRegistry } from "@/config/openapi/swagger.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export enum HttpMethod {
@@ -28,6 +28,7 @@ type RegisterRouteConfig = {
     query?: z.ZodTypeAny;
 
     responses: Record<number, ResponseConfig>;
+    isAdminApi?: boolean
 };
 
 export const registerOpenApiRoute = ({
@@ -39,19 +40,49 @@ export const registerOpenApiRoute = ({
     params,
     query,
     responses,
+    isAdminApi = false
 }: RegisterRouteConfig) => {
-    registry.registerPath({
+    if (isAdminApi) {
+        adminApiRegistry.registerPath({
+            method,
+            path,
+            summary,
+            tags: tag ? [tag] : undefined,
+
+            request: {
+                params: undefined,
+                query: undefined,
+                body: body
+                    ? {
+                        content: { "application/json": { schema: body } },
+                    }
+                    : undefined,
+            },
+
+            responses: Object.fromEntries(
+                Object.entries(responses).map(([status, config]) => [
+                    status,
+                    {
+                        description: config.description,
+                        content: { "application/json": { schema: config.schema } },
+                    },
+                ])
+            ),
+        });
+        return;
+    }
+    userApiRegistry.registerPath({
         method,
         path,
         summary,
         tags: tag ? [tag] : undefined,
 
         request: {
-            params:  undefined,
-            query:  undefined,
+            params: undefined,
+            query: undefined,
             body: body
                 ? {
-                    content: { "application/json": { schema: body } },  
+                    content: { "application/json": { schema: body } },
                 }
                 : undefined,
         },

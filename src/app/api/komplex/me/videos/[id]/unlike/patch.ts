@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db/index.js";
-import { videoLikes } from "@/db/schema.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { videoLikes } from "@/db/drizzle/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 
 export const unlikeVideo = async (
   req: AuthenticatedRequest,

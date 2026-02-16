@@ -1,8 +1,8 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
-import { forumReplyLikes } from "@/db/schema.js";
-import { getResponseError } from "@/utils/responseError.js";
+import { db } from "@/db/drizzle/index.js";
+import { forumReplyLikes } from "@/db/drizzle/schema.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const likeForumReply = async (
   req: AuthenticatedRequest,

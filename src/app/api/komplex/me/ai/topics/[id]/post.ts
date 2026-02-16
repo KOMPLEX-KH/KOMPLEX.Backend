@@ -1,9 +1,9 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { redis } from "@/db/redis/redisConfig.js";
-import { topics, userAITopicHistory } from "@/db/schema.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { topics, userAITopicHistory } from "@/db/drizzle/schema.js";
 import { eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";

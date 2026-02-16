@@ -1,10 +1,10 @@
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
 import { Request } from "express";
 import { Response } from "express";
-import { db } from "@/db/index.js";
-import { users } from "@/db/schema.js";
+import { db } from "@/db/drizzle/index.js";
+import { users } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
-import { userOauth } from "@/db/models/user_oauth.js";
+import { userOauth } from "@/db/drizzle/models/user_oauth.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { z } from "@/config/openapi/openapi.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";

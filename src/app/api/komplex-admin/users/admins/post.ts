@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/responseError.js";
-import { db } from "@/db/index.js";
-import { users } from "@/db/schema.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { users } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const AdminCreateAdminBodySchema = z

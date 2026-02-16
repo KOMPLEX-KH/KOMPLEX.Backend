@@ -1,12 +1,12 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { db } from "@/db/index.js";
-import { users, videoReplies } from "@/db/schema.js";
-import { videoReplyMedias } from "@/db/models/video_reply_medias.js";
-import { videoReplyLike } from "@/db/models/video_reply_like.js";
-import { redis } from "@/db/redis/redisConfig.js";
+import { db } from "@/db/drizzle/index.js";
+import { users, videoReplies } from "@/db/drizzle/schema.js";
+import { videoReplyMedias } from "@/db/drizzle/models/video_reply_medias.js";
+import { videoReplyLike } from "@/db/drizzle/models/video_reply_like.js";
+import { redis } from "@/db/redis/redis.js";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getResponseError } from "@/utils/responseError.js";
+import { getResponseError } from "@/utils/response.js";
 
 export const getVideoReplies = async (
   req: AuthenticatedRequest,
@@ -19,15 +19,15 @@ export const getVideoReplies = async (
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
-  
+
     const cacheKey = `videoReplies:comment:${id}:page:${pageNumber}`;
     const cached = await redis.get(cacheKey);
-  
+
     let cachedReplies: any[] = [];
     if (cached) {
       cachedReplies = JSON.parse(cached);
     }
-  
+
     const dynamicData = await db
       .select({
         id: videoReplies.id,
@@ -48,7 +48,7 @@ export const getVideoReplies = async (
       .groupBy(videoReplies.id, videoReplyLike.videoReplyId, users.profileImage)
       .offset(offset)
       .limit(limit);
-  
+
     if (!cachedReplies.length) {
       const replyRows = await db
         .select({
@@ -96,7 +96,7 @@ export const getVideoReplies = async (
         )
         .offset(offset)
         .limit(limit);
-  
+
       cachedReplies = Object.values(
         replyRows.reduce((acc, reply) => {
           if (!acc[reply.id]) {
@@ -121,10 +121,10 @@ export const getVideoReplies = async (
           return acc;
         }, {} as { [key: number]: any })
       );
-  
+
       await redis.set(cacheKey, JSON.stringify(cachedReplies), { EX: 60 });
     }
-  
+
     const repliesWithMedia = cachedReplies.map((r) => {
       const dynamic = dynamicData.find((d) => d.id === r.id);
       return {
@@ -134,7 +134,7 @@ export const getVideoReplies = async (
         profileImage: dynamic?.profileImage || r.profileImage,
       };
     });
-  
+
     return res.status(200).json({
       data: repliesWithMedia,
       hasMore: repliesWithMedia.length === limit,
