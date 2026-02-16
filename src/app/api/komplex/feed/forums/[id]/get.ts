@@ -6,9 +6,9 @@ import { followers, forumLikes, forumMedias, forums, users } from "@/db/drizzle/
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { z } from "@/config/openapi/openapi.js";
-import { MediaSchema } from "@/types/zod-schemas/media.schema.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-export const ForumPostResponseSchema = z.object({
+export const FeedForumItemResponseSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -24,7 +24,7 @@ export const ForumPostResponseSchema = z.object({
   likeCount: z.number(),
   isLiked: z.boolean(),
   isFollowing: z.boolean(),
-}).openapi("ForumPostResponse");
+}).openapi("FeedForumItemResponseSchema");
 
 export const getForumById = async (
   req: AuthenticatedRequest,
@@ -38,7 +38,7 @@ export const getForumById = async (
     const cached = await redis.get(cacheKey);
     let forumData;
     if (cached) {
-      forumData = JSON.parse(cached);
+      forumData = FeedForumItemResponseSchema.parse(JSON.parse(cached));
     } else {
       const forum = await db
         .select({
@@ -48,7 +48,6 @@ export const getForumById = async (
           description: forums.description,
           type: forums.type,
           topic: forums.topic,
-          viewCount: forums.viewCount,
           createdAt: forums.createdAt,
           updatedAt: forums.updatedAt,
           mediaUrl: forumMedias.url,
@@ -65,24 +64,32 @@ export const getForumById = async (
         throw new ResponseError("Forum not found", 404);
       }
 
-      forumData = {
-        id: forum[0].id,
-        userId: forum[0].userId,
-        title: forum[0].title,
-        description: forum[0].description,
-        type: forum[0].type,
-        topic: forum[0].topic,
-        createdAt: forum[0].createdAt,
-        updatedAt: new Date(),
-        username: forum[0].username,
-        profileImage: forum[0].profileImage,
-        media: forum
-          .filter((f) => f.mediaUrl)
-          .map((f) => ({
+      const forumMap = new Map<number, any>();
+      for (const f of forum) {
+        if (!forumMap.has(f.id)) {
+          forumMap.set(f.id, {
+            id: f.id,
+            userId: f.userId,
+            title: f.title,
+            description: f.description,
+            type: f.type,
+            topic: f.topic,
+            createdAt: f.createdAt,
+            updatedAt: f.updatedAt,
+            username: f.username,
+            profileImage: f.profileImage,
+            media: [] as { url: string; type: string }[],
+          });
+        }
+        if (f.mediaUrl) {
+          forumMap.get(f.id).media.push({
             url: f.mediaUrl,
             type: f.mediaType,
-          })),
-      };
+          });
+        }
+      }
+
+      forumData = forumMap.get(forum[0].id);
 
       await redis.set(cacheKey, JSON.stringify(forumData), {
         EX: 600,
@@ -99,6 +106,7 @@ export const getForumById = async (
 
     const dynamic = await db
       .select({
+        id: forums.id,
         viewCount: forums.viewCount,
         likeCount: sql`COUNT(DISTINCT ${forumLikes.id})`,
         isLiked: sql`CASE WHEN ${forumLikes.forumId} IS NOT NULL THEN true ELSE false END`,
@@ -128,14 +136,14 @@ export const getForumById = async (
 
     const forumWithMedia = {
       ...forumData,
-      isFollowing: isFollowing.length > 0,
-      viewCount: dynamic[0]?.viewCount ?? 0,
+      viewCount: (dynamic[0]?.viewCount ?? 0) + 1,
       likeCount: Number(dynamic[0]?.likeCount) || 0,
       isLiked: !!dynamic[0]?.isLiked,
+      isFollowing: isFollowing.length > 0,
       profileImage: dynamic[0]?.profileImage || forumData.profileImage,
     };
     // parse first before response to ensure the response is valid
-    const responseBody = ForumPostResponseSchema.parse(forumWithMedia);
+    const responseBody = FeedForumItemResponseSchema.parse(forumWithMedia);
     // wrap in success and data
     return getResponseSuccess(res, responseBody);
   } catch (error) {

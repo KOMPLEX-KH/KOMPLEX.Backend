@@ -10,11 +10,11 @@ import {
   forumLikes,
   followers,
 } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
-import { MediaSchema } from "@/types/zod-schemas/media.schema.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-const FeedForumItemSchema = z.object({
+export const FeedForumItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -30,14 +30,7 @@ const FeedForumItemSchema = z.object({
   likeCount: z.number(),
   isLiked: z.boolean(),
   isFollowing: z.boolean(),
-});
-
-export const FeedForumsResponseSchema = z
-  .object({
-    data: z.array(FeedForumItemSchema),
-    hasMore: z.boolean(),
-  })
-  .openapi("FeedForumsResponse");
+}).openapi("FeedForumItemSchema");
 
 export const getAllForums = async (
   req: AuthenticatedRequest,
@@ -102,11 +95,8 @@ export const getAllForums = async (
     ).map((id) => ({ id }));
 
     if (!forumIdRows.length) {
-      const emptyBody = FeedForumsResponseSchema.parse({
-        data: [],
-        hasMore: false,
-      });
-      return res.status(200).json(emptyBody);
+      const emptyBody = FeedForumItemSchema.array().parse([]);
+      return getResponseSuccess(res, emptyBody, "No forums found", false);
     }
 
     const cachedResults = (await redis.mGet(
@@ -263,12 +253,9 @@ export const getAllForums = async (
       isFollowing: forumUserIdRows.some((b) => b.userId === forum.userId),
     }));
 
-    const responseBody = FeedForumsResponseSchema.parse({
-      data: forumsWithMediaAndIsFollowing,
-      hasMore: allForums.length === limit,
-    });
+    const responseBody = FeedForumItemSchema.array().parse(forumsWithMediaAndIsFollowing);
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

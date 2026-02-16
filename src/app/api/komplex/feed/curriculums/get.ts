@@ -11,7 +11,7 @@ const TopicSchema = z.object({
   name: z.string(),
   exerciseId: z.number().nullable().optional(),
   orderIndex: z.number().nullable().optional(),
-});
+}).openapi("TopicSchema");
 
 const LessonSchema = z.object({
   id: z.number(),
@@ -19,7 +19,7 @@ const LessonSchema = z.object({
   icon: z.string().nullable().optional(),
   topics: z.array(TopicSchema),
   orderIndex: z.number().nullable().optional(),
-});
+}).openapi("LessonSchema");
 
 const SubjectSchema = z.object({
   id: z.number(),
@@ -27,20 +27,20 @@ const SubjectSchema = z.object({
   icon: z.string().nullable().optional(),
   orderIndex: z.number().nullable().optional(),
   lessons: z.array(LessonSchema),
-});
+}).openapi("SubjectSchema");
 
 const GradeSchema = z.object({
   id: z.number(),
   name: z.string(),
   orderIndex: z.number().nullable().optional(),
   subjects: z.array(SubjectSchema),
-});
+}).openapi("GradeSchema");
 
 export const FeedCurriculumsResponseSchema = z
   .object({
     data: z.array(GradeSchema),
   })
-  .openapi("FeedCurriculumsResponse");
+  .openapi("FeedCurriculumsResponseSchema");
 
 export const getCurriculums = async (req: Request, res: Response) => {
   try {

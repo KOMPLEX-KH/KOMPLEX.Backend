@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { topics, users, videos } from "@/db/drizzle/schema.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
@@ -11,19 +11,16 @@ const LastAccessedItemSchema = z.object({
   id: z.number(),
   name: z.string().optional(),
   title: z.string().optional(),
-});
+}).openapi("LastAccessedItemSchema");
 
 export const MeLastAccessedResponseSchema = z
   .object({
-    data: z
-      .object({
-        lastTopic: LastAccessedItemSchema.nullable(),
-        lastVideo: LastAccessedItemSchema.nullable(),
-        lastAiTab: LastAccessedItemSchema.nullable(),
-      })
-      .nullable(),
+    lastTopic: LastAccessedItemSchema.nullable(),
+    lastVideo: LastAccessedItemSchema.nullable(),
+    lastAiTab: LastAccessedItemSchema.nullable(),
   })
-  .openapi("MeLastAccessedResponse");
+  .nullable()
+  .openapi("MeLastAccessedResponseSchema");
 
 export const getLastAccessed = async (
   req: AuthenticatedRequest,
@@ -31,7 +28,7 @@ export const getLastAccessed = async (
 ) => {
   try {
     const { userId } = req.user;
-    if (!userId || userId === 0) {
+    if (!userId) {
       return getResponseError(res, new ResponseError("User ID is required", 400));
     }
 
@@ -52,34 +49,32 @@ export const getLastAccessed = async (
       .limit(1);
 
     if (!lastAccessed || lastAccessed.length === 0) {
-      const emptyBody = MeLastAccessedResponseSchema.parse({ data: null });
-      return res.status(200).json(emptyBody);
+      const emptyBody = MeLastAccessedResponseSchema.parse(null);
+      return getResponseSuccess(res, emptyBody, "No last accessed content found", false);
     }
 
     const responseBody = MeLastAccessedResponseSchema.parse({
-      data: {
-        lastTopic: lastAccessed[0].lastTopicId
-          ? {
-            id: lastAccessed[0].lastTopicId,
-            name: lastAccessed[0].lastTopicName,
-          }
-          : null,
-        lastVideo: lastAccessed[0].lastVideoId
-          ? {
-            id: lastAccessed[0].lastVideoId,
-            title: lastAccessed[0].lastVideoTitle,
-          }
-          : null,
-        lastAiTab: lastAccessed[0].lastAiTabId
-          ? {
-            id: lastAccessed[0].lastAiTabId,
-            name: lastAccessed[0].lastAiTabName,
-          }
-          : null,
-      },
+      lastTopic: lastAccessed[0].lastTopicId
+        ? {
+          id: lastAccessed[0].lastTopicId,
+          name: lastAccessed[0].lastTopicName,
+        }
+        : null,
+      lastVideo: lastAccessed[0].lastVideoId
+        ? {
+          id: lastAccessed[0].lastVideoId,
+          title: lastAccessed[0].lastVideoTitle,
+        }
+        : null,
+      lastAiTab: lastAccessed[0].lastAiTabId
+        ? {
+          id: lastAccessed[0].lastAiTabId,
+          name: lastAccessed[0].lastAiTabName,
+        }
+        : null,
     });
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody);
   } catch (error) {
     return getResponseError(res, error);
   }

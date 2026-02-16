@@ -8,7 +8,7 @@ import { redis } from "@/db/redis/redis.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const CurriculumTopicResponseSchema = z.object({
-  component: z.string(),
+  component: z.array(z.any()),
   componentCode: z.string(),
 }).openapi("CurriculumTopicResponse");
 

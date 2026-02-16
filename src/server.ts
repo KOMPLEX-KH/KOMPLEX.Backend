@@ -65,9 +65,9 @@ if (process.env.ENVIRONMENT === "development") {
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(null, {
     swaggerOptions: { url: "/open.json" }
   }));
-  app.use("/docs/admin", swaggerUi.serve, swaggerUi.setup(null, {
-    swaggerOptions: { url: "/open-admin.json" }
-  }));
+  // app.use("/docs/admin", swaggerUi.serve, swaggerUi.setup(null, {
+  //   swaggerOptions: { url: "/open-admin.json" }
+  // }));
 }
 
 app.use(morgan(process.env.ENVIRONMENT === "production" ? "combined" : "dev"));

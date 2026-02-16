@@ -9,7 +9,7 @@ const router = Router();
 // ============================================================================
 // Me Last Accessed Routes
 // ============================================================================
-router.get("", verifyFirebaseToken as any, getLastAccessed as any);
+router.get("/", verifyFirebaseToken as any, getLastAccessed as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
