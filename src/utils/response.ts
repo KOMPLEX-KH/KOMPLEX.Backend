@@ -47,7 +47,7 @@ const getGenericErrorMessage = (code: string) => {
 }
 
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.ENVIRONMENT === "production";
 
 export const getResponseError = (res: Response, err: unknown) => {
 	if (err instanceof ResponseError) {
