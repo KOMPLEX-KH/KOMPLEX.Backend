@@ -5,6 +5,7 @@ import { users } from "@/db/drizzle/schema.js";
 import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
+// Validates incoming request data
 export const SignupBodySchema = z
   .object({
     email: z.string().email(),
@@ -16,8 +17,10 @@ export const SignupBodySchema = z
     phone: z.string().optional(),
     profileImageKey: z.string().optional(),
   })
-  .openapi("SignupBody");
+  .openapi("SignupBody"); 
 
+
+// Defines the structure of successful response data
 export const SignupResponseSchema = z
   .object({
     id: z.number(),
@@ -43,6 +46,7 @@ export const SignupResponseSchema = z
 
 export type SignupBody = z.infer<typeof SignupBodySchema>;
 
+// Validates and extracts data from request body
 export const postSignup = async (req: Request, res: Response) => {
   const {
     email,
@@ -87,3 +91,7 @@ export const postSignup = async (req: Request, res: Response) => {
     return getResponseError(res, error);
   }
 };
+
+
+// 
+
