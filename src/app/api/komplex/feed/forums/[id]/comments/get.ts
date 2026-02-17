@@ -46,8 +46,7 @@ export const getForumComments = async (
     let cachedComments: any[] = [];
     if (cached) {
       try {
-        // Parse and validate cache using the full correct item schema
-        cachedComments = FeedForumCommentItemResponseSchema.array().parse(JSON.parse(cached));
+        cachedComments = (JSON.parse(cached));
       } catch {
         cachedComments = [];
       }
@@ -176,7 +175,6 @@ export const getForumComments = async (
     });
 
     const responseBody = FeedForumCommentItemResponseSchema.array().parse(commentsWithMedia);
-
 
     return getResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
   } catch (error) {

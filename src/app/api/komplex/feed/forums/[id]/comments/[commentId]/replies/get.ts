@@ -44,7 +44,7 @@ export const getForumReplies = async (
 
     let cachedReplies: any[] = [];
     if (cached) {
-      cachedReplies = FeedForumReplyItemResponseSchema.array().parse(JSON.parse(cached).repliesWithMedia);
+      cachedReplies = (JSON.parse(cached));
     }
 
     const dynamicData = await db
@@ -143,7 +143,7 @@ export const getForumReplies = async (
 
       await redis.set(
         cacheKey,
-        JSON.stringify({ repliesWithMedia: cachedReplies }),
+        JSON.stringify(cachedReplies),
         { EX: 60 }
       );
     }
