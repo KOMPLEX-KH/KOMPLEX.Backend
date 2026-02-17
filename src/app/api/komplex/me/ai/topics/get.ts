@@ -1,23 +1,17 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAITopicHistory, topics } from "@/db/drizzle/schema.js";
 import { asc, eq } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
-export const MeGetAiTopicsResponseSchema = z
+export const MeAiTopicItemSchema = z
   .object({
-    data: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string().nullable().optional(),
-      })
-    ),
-    success: z.literal(true),
-    message: z.string(),
+    id: z.number(),
+    name: z.string().nullable().optional(),
   })
-  .openapi("MeGetAiTopicsResponse");
+  .openapi("MeAiTopicItemSchema");
 
 export const getAllAiTopics = async (
   req: AuthenticatedRequest,
@@ -26,12 +20,8 @@ export const getAllAiTopics = async (
   try {
     const userId = req.user.userId;
     const result = await getAllAiTopicNamesServiceInternal(Number(userId));
-    const responseBody = MeGetAiTopicsResponseSchema.parse({
-      data: result,
-      success: true,
-      message: "AI topic names fetched successfully",
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeAiTopicItemSchema.array().parse(result);
+    return getResponseSuccess(res, responseBody, "AI topic names fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -48,11 +38,7 @@ const getAllAiTopicNamesServiceInternal = async (userId: number) => {
       .innerJoin(topics, eq(userAITopicHistory.topicId, topics.id))
       .where(eq(userAITopicHistory.userId, userId))
       .orderBy(asc(userAITopicHistory.updatedAt));
-    const uniqueTopicIds = new Set(result.map((r) => r.id));
-    return Array.from(uniqueTopicIds).map((id) => ({
-      id,
-      name: result.find((r) => r.id === id)?.name,
-    }));
+    return result;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

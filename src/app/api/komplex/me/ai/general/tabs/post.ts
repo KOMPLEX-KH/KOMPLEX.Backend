@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redis.js";
@@ -16,14 +16,10 @@ export const MeCreateAiGeneralTabBodySchema = z
 
 export const MeCreateAiGeneralTabResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      prompt: z.string(),
-      responseType: z.string(),
-      id: z.number(),
-      name: z.string(),
-    }),
+    prompt: z.string(),
+    responseType: z.string(),
+    id: z.number(),
+    name: z.string(),
   })
   .openapi("MeCreateAiGeneralTabResponse");
 
@@ -41,12 +37,8 @@ export const createAiGeneralTab = async (
       responseType,
       Number(userId)
     );
-    const responseBody = MeCreateAiGeneralTabResponseSchema.parse({
-      success: true,
-      message: "AI general first time called successfully",
-      data: result,
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeCreateAiGeneralTabResponseSchema.parse(result);
+    return getResponseSuccess(res, responseBody, "AI general first time called successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -100,12 +92,7 @@ export const callAiFirstTimeService = async (
     //   const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
     //   await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
     // }
-    return {
-      prompt,
-      responseType,
-      id: tabIdAndTabName.tabId,
-      name: tabIdAndTabName.tabName,
-    };
+    return tabIdAndTabName;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

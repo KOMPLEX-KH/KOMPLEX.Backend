@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
@@ -25,14 +25,10 @@ export const MePostAiGeneralBodySchema = z
 
 export const MePostAiGeneralResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      prompt: z.string(),
-      aiResult: z.string(),
-      responseType: z.string(),
-      id: z.number().optional(),
-    }),
+    prompt: z.string(),
+    aiResult: z.string(),
+    responseType: z.string(),
+    id: z.number().optional(),
   })
   .openapi("MePostAiGeneralResponse");
 
@@ -54,13 +50,9 @@ export const postAiGeneral = async (
       Number(id)
     );
 
-    const responseBody = MePostAiGeneralResponseSchema.parse({
-      success: true,
-      message: "AI general called successfully",
-      data: result,
-    });
+    const responseBody = MePostAiGeneralResponseSchema.parse(result);
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody, "AI general called successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
