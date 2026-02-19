@@ -1,18 +1,14 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
 import { desc, eq, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-const UserForumMediaSchema = z.object({
-  url: z.string(),
-  type: z.string(),
-});
-
-const UserForumItemSchema = z.object({
+export const UserForumItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -23,15 +19,8 @@ const UserForumItemSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   username: z.string(),
-  media: z.array(UserForumMediaSchema),
+  media: z.array(MediaSchema),
 });
-
-export const UserForumsResponseSchema = z
-  .object({
-    data: z.array(UserForumItemSchema),
-    hasMore: z.boolean(),
-  })
-  .openapi("UserForumsResponse");
 
 export const getUserForums = async (
   req: AuthenticatedRequest,
@@ -52,12 +41,8 @@ export const getUserForums = async (
     const cacheData = await redis.get(cacheKey);
     const parse = cacheData ? JSON.parse(cacheData) : null;
     if (parse) {
-      const responseBody = UserForumsResponseSchema.parse({
-        data: parse,
-        hasMore: parse.length === limit,
-      });
-
-      return res.status(200).json(responseBody);
+      const responseBody = UserForumItemSchema.array().parse(parse);
+      return getResponseSuccess(res, responseBody, "User forums fetched successfully", parse.length === limit);
     }
 
     const userForums = await db
@@ -114,12 +99,8 @@ export const getUserForums = async (
 
     await redis.set(cacheKey, JSON.stringify(forumsWithMedia), { EX: 300 });
 
-    const responseBody = UserForumsResponseSchema.parse({
-      data: forumsWithMedia,
-      hasMore: forumsWithMedia.length === limit,
-    });
-
-    return res.status(200).json(responseBody);
+    const responseBody = UserForumItemSchema.array().parse(forumsWithMedia);
+    return getResponseSuccess(res, responseBody, "User forums fetched successfully", forumsWithMedia.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

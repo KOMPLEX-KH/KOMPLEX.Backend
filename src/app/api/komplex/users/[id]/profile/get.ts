@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import {
@@ -17,7 +17,11 @@ import { z } from "@/config/openapi/openapi.js";
 
 export const UserProfileResponseSchema = z
   .object({
-    data: z.any(),
+    id: z.number(),
+    username: z.string(),
+    profileImage: z.string().nullable().optional(),
+    numberOfFollowers: z.number(),
+    numberOfFollowing: z.number(),
   })
   .openapi("UserProfileResponse");
 
@@ -35,7 +39,8 @@ export const getUserProfile = async (
 
     const cachedProfile = await redis.get(cacheKey);
     if (cachedProfile) {
-      return res.status(200).json({ data: JSON.parse(cachedProfile) });
+      const responseBody = UserProfileResponseSchema.parse(JSON.parse(cachedProfile));
+      return getResponseSuccess(res, responseBody, "User profile fetched successfully");
     }
 
     const userProfile = await db
@@ -61,11 +66,8 @@ export const getUserProfile = async (
 
     await redis.set(cacheKey, JSON.stringify(profileData), { EX: 300 });
 
-    const responseBody = UserProfileResponseSchema.parse({
-      data: profileData,
-    });
-
-    return res.status(200).json(responseBody);
+    const responseBody = UserProfileResponseSchema.parse(profileData);
+    return getResponseSuccess(res, responseBody, "User profile fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -1,4 +1,4 @@
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { redis } from "@/db/redis/redis.js";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -40,7 +40,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     const cachedUser = await redis.get(cacheKey);
     if (cachedUser) {
       const parsed = MeResponseSchema.parse(JSON.parse(cachedUser));
-      return res.status(200).json(parsed);
+      return getResponseSuccess(res, parsed, "User fetched successfully");
     }
     const user = await db
       .select()
@@ -54,7 +54,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
     await redis.set(cacheKey, JSON.stringify(user[0]), { EX: 60 * 60 * 24 });
 
     const parsed = MeResponseSchema.parse(user[0]);
-    return res.status(200).json(parsed);
+    return getResponseSuccess(res, parsed, "User fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

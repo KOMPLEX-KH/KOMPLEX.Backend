@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { forumMedias } from "@/db/drizzle/models/forum_medias.js";
 import { forums } from "@/db/drizzle/models/forums.js";
@@ -9,13 +9,9 @@ import { followers, forumLikes, users } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-const ForumSearchMediaSchema = z.object({
-  url: z.string(),
-  type: z.string(),
-});
-
-const ForumSearchItemSchema = z.object({
+export const ForumSearchItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -26,19 +22,11 @@ const ForumSearchItemSchema = z.object({
   updatedAt: z.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
-  media: z.array(ForumSearchMediaSchema),
+  media: z.array(MediaSchema),
   viewCount: z.number(),
   likeCount: z.number(),
   isLiked: z.boolean(),
 });
-
-export const SearchForumsResponseSchema = z
-  .object({
-    data: z.array(ForumSearchItemSchema),
-    hasMore: z.boolean(),
-    isMatch: z.boolean(),
-  })
-  .openapi("SearchForumsResponse");
 
 export const searchForums = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -208,11 +196,8 @@ export const searchForums = async (req: AuthenticatedRequest, res: Response) => 
       };
     });
 
-    return res.status(200).json({
-      data: forumsWithMedia,
-      hasMore: allForums.length === Number(limit),
-      isMatch: searchResults.hits.length > 0,
-    });
+    const responseBody = ForumSearchItemSchema.array().parse(forumsWithMedia);
+    return getResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === Number(limit));
   } catch (error) {
     return getResponseError(res, error);
   }

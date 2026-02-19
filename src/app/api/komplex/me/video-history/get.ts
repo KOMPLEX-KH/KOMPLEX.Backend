@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { userVideoHistory, videos } from "@/db/drizzle/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { ResponseError, getResponseError } from "@/utils/response.js";
+import { ResponseError, getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 const VideoHistoryItemSchema = z.object({
@@ -14,12 +14,6 @@ const VideoHistoryItemSchema = z.object({
   title: z.string().nullable().optional(),
   thumbnailUrl: z.string().nullable().optional(),
 });
-
-export const MeVideoHistoryResponseSchema = z
-  .object({
-    data: z.array(VideoHistoryItemSchema),
-  })
-  .openapi("MeVideoHistoryResponse");
 
 export const getMyVideoHistory = async (
   req: AuthenticatedRequest,
@@ -44,9 +38,8 @@ export const getMyVideoHistory = async (
       thumbnailUrl: history.videos?.thumbnailUrl,
     }));
 
-    const responseBody = MeVideoHistoryResponseSchema.parse({ data: mapped });
-
-    return res.status(200).json(responseBody);
+    const responseBody = VideoHistoryItemSchema.array().parse(mapped);
+    return getResponseSuccess(res, responseBody, "Video history fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

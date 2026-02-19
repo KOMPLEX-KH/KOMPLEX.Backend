@@ -41,8 +41,6 @@ export const SignupResponseSchema = z
   })
   .openapi("SignupResponse");
 
-export type SignupBody = z.infer<typeof SignupBodySchema>;
-
 export const postSignup = async (req: Request, res: Response) => {
   const {
     email,
@@ -53,7 +51,7 @@ export const postSignup = async (req: Request, res: Response) => {
     dateOfBirth,
     phone,
     profileImageKey,
-  }: SignupBody = await SignupBodySchema.parseAsync(req.body);
+  } = await SignupBodySchema.parseAsync(req.body);
 
   try {
     const profileImage =

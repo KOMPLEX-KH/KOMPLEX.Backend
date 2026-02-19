@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { newsMedia } from "@/db/drizzle/models/news_medias.js";
 import { news } from "@/db/drizzle/models/news.js";
@@ -9,13 +9,9 @@ import { followers, users, userSavedNews } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
 
-const NewsSearchMediaSchema = z.object({
-  url: z.string(),
-  type: z.string(),
-});
-
-const NewsSearchItemSchema = z.object({
+export const NewsSearchItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -26,19 +22,11 @@ const NewsSearchItemSchema = z.object({
   updatedAt: z.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
-  media: z.array(NewsSearchMediaSchema),
+  media: z.array(MediaSchema),
   viewCount: z.number(),
   likeCount: z.number(),
   isSaved: z.boolean(),
 });
-
-export const SearchNewsResponseSchema = z
-  .object({
-    data: z.array(NewsSearchItemSchema),
-    hasMore: z.boolean(),
-    isMatch: z.boolean(),
-  })
-  .openapi("SearchNewsResponse");
 
 export const searchNews = async (
   req: AuthenticatedRequest,
@@ -202,11 +190,8 @@ export const searchNews = async (
       };
     });
 
-    return res.status(200).json({
-      data: newsWithMedia,
-      hasMore: allNews.length === Number(limit),
-      isMatch: searchResults.hits.length > 0,
-    });
+    const responseBody = NewsSearchItemSchema.array().parse(newsWithMedia);
+    return getResponseSuccess(res, responseBody, "News fetched successfully", allNews.length === Number(limit));
   } catch (error) {
     return getResponseError(res, error);
   }

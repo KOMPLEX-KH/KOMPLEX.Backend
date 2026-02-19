@@ -36,17 +36,11 @@ const GradeSchema = z.object({
   subjects: z.array(SubjectSchema),
 }).openapi("GradeSchema");
 
-export const FeedCurriculumsResponseSchema = z
-  .object({
-    data: z.array(GradeSchema),
-  })
-  .openapi("FeedCurriculumsResponseSchema");
-
 export const getCurriculums = async (req: Request, res: Response) => {
   try {
     const cached = await redis.get("curriculums");
     if (cached) {
-      const responseBody = FeedCurriculumsResponseSchema.parse(JSON.parse(cached));
+      const responseBody = GradeSchema.array().parse(JSON.parse(cached));
       return getResponseSuccess(res, responseBody);
     }
     const allData = await db
@@ -167,11 +161,9 @@ export const getCurriculums = async (req: Request, res: Response) => {
       EX: 60 * 60 * 24,
     });
 
-    const responseBody = FeedCurriculumsResponseSchema.parse({
-      data: structuredData,
-    });
-
-    return getResponseSuccess(res, responseBody);
+    const responseBody = GradeSchema.array().parse(structuredData);
+    
+    return getResponseSuccess(res, responseBody, "Curriculums fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

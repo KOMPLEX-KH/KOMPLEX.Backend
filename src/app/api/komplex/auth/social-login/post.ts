@@ -1,5 +1,4 @@
-import { getResponseError, ResponseError } from "@/utils/response.js";
-import { Request } from "express";
+import { getResponseError } from "@/utils/response.js";
 import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -43,8 +42,6 @@ export const SocialLoginResponseSchema = z.object({
   updatedAt: z.date(),
 }).openapi("SocialLoginResponse");
 
-export type SocialLoginBody = z.infer<typeof SocialLoginBodySchema>;
-
 export const postSocialLogIn = async (
   req: AuthenticatedRequest,
   res: Response
@@ -61,7 +58,7 @@ export const postSocialLogIn = async (
       phone,
       profileImage,
       profileImageKey,
-    }: SocialLoginBody = await SocialLoginBodySchema.parseAsync(req.body);
+    } = await SocialLoginBodySchema.parseAsync(req.body);
 
     const isUserExists = await db
       .select()
