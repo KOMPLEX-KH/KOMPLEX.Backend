@@ -6,14 +6,20 @@ import { newsMedia } from "@/db/drizzle/schema.js";
 import { and, sql } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import { Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { FeedNewsItemSchema } from "../get.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GetNewsByIdParamsSchema = z.object({
+  id: z.number(),
+}).openapi("GetNewsByIdParams");
 
 export const getNewsById = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { id } = GetNewsByIdParamsSchema.parse(req.params);
     const userId = req.user.userId;
     const cacheKey = `news:${id}`;
     const cached = await redis.get(cacheKey);
@@ -111,8 +117,8 @@ export const getNewsById = async (
       likeCount: dynamic[0]?.likeCount ?? 0,
       isSaved: !!dynamic[0]?.isSaved,
     };
-
-    return res.status(200).json({ data: newsWithMedia });
+    const responseBody = FeedNewsItemSchema.parse(newsWithMedia);
+    return getResponseSuccess(res, responseBody, "News fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

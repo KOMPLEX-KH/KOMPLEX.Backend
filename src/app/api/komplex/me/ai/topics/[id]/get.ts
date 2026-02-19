@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { userAITopicHistory } from "@/db/drizzle/schema.js";
@@ -17,16 +17,18 @@ export const MeAiTopicHistoryQuerySchema = z
   .object({
     page: z.string().optional(),
     limit: z.string().optional(),
-    offset: z.string().optional(),
   })
   .openapi("MeAiTopicHistoryQuery");
 
-export const MeAiTopicHistoryResponseSchema = z
-  .object({
-    data: z.array(z.any()),
-    hasMore: z.boolean(),
-  })
-  .openapi("MeAiTopicHistoryResponse");
+export const MeAiTopicHistoryItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  topicId: z.number(),
+  prompt: z.string(),
+  response: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+}).openapi("MeAiTopicHistoryItem");
 
 export const getAiTopicHistory = async (
   req: AuthenticatedRequest,
@@ -35,7 +37,7 @@ export const getAiTopicHistory = async (
   try {
     const userId = req.user.userId;
     const { id } = await MeAiTopicHistoryParamsSchema.parseAsync(req.params);
-    const { page, limit, offset } =
+    const { page, limit } =
       await MeAiTopicHistoryQuerySchema.parseAsync(req.query);
 
     const result = await getAiTopicHistoryInternal(
@@ -43,10 +45,9 @@ export const getAiTopicHistory = async (
       Number(id),
       page ? Number(page) : undefined,
       limit ? Number(limit) : undefined,
-      offset ? Number(offset) : undefined
     );
-    const responseBody = MeAiTopicHistoryResponseSchema.parse(result);
-    return res.status(200).json(responseBody);
+    const responseBody = MeAiTopicHistoryItemSchema.array().parse(result);
+    return getResponseSuccess(res, responseBody, "AI topic history fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -65,10 +66,7 @@ const getAiTopicHistoryInternal = async (
     const cached = await redis.get(cacheKey);
     const parseData = cached ? JSON.parse(cached) : null;
     if (parseData) {
-      return {
-        data: parseData,
-        hasMore: parseData.length === (limit ?? 20),
-      };
+      return parseData;
     }
     const history = await db
       .select()
@@ -86,10 +84,7 @@ const getAiTopicHistoryInternal = async (
     await redis.set(cacheKey, JSON.stringify(reversedHistory), {
       EX: 60 * 60 * 24,
     });
-    return {
-      data: reversedHistory,
-      hasMore: history.length === (limit ?? 20),
-    };
+    return reversedHistory;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

@@ -1,9 +1,9 @@
 import Router from "express";
 import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { searchRateLimiter } from "@/middleware/rateLimiter.js";
-import { searchVideos, SearchVideosResponseSchema } from "../search/videos/get.js";
-import { searchForums, SearchForumsResponseSchema } from "../search/forums/get.js";
-import { searchNews, SearchNewsResponseSchema } from "../search/news/get.js";
+import { searchVideos, VideoSearchItemSchema } from "../search/videos/get.js";
+import { searchForums, ForumSearchItemSchema } from "../search/forums/get.js";
+import { searchNews, NewsSearchItemSchema } from "../search/news/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
@@ -39,7 +39,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Videos retrieved successfully",
-            schema: getResponseSuccessSchema(SearchVideosResponseSchema),
+            schema: getResponseSuccessSchema(VideoSearchItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -56,7 +56,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Forums retrieved successfully",
-            schema: getResponseSuccessSchema(SearchForumsResponseSchema),
+            schema: getResponseSuccessSchema(ForumSearchItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -73,7 +73,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "News retrieved successfully",
-            schema: getResponseSuccessSchema(SearchNewsResponseSchema),
+            schema: getResponseSuccessSchema(NewsSearchItemSchema.array()),
         },
         400: {
             description: "Invalid input",

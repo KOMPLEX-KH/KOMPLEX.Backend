@@ -1,7 +1,7 @@
 import Router from "express";
 import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { getSmallContentRateLimiter } from "@/middleware/rateLimiter.js";
-import { getAllNews, FeedNewsResponseSchema } from "../../feed/news/get.js";
+import { getAllNews, FeedNewsItemSchema } from "../../feed/news/get.js";
 import { getNewsById } from "../../feed/news/[id]/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
@@ -23,7 +23,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "News retrieved successfully",
-            schema: getResponseSuccessSchema(FeedNewsResponseSchema),
+            schema: getResponseSuccessSchema(FeedNewsItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -40,7 +40,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "News retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(FeedNewsItemSchema),
         },
         400: {
             description: "Invalid input",

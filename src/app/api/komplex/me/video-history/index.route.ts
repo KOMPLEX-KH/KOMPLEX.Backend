@@ -1,6 +1,6 @@
 import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
-import { getMyVideoHistory, MeVideoHistoryResponseSchema } from "../../me/video-history/get.js";
+import { getMyVideoHistory, VideoHistoryItemSchema } from "../../me/video-history/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
@@ -19,7 +19,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Video history retrieved successfully",
-            schema: getResponseSuccessSchema(MeVideoHistoryResponseSchema),
+            schema: getResponseSuccessSchema(VideoHistoryItemSchema.array()),
         },
         400: {
             description: "Invalid input",

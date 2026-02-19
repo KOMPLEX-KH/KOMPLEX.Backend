@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers } from "@/db/drizzle/schema.js";
 import { and, eq } from "drizzle-orm";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeUnfollowUserParamsSchema = z
@@ -12,12 +12,6 @@ export const MeUnfollowUserParamsSchema = z
     id: z.string(),
   })
   .openapi("MeUnfollowUserParams");
-
-export const MeUnfollowUserResponseSchema = z
-  .object({
-    message: z.string(),
-  })
-  .openapi("MeUnfollowUserResponse");
 
 export const unfollowUser = async (
   req: AuthenticatedRequest,
@@ -45,11 +39,7 @@ export const unfollowUser = async (
       await redis.del(myFollowingKeys);
     }
 
-    const responseBody = MeUnfollowUserResponseSchema.parse({
-      message: "Successfully unfollowed the user.",
-    });
-
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, null, "Successfully unfollowed the user.");
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { users, userAIHistory } from "@/db/drizzle/schema.js";
@@ -25,13 +25,7 @@ export const MeAiGeneralTabHistoryItemSchema = z.object({
   prompt: z.string(),
   aiResult: z.string(),
   responseType: z.string(),
-});
-
-export const MeAiGeneralTabHistoryResponseSchema = z
-  .object({
-    data: z.array(MeAiGeneralTabHistoryItemSchema),
-  })
-  .openapi("MeAiGeneralTabHistoryResponse");
+}).openapi("MeAiGeneralTabHistoryItemSchema");
 
 export const getAiGeneralTabHistory = async (
   req: AuthenticatedRequest,
@@ -54,8 +48,9 @@ export const getAiGeneralTabHistory = async (
     );
 
     const responseBody =
-      MeAiGeneralTabHistoryResponseSchema.parse(result);
-    return res.status(200).json(responseBody);
+      MeAiGeneralTabHistoryItemSchema.array().parse(result);
+      
+    return getResponseSuccess(res, responseBody, "AI history fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

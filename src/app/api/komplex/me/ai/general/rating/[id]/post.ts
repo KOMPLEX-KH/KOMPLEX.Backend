@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
 import { ResponseError } from "@/utils/response.js";
@@ -41,7 +41,7 @@ export const rateAiGeneralResponse = async (
       ratingFeedback ?? ""
     );
     const responseBody = MeRateAiGeneralResponseSchema.parse(result);
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody, "AI general response rated successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -58,7 +58,7 @@ const rateAiResponseInternal = async (
       .set({ rating, ratingFeedback })
       .where(eq(userAIHistory.id, Number(id)))
       .returning();
-    return { data: response };
+    return response;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

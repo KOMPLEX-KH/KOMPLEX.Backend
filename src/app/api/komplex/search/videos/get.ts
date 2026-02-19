@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { videos } from "@/db/drizzle/models/videos.js";
 import { redis } from "@/db/redis/redis.js";
@@ -9,7 +9,7 @@ import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
-const VideoSearchItemSchema = z.object({
+export const VideoSearchItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -29,14 +29,6 @@ const VideoSearchItemSchema = z.object({
   isLiked: z.boolean(),
   isSaved: z.boolean(),
 });
-
-export const SearchVideosResponseSchema = z
-  .object({
-    data: z.array(VideoSearchItemSchema),
-    hasMore: z.boolean(),
-    isMatch: z.boolean(),
-  })
-  .openapi("SearchVideosResponse");
 
 export const searchVideos = async (
   req: AuthenticatedRequest,
@@ -167,11 +159,8 @@ export const searchVideos = async (
       };
     });
 
-    return res.status(200).json({
-      data: videosWithMedia,
-      hasMore: allVideos.length === Number(limit),
-      isMatch: searchResults.hits.length > 0,
-    });
+    const responseBody = VideoSearchItemSchema.array().parse(videosWithMedia);
+    return getResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === Number(limit));
   } catch (error) {
     return getResponseError(res, error);
   }

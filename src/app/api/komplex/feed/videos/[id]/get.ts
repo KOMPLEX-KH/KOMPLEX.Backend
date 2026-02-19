@@ -14,7 +14,19 @@ import {
   followers,
 } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+import { FeedVideoItemSchema } from "../../videos/get.js";
+
+// const VideoByIdResponseSchema = z.object({
+//   ...FeedVideoItemSchema,
+//   exercises: z.array(ExerciseSchema),
+//   isFollowing: z.boolean(),
+// }).openapi("VideoByIdResponseSchema");
+
+const VideoByIdParamsSchema = z.object({
+  id: z.number(),
+}).openapi("GetVideoByIdParamsSchema");
 
 export const getVideoById = async (
   req: AuthenticatedRequest,
@@ -22,11 +34,9 @@ export const getVideoById = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const videoId = Number(req.params.id);
+    const { id } = await VideoByIdParamsSchema.parseAsync(req.params);
+    const videoId = Number(id);
 
-    if (!videoId) {
-      throw new ResponseError("Missing video id", 400);
-    }
 
     const cacheVideoKey = `video:${videoId}`;
     const cacheExercisesKey = `exercises:videoId:${videoId}`;
@@ -136,9 +146,7 @@ export const getVideoById = async (
         updatedAt: new Date(),
       });
 
-      return res.status(200).json({
-        data: { ...video, exercises, isFollowing: isFollowing.length > 0 },
-      });
+      return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, exercises, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
     }
 
     const [videoRow] = await db

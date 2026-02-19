@@ -1,15 +1,15 @@
 import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { aiRateLimiter } from "@/middleware/rateLimiter.js";
-import { getAllAiGeneralTabs, MeAiGeneralTabsQuerySchema, MeAiGeneralTabsResponseSchema } from "../../me/ai/general/tabs/get.js";
+import { getAllAiGeneralTabs, MeAiGeneralTabsQuerySchema, MeAiGeneralTabItemSchema } from "../../me/ai/general/tabs/get.js";
 import { createAiGeneralTab, MeCreateAiGeneralTabBodySchema, MeCreateAiGeneralTabResponseSchema } from "../../me/ai/general/tabs/post.js";
-import { getAiGeneralTabHistory, MeAiGeneralTabHistoryParamsSchema, MeAiGeneralTabHistoryQuerySchema, MeAiGeneralTabHistoryResponseSchema } from "../../me/ai/general/tabs/[id]/get.js";
+import { getAiGeneralTabHistory, MeAiGeneralTabHistoryParamsSchema, MeAiGeneralTabHistoryQuerySchema, MeAiGeneralTabHistoryItemSchema } from "../../me/ai/general/tabs/[id]/get.js";
 import { postAiGeneral, MePostAiGeneralParamsSchema, MePostAiGeneralBodySchema, MePostAiGeneralResponseSchema } from "../../me/ai/general/tabs/[id]/post.js";
 import { updateAiGeneralTab, MeUpdateAiGeneralTabParamsSchema, MeUpdateAiGeneralTabBodySchema, MeUpdateAiGeneralTabResponseSchema } from "../../me/ai/general/tabs/[id]/put.js";
 import { deleteAiGeneralTab, MeDeleteAiGeneralTabParamsSchema, MeDeleteAiGeneralTabResponseSchema } from "../../me/ai/general/tabs/[id]/delete.js";
 import { rateAiGeneralResponse, MeRateAiGeneralParamsSchema, MeRateAiGeneralBodySchema, MeRateAiGeneralResponseSchema } from "../../me/ai/general/rating/[id]/post.js";
-import { getAllAiTopics, MeGetAiTopicsResponseSchema } from "../../me/ai/topics/get.js";
-import { getAiTopicHistory, MeAiTopicHistoryParamsSchema, MeAiTopicHistoryQuerySchema, MeAiTopicHistoryResponseSchema } from "../../me/ai/topics/[id]/get.js";
+import { getAllAiTopics, MeAiTopicItemSchema } from "../../me/ai/topics/get.js";
+import { getAiTopicHistory, MeAiTopicHistoryParamsSchema, MeAiTopicHistoryQuerySchema, MeAiTopicHistoryItemSchema } from "../../me/ai/topics/[id]/get.js";
 import { callAiTopic, MeCallAiTopicParamsSchema, MeCallAiTopicBodySchema, MeCallAiTopicResponseSchema } from "../../me/ai/topics/[id]/post.js";
 import { deleteAiTopic, MeDeleteAiTopicParamsSchema, MeDeleteAiTopicResponseSchema } from "../../me/ai/topics/[id]/delete.js";
 import { rateAiTopicResponse, MeRateAiTopicParamsSchema, MeRateAiTopicBodySchema, MeRateAiTopicResponseSchema } from "../../me/ai/topics/rating/[id]/post.js";
@@ -63,7 +63,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI general tabs retrieved successfully",
-            schema: getResponseSuccessSchema(MeAiGeneralTabsResponseSchema),
+            schema: getResponseSuccessSchema(MeAiGeneralTabItemSchema),
         },
         400: {
             description: "Invalid input",
@@ -99,7 +99,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI general tab history retrieved successfully",
-            schema: getResponseSuccessSchema(MeAiGeneralTabHistoryResponseSchema),
+            schema: getResponseSuccessSchema(MeAiGeneralTabHistoryItemSchema),
         },
         400: {
             description: "Invalid input",
@@ -187,7 +187,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI topics retrieved successfully",
-            schema: getResponseSuccessSchema(MeGetAiTopicsResponseSchema),
+            schema: getResponseSuccessSchema(MeAiTopicItemSchema),
         },
         400: {
             description: "Invalid input",
@@ -205,7 +205,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI topic history retrieved successfully",
-            schema: getResponseSuccessSchema(MeAiTopicHistoryResponseSchema),
+            schema: getResponseSuccessSchema(MeAiTopicHistoryItemSchema),
         },
         400: {
             description: "Invalid input",
