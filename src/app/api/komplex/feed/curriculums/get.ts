@@ -29,7 +29,7 @@ const SubjectSchema = z.object({
   lessons: z.array(LessonSchema),
 }).openapi("SubjectSchema");
 
-const GradeSchema = z.object({
+export const GradeSchema = z.object({
   id: z.number(),
   name: z.string(),
   orderIndex: z.number().nullable().optional(),
@@ -162,7 +162,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
     });
 
     const responseBody = GradeSchema.array().parse(structuredData);
-    
+
     return getResponseSuccess(res, responseBody, "Curriculums fetched successfully");
   } catch (error) {
     return getResponseError(res, error);

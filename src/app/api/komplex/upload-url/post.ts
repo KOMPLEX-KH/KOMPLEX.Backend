@@ -39,9 +39,7 @@ export const postUploadUrl = async (
       userId
     );
 
-    const responseBody = UploadUrlResponseSchema.parse({ signedUrl, key });
-
-    return getResponseSuccess(res, responseBody, "Upload URL fetched successfully");
+    return getResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key }), "Upload URL fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

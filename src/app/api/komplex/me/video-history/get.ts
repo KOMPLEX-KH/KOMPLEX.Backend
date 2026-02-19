@@ -6,7 +6,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { ResponseError, getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
-const VideoHistoryItemSchema = z.object({
+export const VideoHistoryItemSchema = z.object({
   id: z.number(),
   videoId: z.number(),
   createdAt: z.date(),

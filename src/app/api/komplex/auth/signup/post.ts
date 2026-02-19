@@ -2,16 +2,16 @@ import { Request } from "express";
 import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const SignupBodySchema = z
   .object({
     email: z.string().email(),
-    username: z.string().min(3).max(20),
+    username: z.string(),
     uid: z.string(),
-    firstName: z.string().min(3).max(20),
-    lastName: z.string().min(3).max(20),
+    firstName: z.string(),
+    lastName: z.string().nullable().optional(),
     dateOfBirth: z.string().optional(),
     phone: z.string().optional(),
     profileImageKey: z.string().optional(),
@@ -54,6 +54,7 @@ export const postSignup = async (req: Request, res: Response) => {
   } = await SignupBodySchema.parseAsync(req.body);
 
   try {
+    // email duplication handled by firebase at frontend
     const profileImage =
       profileImageKey && process.env.R2_PHOTO_PUBLIC_URL
         ? `${process.env.R2_PHOTO_PUBLIC_URL}/${profileImageKey}`
@@ -80,7 +81,7 @@ export const postSignup = async (req: Request, res: Response) => {
       })
       .returning();
 
-    return res.status(200).json(user);
+    return getResponseSuccess(res, SignupResponseSchema.parse(user), "User created successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

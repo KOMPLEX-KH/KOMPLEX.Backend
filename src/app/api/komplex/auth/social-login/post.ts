@@ -1,4 +1,4 @@
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -10,15 +10,15 @@ import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.j
 
 export const SocialLoginBodySchema = z.object({
   email: z.string().email(),
-  username: z.string().min(3).max(20),
+  username: z.string(),
   provider: z.string(),
   uid: z.string(),
-  firstName: z.string().min(3).max(20),
-  lastName: z.string().min(3).max(20),
-  dateOfBirth: z.string().optional(),
-  phone: z.string().optional(),
-  profileImage: z.string().optional(),
-  profileImageKey: z.string().optional(),
+  firstName: z.string(),
+  lastName: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
+  phone: z.string().optional().nullable().optional(),
+  profileImage: z.string().optional().nullable().optional(),
+  profileImageKey: z.string().optional().nullable().optional(),
 }).openapi("SocialLoginBody");
 
 export const SocialLoginResponseSchema = z.object({
@@ -26,7 +26,7 @@ export const SocialLoginResponseSchema = z.object({
   uid: z.string(),
   username: z.string(),
   firstName: z.string(),
-  lastName: z.string(),
+  lastName: z.string().nullable().optional(),
   dateOfBirth: z.string().nullable().optional(),
   isAdmin: z.boolean(),
   isVerified: z.boolean(),
@@ -65,7 +65,7 @@ export const postSocialLogIn = async (
       .from(users)
       .where(eq(users.uid, uid));
     if (isUserExists.length > 0) {
-      return res.status(200).json(isUserExists[0]);
+      return getResponseSuccess(res, SocialLoginResponseSchema.parse(isUserExists[0]), "User already exists");
     }
 
     const user = await db
@@ -86,14 +86,15 @@ export const postSocialLogIn = async (
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      .returning();
+      .returning() as any[];
 
     await db.insert(userOauth).values({
       uid,
       provider,
       createdAt: new Date(),
     });
-    return res.status(200).json(user);
+
+    return getResponseSuccess(res, SocialLoginResponseSchema.parse(user), "User created successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
