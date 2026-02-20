@@ -10,21 +10,21 @@ import {
   videoLikes,
   followers,
 } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
-const FeedVideoItemSchema = z.object({
+export const FeedVideoItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
   description: z.string().nullable().optional(),
-  type: z.string(),
+  type: z.string().nullable().optional(),
   topic: z.string().nullable().optional(),
   duration: z.number().nullable().optional(),
   videoUrl: z.string(),
   thumbnailUrl: z.string().nullable().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
   viewCount: z.number(),
@@ -33,14 +33,7 @@ const FeedVideoItemSchema = z.object({
   isLiked: z.boolean(),
   isSaved: z.boolean(),
   isFollowing: z.boolean(),
-});
-
-export const FeedVideosResponseSchema = z
-  .object({
-    data: z.array(FeedVideoItemSchema),
-    hasMore: z.boolean(),
-  })
-  .openapi("FeedVideosResponse");
+}).openapi("FeedVideoItemSchema");
 
 export const getAllVideos = async (
   req: AuthenticatedRequest,
@@ -111,11 +104,7 @@ export const getAllVideos = async (
     ).map((id) => ({ id }));
 
     if (!videoIdRows.length) {
-      const emptyBody = FeedVideosResponseSchema.parse({
-        data: [],
-        hasMore: false,
-      });
-      return res.status(200).json(emptyBody);
+      return getResponseSuccess(res, [], "No videos found");
     }
 
     const cachedResults = (await redis.mGet(
@@ -245,12 +234,10 @@ export const getAllVideos = async (
       isFollowing: videoUserIdRows.some((b) => b.userId === video.userId),
     }));
 
-    const responseBody = FeedVideosResponseSchema.parse({
-      data: videosWithMediaAndIsFollowing,
-      hasMore: allVideos.length === limit,
-    });
+    const responseBody = FeedVideoItemSchema.array().parse(videosWithMediaAndIsFollowing);
+    console.log("Response Body Video:", responseBody);
 
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

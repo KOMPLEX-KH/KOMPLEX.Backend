@@ -1,7 +1,7 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { getSignedUrlFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const UploadUrlBodySchema = z
@@ -39,9 +39,7 @@ export const postUploadUrl = async (
       userId
     );
 
-    const responseBody = UploadUrlResponseSchema.parse({ signedUrl, key });
-
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key }), "Upload URL fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

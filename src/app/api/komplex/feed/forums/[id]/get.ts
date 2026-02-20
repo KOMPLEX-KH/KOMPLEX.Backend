@@ -15,8 +15,8 @@ export const FeedForumItemResponseSchema = z.object({
   description: z.string().nullable().optional(),
   type: z.string(),
   topic: z.string().nullable().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   username: z.string(),
   profileImage: z.string().nullable().optional(),
   media: z.array(MediaSchema),
@@ -38,7 +38,8 @@ export const getForumById = async (
     const cached = await redis.get(cacheKey);
     let forumData;
     if (cached) {
-      forumData = FeedForumItemResponseSchema.parse(JSON.parse(cached));
+      // removed parsing because we need to take this and add dynamic data to it at the end we will always parse it with the schema
+      forumData = (JSON.parse(cached));
     } else {
       const forum = await db
         .select({
@@ -145,6 +146,7 @@ export const getForumById = async (
     // parse first before response to ensure the response is valid
     const responseBody = FeedForumItemResponseSchema.parse(forumWithMedia);
     // wrap in success and data
+    console.log("Response Body:", responseBody);
     return getResponseSuccess(res, responseBody);
   } catch (error) {
     return getResponseError(res, error);

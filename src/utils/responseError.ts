@@ -4,27 +4,12 @@ import { z } from "@/config/openapi/openapi.js";
 export type ResponseErrorWrapper = {
 	success: boolean;
 	error?: string;
-	message?: string;
 	data?: any;
 }
 
 export type ResponseSuccessWrapper = {
 	success: true;
-	message?: string;
 	data: any;
-	hasMore?: boolean;
-}
-
-export class ResponseError extends Error {
-	code: number;
-
-	constructor(message: string, code: number) {
-		super(message);
-		this.code = code;
-
-		// Fix prototype chain (important)
-		Object.setPrototypeOf(this, ResponseError.prototype);
-	}
 }
 
 const getGenericErrorMessage = (code: string) => {
@@ -46,8 +31,19 @@ const getGenericErrorMessage = (code: string) => {
 	return errorMessages[code as keyof typeof errorMessages] || errorMessages["default"];
 }
 
+export class ResponseError extends Error {
+	code: number;
 
-const isProd = process.env.ENVIRONMENT === "production";
+	constructor(message: string, code: number) {
+		super(message);
+		this.code = code;
+
+		// Fix prototype chain (important)
+		Object.setPrototypeOf(this, ResponseError.prototype);
+	}
+}
+
+const isProd = process.env.NODE_ENV === "production";
 
 export const getResponseError = (res: Response, err: unknown) => {
 	if (err instanceof ResponseError) {
@@ -55,7 +51,6 @@ export const getResponseError = (res: Response, err: unknown) => {
 			success: false,
 			error: isProd ? getGenericErrorMessage(err.code.toString()) : err.message,
 		}
-		console.error("Response Error:", response);
 		return res.status(err.code).json(response);
 	}
 	if (err instanceof z.ZodError) {
@@ -63,7 +58,6 @@ export const getResponseError = (res: Response, err: unknown) => {
 			success: false,
 			error: isProd ? getGenericErrorMessage("400") : err.issues.map((issue) => issue.message).join(", "),
 		}
-		console.error("Zod Error:", response);
 		return res.status(400).json(response);
 	}
 
@@ -71,21 +65,16 @@ export const getResponseError = (res: Response, err: unknown) => {
 		success: false,
 		error: isProd ? getGenericErrorMessage("500") : (err instanceof Error ? err.message : "Internal Server Error"),
 	}
-	console.error("Response Error:", response);
 	return res.status(500).json(response);
 }
 
-export const getResponseSuccess = (res: Response, data: any, message?: string, hasMore?: boolean) => {
+export const getResponseSuccess = (res: Response, data: any) => {
 	const response: ResponseSuccessWrapper = {
 		success: true,
-		message: message ? isProd ? "Success" : message : undefined,
 		data,
-		hasMore,
 	}
 	return res.status(200).json(response);
 }
-
-// used for openapi routes registration to wrap
 
 export const getResponseSuccessSchema = (
 	dataSchema: z.ZodTypeAny

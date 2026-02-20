@@ -7,13 +7,13 @@ import {
     deleteBigRateLimiter,
     updateSmallRateLimiter,
 } from "@/middleware/rateLimiter.js";
-import { getAllForums as getAllMyForums, MeGetForumsQuerySchema, MeGetForumsResponseSchema } from "../../me/forums/get.js";
-import { postForum, MePostForumBodySchema, MePostForumResponseSchema } from "../../me/forums/post.js";
+import { getAllForums as getAllMyForums, MeGetForumsQuerySchema } from "../../me/forums/get.js";
+import { postForum, MePostForumBodySchema } from "../../me/forums/post.js";
 import { updateForum } from "../../me/forums/[id]/put.js";
-import { deleteForum, MeDeleteForumParamsSchema, MeDeleteForumResponseSchema } from "../../me/forums/[id]/delete.js";
-import { likeForum, MeLikeForumParamsSchema, MeLikeForumResponseSchema } from "../../me/forums/[id]/like/patch.js";
+import { deleteForum } from "../../me/forums/[id]/delete.js";
+import { likeForum } from "../../me/forums/[id]/like/patch.js";
 import { unlikeForum } from "../../me/forums/[id]/unlike/patch.js";
-import { postForumComment, MePostForumCommentParamsSchema, MePostForumCommentBodySchema, MePostForumCommentResponseSchema } from "../../me/forums/[id]/comments/post.js";
+import { postForumComment, MePostForumCommentBodySchema } from "../../me/forums/[id]/comments/post.js";
 import { updateForumComment } from "../../me/forums/[id]/comments/[id]/put.js";
 import { deleteForumComment } from "../../me/forums/[id]/comments/[id]/delete.js";
 import { likeForumComment } from "../../me/forums/[id]/comments/[id]/like/patch.js";
@@ -108,7 +108,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Forums retrieved successfully",
-            schema: getResponseSuccessSchema(MeGetForumsResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",
@@ -126,7 +126,7 @@ registerOpenApiRoute({
     responses: {
         201: {
             description: "Forum posted successfully",
-            schema: getResponseSuccessSchema(MePostForumResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",
@@ -160,7 +160,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Forum deleted successfully",
-            schema: getResponseSuccessSchema(MeDeleteForumResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",
@@ -177,7 +177,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Forum liked successfully",
-            schema: getResponseSuccessSchema(MeLikeForumResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",
@@ -212,7 +212,7 @@ registerOpenApiRoute({
     responses: {
         201: {
             description: "Comment posted successfully",
-            schema: getResponseSuccessSchema(MePostForumCommentResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",

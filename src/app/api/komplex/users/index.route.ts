@@ -6,8 +6,8 @@ import {
     getBigContentRateLimiter,
 } from "@/middleware/rateLimiter.js";
 import { getUserProfile, UserProfileResponseSchema } from "../users/[id]/profile/get.js";
-import { getUserVideos, UserVideosResponseSchema } from "../users/[id]/videos/get.js";
-import { getUserForums, UserForumsResponseSchema } from "../users/[id]/forums/get.js";
+import { getUserVideos, UserVideoItemSchema } from "../users/[id]/videos/get.js";
+import { getUserForums, UserForumItemSchema } from "../users/[id]/forums/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
@@ -60,7 +60,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "User videos retrieved successfully",
-            schema: getResponseSuccessSchema(UserVideosResponseSchema),
+            schema: getResponseSuccessSchema(UserVideoItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -77,7 +77,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "User forums retrieved successfully",
-            schema: getResponseSuccessSchema(UserForumsResponseSchema),
+            schema: getResponseSuccessSchema(UserForumItemSchema.array()),
         },
         400: {
             description: "Invalid input",

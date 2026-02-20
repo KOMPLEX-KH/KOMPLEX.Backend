@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeFollowUserParamsSchema = z
@@ -11,12 +11,6 @@ export const MeFollowUserParamsSchema = z
     id: z.string(),
   })
   .openapi("MeFollowUserParams");
-
-export const MeFollowUserResponseSchema = z
-  .object({
-    message: z.string(),
-  })
-  .openapi("MeFollowUserResponse");
 
 export const followUser = async (
   req: AuthenticatedRequest,
@@ -42,11 +36,7 @@ export const followUser = async (
       await redis.del(myFollowingKeys);
     }
 
-    const responseBody = MeFollowUserResponseSchema.parse({
-      message: "Successfully followed the user.",
-    });
-
-    return res.status(200).json(responseBody);
+    return getResponseSuccess(res, null, "Successfully followed the user.");
   } catch (error) {
     return getResponseError(res, error);
   }

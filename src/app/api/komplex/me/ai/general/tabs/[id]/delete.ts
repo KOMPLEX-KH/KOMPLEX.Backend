@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
@@ -16,11 +16,7 @@ export const MeDeleteAiGeneralTabParamsSchema = z
 
 export const MeDeleteAiGeneralTabResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      data: z.array(z.any()),
-    }),
+    data: z.array(z.any()),
   })
   .openapi("MeDeleteAiGeneralTabResponse");
 
@@ -38,12 +34,8 @@ export const deleteAiGeneralTab = async (
       Number(userId),
       Number(id)
     );
-    const responseBody = MeDeleteAiGeneralTabResponseSchema.parse({
-      success: true,
-      message: "AI general tab deleted successfully",
-      data: result,
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeDeleteAiGeneralTabResponseSchema.parse(result);
+    return getResponseSuccess(res, responseBody, "AI general tab deleted successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -59,7 +51,7 @@ const deleteAiGeneralTabInternal = async (userId: number, tabId: number) => {
       .returning();
     await db.delete(userAiTabs).where(eq(userAiTabs.id, tabId));
     await redis.flushAll(); // TO CHANGE
-    return { data: response };
+    return response;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

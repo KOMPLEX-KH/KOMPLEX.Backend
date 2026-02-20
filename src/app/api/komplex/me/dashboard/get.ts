@@ -2,7 +2,7 @@ import { db } from "@/db/drizzle/index.js";
 import { desc, eq } from "drizzle-orm";
 import { news, exercises, forums, videos } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { ResponseError, getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { z } from "@/config/openapi/openapi.js";
@@ -37,7 +37,8 @@ export const getMeDashboard = async (
     const cached = await redis.get(cacheKey);
     if (cached) {
       const parsed = MeDashboardResponseSchema.parse(JSON.parse(cached));
-      return res.status(200).json(parsed);
+      getResponseSuccess(res, parsed, "Dashboard fetched successfully");
+      return;
     }
 
     const dashboardData = {
@@ -134,7 +135,7 @@ export const getMeDashboard = async (
     const parsed = MeDashboardResponseSchema.parse(responseData);
     await redis.set(cacheKey, JSON.stringify(parsed), { EX: 60 * 60 * 24 });
 
-    return res.status(200).json(parsed);
+    return getResponseSuccess(res, parsed, "Dashboard fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

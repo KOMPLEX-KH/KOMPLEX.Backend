@@ -6,7 +6,7 @@ import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -18,16 +18,6 @@ export const MePostForumBodySchema = z
     topic: z.string().optional(),
   })
   .openapi("MePostForumBody");
-
-export const MePostForumResponseSchema = z
-  .object({
-    data: z.object({
-      success: z.literal(true),
-      newForum: z.any(),
-      newForumMedia: z.array(z.any()),
-    }),
-  })
-  .openapi("MePostForumResponse");
 
 export const postForum = async (
   req: AuthenticatedRequest,
@@ -127,11 +117,7 @@ export const postForum = async (
       await redis.del(myForumKeys);
     }
 
-    const responseBody = MePostForumResponseSchema.parse({
-      data: { success: true, newForum, newForumMedia },
-    });
-
-    return res.status(201).json(responseBody);
+    return getResponseSuccess(res, { success: true, newForum, newForumMedia }, "Forum posted successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

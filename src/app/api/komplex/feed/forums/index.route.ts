@@ -17,8 +17,8 @@ const router = Router();
 // ============================================================================
 router.get("", verifyFirebaseTokenOptional as any, getBigContentRateLimiter, getAllFeedForums as any);
 router.get("/:id", verifyFirebaseTokenOptional as any, getBigContentRateLimiter, getForumById as any);
-router.get("/:id/comments", getForumComments as any);
-router.get("/comments/:commentId/replies", getForumReplies as any);
+router.get("/:id/comments", verifyFirebaseTokenOptional as any, getBigContentRateLimiter, getForumComments as any);
+router.get("/comments/:commentId/replies", verifyFirebaseTokenOptional as any, getBigContentRateLimiter, getForumReplies as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,

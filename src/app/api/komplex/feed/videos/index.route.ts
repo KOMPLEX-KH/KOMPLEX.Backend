@@ -1,7 +1,7 @@
 import Router from "express";
 import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { getVideoRateLimiter } from "@/middleware/rateLimiter.js";
-import { getAllVideos, FeedVideosResponseSchema } from "../../feed/videos/get.js";
+import { getAllVideos, FeedVideoItemSchema } from "../../feed/videos/get.js";
 import { getVideoById } from "../../feed/videos/[id]/get.js";
 import { getRecommendedVideos } from "../../feed/videos/[id]/recommended/get.js";
 import { getVideoLikes } from "../../feed/videos/[id]/likes/get.js";
@@ -36,7 +36,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Videos retrieved successfully",
-            schema: getResponseSuccessSchema(FeedVideosResponseSchema),
+            schema: getResponseSuccessSchema(FeedVideoItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -53,7 +53,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Video retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(FeedVideoItemSchema),
         },
         400: {
             description: "Invalid input",
@@ -70,7 +70,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "Recommended videos retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(FeedVideoItemSchema.array()),
         },
         400: {
             description: "Invalid input",

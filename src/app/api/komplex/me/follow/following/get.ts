@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeFollowingQuerySchema = z
@@ -13,12 +13,13 @@ export const MeFollowingQuerySchema = z
   })
   .openapi("MeFollowingQuery");
 
-export const MeFollowingResponseSchema = z
-  .object({
-    data: z.array(z.any()),
-    hasMore: z.boolean(),
-  })
-  .openapi("MeFollowingResponse");
+export const MeFollowingItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  followedId: z.number(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+}).openapi("MeFollowingItemSchema");
 
 export const getFollowing = async (
   req: AuthenticatedRequest,
@@ -35,11 +36,8 @@ export const getFollowing = async (
     const redisData = await redis.get(cacheKey);
     if (redisData) {
       const data = JSON.parse(redisData);
-      const responseBody = MeFollowingResponseSchema.parse({
-        data,
-        hasMore: data.length === limit,
-      });
-      return res.status(200).json(responseBody);
+      const responseBody = MeFollowingItemSchema.array().parse(data);
+      return getResponseSuccess(res, responseBody, "Following fetched successfully", data.length === limit);
     }
 
     const followingList = await db
@@ -53,12 +51,8 @@ export const getFollowing = async (
       EX: 60 * 60 * 24,
     });
 
-    const responseBody = MeFollowingResponseSchema.parse({
-      data: followingList,
-      hasMore: followingList.length === limit,
-    });
-
-    return res.status(200).json(responseBody);
+    const responseBody = MeFollowingItemSchema.array().parse(followingList);
+    return getResponseSuccess(res, responseBody, "Following fetched successfully", followingList.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

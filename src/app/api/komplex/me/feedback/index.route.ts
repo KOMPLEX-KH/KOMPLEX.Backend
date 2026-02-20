@@ -1,8 +1,10 @@
+import { and } from 'drizzle-orm';
 import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { postSmallRateLimiter } from "@/middleware/rateLimiter.js";
-import { postFeedback, MePostFeedbackBodySchema, MePostFeedbackResponseSchema } from "../../me/feedback/post.js";
+import { postFeedback, MePostFeedbackBodySchema } from "../../me/feedback/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
+import { z } from "zod";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 
 const router = Router();
@@ -21,7 +23,7 @@ registerOpenApiRoute({
     responses: {
         201: {
             description: "Feedback posted successfully",
-            schema: getResponseSuccessSchema(MePostFeedbackResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",

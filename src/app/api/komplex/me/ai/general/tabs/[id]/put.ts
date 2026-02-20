@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redis.js";
@@ -21,11 +21,7 @@ export const MeUpdateAiGeneralTabBodySchema = z
 
 export const MeUpdateAiGeneralTabResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      data: z.array(z.any()),
-    }),
+    data: z.array(z.any()),
   })
   .openapi("MeUpdateAiGeneralTabResponse");
 
@@ -47,12 +43,8 @@ export const updateAiGeneralTab = async (
       Number(id),
       tabName
     );
-    const responseBody = MeUpdateAiGeneralTabResponseSchema.parse({
-      success: true,
-      message: "AI general tab edited successfully",
-      data: result,
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeUpdateAiGeneralTabResponseSchema.parse(result);
+    return getResponseSuccess(res, responseBody, "AI general tab edited successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -70,7 +62,7 @@ const editAiGeneralTabInternal = async (
       .where(and(eq(userAiTabs.userId, userId), eq(userAiTabs.id, tabId)))
       .returning();
     await redis.flushAll(); // TO CHANGE
-    return { data: response };
+    return response;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

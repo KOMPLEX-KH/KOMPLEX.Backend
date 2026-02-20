@@ -1,7 +1,7 @@
 import { db } from "@/db/drizzle/index.js";
 import { feedbacks } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { ResponseError, getResponseError } from "@/utils/response.js";
+import { ResponseError, getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { z } from "@/config/openapi/openapi.js";
@@ -12,10 +12,6 @@ export const MePostFeedbackBodySchema = z
     type: z.string(),
   })
   .openapi("MePostFeedbackBody");
-
-export const MePostFeedbackResponseSchema = z
-  .array(z.any())
-  .openapi("MePostFeedbackResponse");
 
 export const postFeedback = async (
   req: AuthenticatedRequest,
@@ -41,9 +37,8 @@ export const postFeedback = async (
     const cacheKey = `feedback:${feedback[0].id}`;
     await redis.set(cacheKey, JSON.stringify(feedback[0]), { EX: 600 });
 
-    const responseBody = MePostFeedbackResponseSchema.parse(feedback);
 
-    return res.status(201).json(responseBody);
+    return getResponseSuccess(res, feedback[0], "Feedback posted successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

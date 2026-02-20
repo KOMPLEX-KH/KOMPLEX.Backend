@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { topics, userAITopicHistory } from "@/db/drizzle/schema.js";
@@ -24,14 +24,10 @@ export const MeCallAiTopicBodySchema = z
 
 export const MeCallAiTopicResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      prompt: z.string(),
-      responseType: z.string(),
-      aiResult: z.string(),
-      id: z.number(),
-    }),
+    prompt: z.string(),
+    responseType: z.string(),
+    aiResult: z.string(),
+    id: z.number(),
   })
   .openapi("MeCallAiTopicResponse");
 
@@ -51,12 +47,8 @@ export const callAiTopic = async (
       Number(userId),
       id
     );
-    const responseBody = MeCallAiTopicResponseSchema.parse({
-      success: true,
-      message: "AI topic called successfully",
-      data: result,
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeCallAiTopicResponseSchema.parse(result);
+    return getResponseSuccess(res, responseBody, "AI topic called successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

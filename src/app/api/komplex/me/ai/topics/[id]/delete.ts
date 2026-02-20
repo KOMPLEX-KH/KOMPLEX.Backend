@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAITopicHistory } from "@/db/drizzle/models/user_ai_topic_history.js";
 import { redis } from "@/db/redis/redis.js";
@@ -15,11 +15,7 @@ export const MeDeleteAiTopicParamsSchema = z
 
 export const MeDeleteAiTopicResponseSchema = z
   .object({
-    success: z.literal(true),
-    message: z.string(),
-    data: z.object({
-      data: z.array(z.any()),
-    }),
+    data: z.array(z.any()),
   })
   .openapi("MeDeleteAiTopicResponse");
 
@@ -35,12 +31,8 @@ export const deleteAiTopic = async (
       Number(userId),
       Number(id)
     );
-    const responseBody = MeDeleteAiTopicResponseSchema.parse({
-      success: true,
-      message: "AI topic tab deleted successfully",
-      data: result,
-    });
-    return res.status(200).json(responseBody);
+    const responseBody = MeDeleteAiTopicResponseSchema.parse(result);
+    return getResponseSuccess(res, responseBody, "AI topic tab deleted successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
@@ -58,7 +50,7 @@ const deleteAiTopicTabInternal = async (userId: number, topicId: number) => {
       )
       .returning();
     await redis.flushAll(); // TO CHANGE
-    return { data: response };
+    return response;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

@@ -1,13 +1,13 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videos, users } from "@/db/drizzle/schema.js";
 import { desc, eq } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
-const UserVideoItemSchema = z.object({
+export const UserVideoItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
   title: z.string(),
@@ -23,13 +23,6 @@ const UserVideoItemSchema = z.object({
   userFirstName: z.string(),
   userLastName: z.string(),
 });
-
-export const UserVideosResponseSchema = z
-  .object({
-    data: z.array(UserVideoItemSchema),
-    hasMore: z.boolean(),
-  })
-  .openapi("UserVideosResponse");
 
 export const getUserVideos = async (
   req: AuthenticatedRequest,
@@ -51,12 +44,8 @@ export const getUserVideos = async (
     const cachedVideos = await redis.get(cacheKey);
     const parsedData = cachedVideos ? JSON.parse(cachedVideos) : null;
     if (parsedData) {
-      const responseBody = UserVideosResponseSchema.parse({
-        data: parsedData,
-        hasMore: parsedData.length === limit,
-      });
-
-      return res.status(200).json(responseBody);
+      const responseBody = UserVideoItemSchema.array().parse(parsedData);
+      return getResponseSuccess(res, responseBody, "User videos fetched successfully", parsedData.length === limit);
     }
 
     const userVideos = await db
@@ -87,12 +76,8 @@ export const getUserVideos = async (
       EX: 300,
     });
 
-    const responseBody = UserVideosResponseSchema.parse({
-      data: userVideos,
-      hasMore: userVideos.length === limit,
-    });
-
-    return res.status(200).json(responseBody);
+    const responseBody = UserVideoItemSchema.array().parse(userVideos);
+    return getResponseSuccess(res, responseBody, "User videos fetched successfully", userVideos.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }
