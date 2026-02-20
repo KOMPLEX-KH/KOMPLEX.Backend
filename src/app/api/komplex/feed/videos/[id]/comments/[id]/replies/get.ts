@@ -6,7 +6,23 @@ import { videoReplyMedias } from "@/db/drizzle/models/video_reply_medias.js";
 import { videoReplyLike } from "@/db/drizzle/models/video_reply_like.js";
 import { redis } from "@/db/redis/redis.js";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
+
+export const FeedVideoReplyItemResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  videoCommentId: z.number(),
+  description: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  media: z.array(MediaSchema),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+}).openapi("FeedVideoReplyItemResponseSchema");
 
 export const getVideoReplies = async (
   req: AuthenticatedRequest,
@@ -122,23 +138,32 @@ export const getVideoReplies = async (
         }, {} as { [key: number]: any })
       );
 
-      await redis.set(cacheKey, JSON.stringify(cachedReplies), { EX: 60 });
+      // Save to redis after schema parsing and serializing for consistency
+      // (Add placeholder for likeCount/isLiked, those will always be overwritten after mapping below)
+      const parsedCache = FeedVideoReplyItemResponseSchema.array().parse(
+        cachedReplies.map((r) => ({
+          ...r,
+          likeCount: 0,
+          isLiked: false,
+        })),
+      );
+      await redis.set(cacheKey, JSON.stringify(parsedCache), { EX: 60 });
     }
 
+    // Compose final replies with dynamic like info, using zod to validate each
     const repliesWithMedia = cachedReplies.map((r) => {
       const dynamic = dynamicData.find((d) => d.id === r.id);
-      return {
+      return FeedVideoReplyItemResponseSchema.parse({
         ...r,
         likeCount: Number(dynamic?.likeCount) || 0,
         isLiked: !!dynamic?.isLiked,
-        profileImage: dynamic?.profileImage || r.profileImage,
-      };
+        profileImage: dynamic?.profileImage || r.profileImage || null,
+      });
     });
 
-    return res.status(200).json({
-      data: repliesWithMedia,
-      hasMore: repliesWithMedia.length === limit,
-    });
+    const responseBody = FeedVideoReplyItemResponseSchema.array().parse(repliesWithMedia);
+
+    return getResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

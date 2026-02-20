@@ -24,17 +24,13 @@ import { FeedVideoItemSchema } from "../../videos/get.js";
 //   isFollowing: z.boolean(),
 // }).openapi("VideoByIdResponseSchema");
 
-const VideoByIdParamsSchema = z.object({
-  id: z.number(),
-}).openapi("GetVideoByIdParamsSchema");
-
 export const getVideoById = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = await VideoByIdParamsSchema.parseAsync(req.params);
+    const id = req.params.id;
     const videoId = Number(id);
 
 

@@ -9,7 +9,24 @@ import {
 } from "@/db/drizzle/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
+
+// Zod schema for a single video comment item with all returned fields
+export const FeedVideoCommentItemResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  videoId: z.number(),
+  description: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  media: z.array(MediaSchema),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+}).openapi("FeedVideoCommentItemResponseSchema");
 
 export const getVideoComments = async (
   req: AuthenticatedRequest,
@@ -129,23 +146,32 @@ export const getVideoComments = async (
         }, {} as { [key: number]: any })
       );
 
-      await redis.set(cacheKey, JSON.stringify(cachedComments), { EX: 60 });
+      // Save to redis after schema parsing and serializing for consistency
+      // (Add placeholder for likeCount/isLiked, those will always be overwritten after mapping below)
+      const parsedCache = FeedVideoCommentItemResponseSchema.array().parse(
+        cachedComments.map((c) => ({
+          ...c,
+          likeCount: 0,
+          isLiked: false,
+        })),
+      );
+      await redis.set(cacheKey, JSON.stringify(parsedCache), { EX: 60 });
     }
 
+    // Compose final comments with dynamic like info, using zod to validate each
     const commentsWithMedia = cachedComments.map((c) => {
       const dynamic = dynamicData.find((d) => d.id === c.id);
-      return {
+      return FeedVideoCommentItemResponseSchema.parse({
         ...c,
         likeCount: Number(dynamic?.likeCount) || 0,
         isLiked: !!dynamic?.isLiked,
-        profileImage: dynamic?.profileImage || c.profileImage,
-      };
+        profileImage: dynamic?.profileImage || c.profileImage || null,
+      });
     });
 
-    return res.status(200).json({
-      data: commentsWithMedia,
-      hasMore: commentsWithMedia.length === limit,
-    });
+    const responseBody = FeedVideoCommentItemResponseSchema.array().parse(commentsWithMedia);
+
+    return getResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }
