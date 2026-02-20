@@ -92,7 +92,12 @@ export const callAiFirstTimeService = async (
     //   const summarizeCounterCacheKey = `summarizeCounter:${userId}:tabId:${tabIdAndTabName.tabId}`;
     //   await redis.set(summarizeCounterCacheKey, "0", { EX: 60 * 60 * 24 * 3 });
     // }
-    return tabIdAndTabName;
+    return {
+      prompt,
+      responseType,
+      id: tabIdAndTabName.tabId,
+      name: tabIdAndTabName.tabName,
+    };
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

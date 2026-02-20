@@ -10,10 +10,25 @@ import { z } from "@/config/openapi/openapi.js";
 export const MeProfileResponseSchema = z
   .object({
     id: z.number(),
+    uid: z.string(),
     username: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    dateOfBirth: z.string().nullable().optional(),
+    isAdmin: z.boolean(),
+    isVerified: z.boolean(),
+    isSocial: z.boolean(),
+    email: z.string().email(),
+    phone: z.string().nullable().optional(),
     profileImage: z.string().nullable().optional(),
+    profileImageKey: z.string().nullable().optional(),
+    lastTopicId: z.number().nullable().optional(),
+    lastVideoId: z.number().nullable().optional(),
+    lastAiTabId: z.number().nullable().optional(),
     numberOfFollowers: z.number(),
     numberOfFollowing: z.number(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
   })
   .openapi("MeProfileResponse");
 
