@@ -274,6 +274,25 @@ export const userSignupRateLimiter = createRateLimiterMiddleware(
     keyPrefix: "user-signup",
   })
 );
+export const userResetPasswordRateLimiter = createRateLimiterMiddleware(
+  createLimiter({
+    points: 3,
+    duration: 300,
+    blockDuration: 900,
+    keyPrefix: "user-reset-password",
+  })
+);
+
+export const userSendOtpRateLimiter = createRateLimiterMiddleware(
+  createLimiter({
+    points: 3,
+    duration: 300,
+    blockDuration: 900,
+    keyPrefix: "user-send-otp",
+  })
+);
+
+
 export const adminLoginRateLimiter = createRateLimiterMiddleware(
   createLimiter({
     points: 5,

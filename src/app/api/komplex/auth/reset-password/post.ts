@@ -6,12 +6,13 @@ import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import admin from "@/config/firebase/admin.js";
 
 export const ResetPasswordBodySchema = z
     .object({
-        email: z.string().email("Invalid email format"),
-        resetToken: z.string("Reset token is required"),
-        newPassword: z.string().min(6, "Password must be at least 6 characters"),
+        email: z.string().email(),
+        resetToken: z.string(),
+        newPassword: z.string().min(6),
     })
     .openapi("ResetPasswordBody");
 
@@ -37,22 +38,20 @@ export const postResetPassword = async (req: Request, res: Response) => {
             });
         }
         
-        // hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 12); 
+        // get user by email to find firebase uid
+        const [user] = await db
+            .select({uid: users.uid})
+            .from(users)
+            .where(eq(users.email, email));
         
-        // update password in database
-        const updatedUser = await db
-            .update(users)
-            .set({ 
-              password: hashedPassword,
-              updatedAt: new Date()
-            })
-            .where(eq(users.email, email))
-            .returning({ id: users.id });
-        
-        if (!updatedUser.length) {
+        if (!user || !user.uid) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        // update password in firebase
+        await admin.auth().updateUser(user.uid, {
+            password: newPassword,
+        });
 
         //reset token
         await redis.del(`reset-token:${email}`);
