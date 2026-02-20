@@ -25,12 +25,19 @@ export const postForum = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { title, description, type, topic } =
-      await MePostForumBodySchema.parseAsync(req.body);
+    // Form data: multer puts text fields in req.body; ensure we don't destructure undefined
+    const body = req.body ?? {};
+    const { title, description, type, topic } = await MePostForumBodySchema.parseAsync({
+      title: body.title,
+      description: body.description,
+      type: body.type,
+      topic: body.topic,
+    });
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (!userId) {
-      throw new ResponseError("Missing required user", 400);
+      getResponseError(res, new ResponseError("Missing required user", 400));
+      return;
     }
 
     const [newForum] = await db
@@ -71,7 +78,8 @@ export const postForum = async (
             .returning();
           newForumMedia.push(media);
         } catch (error) {
-          throw new ResponseError(error as string, 500);
+          getResponseError(res, new ResponseError(error as string, 500));
+          return;
         }
       }
     }
@@ -117,7 +125,7 @@ export const postForum = async (
       await redis.del(myForumKeys);
     }
 
-    return getResponseSuccess(res, { success: true, newForum, newForumMedia }, "Forum posted successfully");
+    return getResponseSuccess(res, forumWithMedia, "Forum posted successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

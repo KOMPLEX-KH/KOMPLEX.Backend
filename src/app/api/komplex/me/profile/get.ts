@@ -27,8 +27,8 @@ export const MeProfileResponseSchema = z
     lastAiTabId: z.number().nullable().optional(),
     numberOfFollowers: z.number(),
     numberOfFollowing: z.number(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
   })
   .openapi("MeProfileResponse");
 

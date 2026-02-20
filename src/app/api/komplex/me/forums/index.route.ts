@@ -1,5 +1,6 @@
 import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
+import { uploadImages } from "@/middleware/upload.js";
 import {
     getBigContentRateLimiter,
     postBigRateLimiter,
@@ -33,7 +34,7 @@ const router = Router();
 // Me Forums Routes
 // ============================================================================
 router.get("", verifyFirebaseToken as any, getBigContentRateLimiter, getAllMyForums as any);
-router.post("", verifyFirebaseToken as any, postBigRateLimiter, postForum as any);
+router.post("", verifyFirebaseToken as any, postBigRateLimiter, uploadImages.any(), postForum as any);
 router.put("/:id", verifyFirebaseToken as any, updateBigRateLimiter, updateForum as any);
 router.delete("/:id", verifyFirebaseToken as any, deleteBigRateLimiter, deleteForum as any);
 router.patch("/:id/like", verifyFirebaseToken as any, updateSmallRateLimiter, likeForum as any);
