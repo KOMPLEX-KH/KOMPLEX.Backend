@@ -7,14 +7,15 @@ import { getAiGeneralTabHistory, MeAiGeneralTabHistoryParamsSchema, MeAiGeneralT
 import { postAiGeneral, MePostAiGeneralParamsSchema, MePostAiGeneralBodySchema, MePostAiGeneralResponseSchema } from "../../me/ai/general/tabs/[id]/post.js";
 import { updateAiGeneralTab, MeUpdateAiGeneralTabParamsSchema, MeUpdateAiGeneralTabBodySchema, MeUpdateAiGeneralTabResponseSchema } from "../../me/ai/general/tabs/[id]/put.js";
 import { deleteAiGeneralTab, MeDeleteAiGeneralTabParamsSchema, MeDeleteAiGeneralTabResponseSchema } from "../../me/ai/general/tabs/[id]/delete.js";
-import { rateAiGeneralResponse, MeRateAiGeneralParamsSchema, MeRateAiGeneralBodySchema, MeRateAiGeneralResponseSchema } from "../../me/ai/general/rating/[id]/post.js";
+import { rateAiGeneralResponse, MeRateAiGeneralParamsSchema, MeRateAiGeneralBodySchema } from "../../me/ai/general/rating/[id]/post.js";
 import { getAllAiTopics, MeAiTopicItemSchema } from "../../me/ai/topics/get.js";
 import { getAiTopicHistory, MeAiTopicHistoryParamsSchema, MeAiTopicHistoryQuerySchema, MeAiTopicHistoryItemSchema } from "../../me/ai/topics/[id]/get.js";
 import { callAiTopic, MeCallAiTopicParamsSchema, MeCallAiTopicBodySchema, MeCallAiTopicResponseSchema } from "../../me/ai/topics/[id]/post.js";
 import { deleteAiTopic, MeDeleteAiTopicParamsSchema, MeDeleteAiTopicResponseSchema } from "../../me/ai/topics/[id]/delete.js";
-import { rateAiTopicResponse, MeRateAiTopicParamsSchema, MeRateAiTopicBodySchema, MeRateAiTopicResponseSchema } from "../../me/ai/topics/rating/[id]/post.js";
+import { rateAiTopicResponse, MeRateAiTopicParamsSchema, MeRateAiTopicBodySchema } from "../../me/ai/topics/rating/[id]/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();
 
@@ -170,7 +171,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI general response rated successfully",
-            schema: getResponseSuccessSchema(MeRateAiGeneralResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",
@@ -258,7 +259,7 @@ registerOpenApiRoute({
     responses: {
         200: {
             description: "AI topic response rated successfully",
-            schema: getResponseSuccessSchema(MeRateAiTopicResponseSchema),
+            schema: getResponseSuccessSchema(z.any()),
         },
         400: {
             description: "Invalid input",

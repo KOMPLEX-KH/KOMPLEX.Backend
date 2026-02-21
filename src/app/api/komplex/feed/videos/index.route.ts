@@ -3,10 +3,10 @@ import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
 import { getVideoRateLimiter } from "@/middleware/rateLimiter.js";
 import { getAllVideos, FeedVideoItemSchema } from "../../feed/videos/get.js";
 import { getVideoById } from "../../feed/videos/[id]/get.js";
-import { getRecommendedVideos } from "../../feed/videos/[id]/recommended/get.js";
+import { getRecommendedVideos, RecommendedVideosItemSchema } from "../../feed/videos/[id]/recommended/get.js";
 import { getVideoLikes } from "../../feed/videos/[id]/likes/get.js";
-import { getVideoComments } from "../../feed/videos/[id]/comments/get.js";
-import { getVideoReplies } from "../../feed/videos/[id]/comments/[id]/replies/get.js";
+import { getVideoComments, FeedVideoCommentItemResponseSchema } from "../../feed/videos/[id]/comments/get.js";
+import { getVideoReplies, FeedVideoReplyItemResponseSchema } from "./[id]/comments/[commentId]/replies/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
@@ -21,16 +21,15 @@ router.get("/:id", verifyFirebaseTokenOptional as any, getVideoRateLimiter, getV
 router.get(
     "/:id/recommended",
     verifyFirebaseTokenOptional as any,
-    getVideoRateLimiter,
     getRecommendedVideos as any
 );
 router.get("/:id/likes", getVideoLikes as any);
-router.get("/:id/comments", getVideoComments as any);
-router.get("/:id/comments/:id/replies", getVideoReplies as any);
+router.get("/:id/comments", verifyFirebaseTokenOptional as any, getVideoComments as any);
+router.get("/:id/comments/:commentId/replies", verifyFirebaseTokenOptional as any, getVideoReplies as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos",
+    path: "/feed/videos",
     summary: "Get all videos",
     tag: "Feed",
     responses: {
@@ -47,7 +46,7 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos/:id",
+    path: "/feed/videos/:id",
     summary: "Get video by ID",
     tag: "Feed",
     responses: {
@@ -64,13 +63,13 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos/:id/recommended",
+    path: "/feed/videos/:id/recommended",
     summary: "Get recommended videos",
     tag: "Feed",
     responses: {
         200: {
             description: "Recommended videos retrieved successfully",
-            schema: getResponseSuccessSchema(FeedVideoItemSchema.array()),
+            schema: getResponseSuccessSchema(RecommendedVideosItemSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -81,7 +80,7 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos/:id/likes",
+    path: "/feed/videos/:id/likes",
     summary: "Get video likes",
     tag: "Feed",
     responses: {
@@ -98,13 +97,13 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos/:id/comments",
+    path: "/feed/videos/:id/comments",
     summary: "Get video comments",
     tag: "Feed",
     responses: {
         200: {
             description: "Video comments retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(FeedVideoCommentItemResponseSchema.array()),
         },
         400: {
             description: "Invalid input",
@@ -115,13 +114,13 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
-    path: "/komplex/feed/videos/:id/comments/:id/replies",
+    path: "/feed/videos/:id/comments/:id/replies",
     summary: "Get video comment replies",
     tag: "Feed",
     responses: {
         200: {
             description: "Video comment replies retrieved successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(FeedVideoReplyItemResponseSchema.array()),
         },
         400: {
             description: "Invalid input",

@@ -20,12 +20,6 @@ export const MeRateAiGeneralBodySchema = z
   })
   .openapi("MeRateAiGeneralBody");
 
-export const MeRateAiGeneralResponseSchema = z
-  .object({
-    data: z.array(z.any()),
-  })
-  .openapi("MeRateAiGeneralResponse");
-
 export const rateAiGeneralResponse = async (
   req: AuthenticatedRequest,
   res: Response
@@ -40,8 +34,7 @@ export const rateAiGeneralResponse = async (
       Number(rating),
       ratingFeedback ?? ""
     );
-    const responseBody = MeRateAiGeneralResponseSchema.parse(result);
-    return getResponseSuccess(res, responseBody, "AI general response rated successfully");
+    return getResponseSuccess(res, z.any(), "AI general response rated successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
