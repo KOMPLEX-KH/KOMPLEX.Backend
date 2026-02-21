@@ -12,14 +12,21 @@ import {
   videos,
   videoLikes,
 } from "@/db/drizzle/schema.js";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, exists } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
 export const UserProfileResponseSchema = z
   .object({
     id: z.number(),
     username: z.string(),
+    firstName: z.string(),
+    lastName: z.string().nullable().optional(),
+    isVerified: z.boolean(),
+    bio: z.string().nullable().optional(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
     profileImage: z.string().nullable().optional(),
+    isFollowing: z.boolean(),
     numberOfFollowers: z.number(),
     numberOfFollowing: z.number(),
   })
@@ -31,11 +38,12 @@ export const getUserProfile = async (
 ) => {
   try {
     const { id } = req.params;
-    if (!id) {
+    const userId = req.user?.userId;
+    if (!id || !userId) {
       return getResponseError(res, new ResponseError("User ID is required", 400));
     }
 
-    const cacheKey = `user:${id}:profile`;
+    const cacheKey = `user:${userId}:profile`;
 
     const cachedProfile = await redis.get(cacheKey);
     if (cachedProfile) {
@@ -58,10 +66,21 @@ export const getUserProfile = async (
       .from(followers)
       .where(eq(followers.userId, Number(id)));
 
+    const isFollowing = await db
+      .select()
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followedId, Number(id)),
+          eq(followers.userId, userId)
+        )
+      );
+
     const profileData = {
       ...userProfile[0],
       numberOfFollowers: numberOfFollowers[0].count,
       numberOfFollowing: numberOfFollowing[0].count,
+      isFollowing: isFollowing.length > 0,
     };
 
     await redis.set(cacheKey, JSON.stringify(profileData), { EX: 300 });

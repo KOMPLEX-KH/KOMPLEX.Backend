@@ -29,14 +29,14 @@ export const getVideoReplies = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const { commentId } = req.params;
     const userId = req.user?.userId;
     const { page } = req.query;
     const pageNumber = Number(page) || 1;
     const limit = 20;
     const offset = (pageNumber - 1) * limit;
 
-    const cacheKey = `videoReplies:comment:${id}:page:${pageNumber}`;
+    const cacheKey = `videoReplies:comment:${commentId}:page:${pageNumber}`;
     const cached = await redis.get(cacheKey);
 
     let cachedReplies: any[] = [];
@@ -60,7 +60,7 @@ export const getVideoReplies = async (
         )
       )
       .leftJoin(users, eq(users.id, videoReplies.userId))
-      .where(eq(videoReplies.videoCommentId, Number(id)))
+      .where(eq(videoReplies.videoCommentId, Number(commentId)))
       .groupBy(videoReplies.id, videoReplyLike.videoReplyId, users.profileImage)
       .offset(offset)
       .limit(limit);
@@ -89,7 +89,7 @@ export const getVideoReplies = async (
           videoReplyLike,
           eq(videoReplies.id, videoReplyLike.videoReplyId)
         )
-        .where(eq(videoReplies.videoCommentId, Number(id)))
+        .where(eq(videoReplies.videoCommentId, Number(commentId)))
         .groupBy(
           videoReplies.id,
           videoReplies.userId,

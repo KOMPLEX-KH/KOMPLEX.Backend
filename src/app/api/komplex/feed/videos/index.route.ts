@@ -6,7 +6,7 @@ import { getVideoById } from "../../feed/videos/[id]/get.js";
 import { getRecommendedVideos, RecommendedVideosItemSchema } from "../../feed/videos/[id]/recommended/get.js";
 import { getVideoLikes } from "../../feed/videos/[id]/likes/get.js";
 import { getVideoComments, FeedVideoCommentItemResponseSchema } from "../../feed/videos/[id]/comments/get.js";
-import { getVideoReplies, FeedVideoReplyItemResponseSchema } from "../../feed/videos/[id]/comments/[id]/replies/get.js";
+import { getVideoReplies, FeedVideoReplyItemResponseSchema } from "./[id]/comments/[commentId]/replies/get.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
@@ -25,7 +25,7 @@ router.get(
 );
 router.get("/:id/likes", getVideoLikes as any);
 router.get("/:id/comments", verifyFirebaseTokenOptional as any, getVideoComments as any);
-router.get("/:id/comments/:id/replies", verifyFirebaseTokenOptional as any, getVideoReplies as any);
+router.get("/:id/comments/:commentId/replies", verifyFirebaseTokenOptional as any, getVideoReplies as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
