@@ -2,10 +2,13 @@ import { Request } from "express";
 import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
+import { redis } from "@/db/redis/redis.js";
+import { sendEmail, EmailType } from "@/utils/emailService.js";
 import { getResponseError, getResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
+import { eq } from "drizzle-orm";
 
-// Validates incoming request data
+// Validates incoming request data (now includes verificationToken)
 export const SignupBodySchema = z
   .object({
     email: z.string().email(),
@@ -16,80 +19,96 @@ export const SignupBodySchema = z
     dateOfBirth: z.string().optional(),
     phone: z.string().optional(),
     profileImageKey: z.string().optional(),
+    verificationToken: z.string(), // Required from verify-otp step
   })
   .openapi("SignupBody"); 
 
 
-// Defines the structure of successful response data
-export const SignupResponseSchema = z
-  .object({
-    id: z.number(),
-    uid: z.string(),
+// Response schema - returns created user
+export const SignupResponseSchema = z.object({
+  message: z.string(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
     username: z.string(),
     firstName: z.string(),
-    lastName: z.string(),
-    dateOfBirth: z.string().nullable().optional(),
-    isAdmin: z.boolean(),
-    isVerified: z.boolean(),
-    isSocial: z.boolean(),
-    email: z.string().email(),
-    phone: z.string().nullable().optional(),
-    profileImage: z.string().nullable().optional(),
-    profileImageKey: z.string().nullable().optional(),
-    lastTopicId: z.number().nullable().optional(),
-    lastVideoId: z.number().nullable().optional(),
-    lastAiTabId: z.number().nullable().optional(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-  })
-  .openapi("SignupResponse");
+    lastName: z.string().nullable(),
+    uid: z.string(),
+  }),
+}).openapi("SignupResponse");
 
 export const postSignup = async (req: Request, res: Response) => {
-  const {
-    email,
-    username,
-    uid,
-    firstName,
-    lastName,
-    dateOfBirth,
-    phone,
-    profileImageKey,
-  } = await SignupBodySchema.parseAsync(req.body);
-
   try {
-    // email duplication handled by firebase at frontend
-    const profileImage =
-      profileImageKey && process.env.R2_PHOTO_PUBLIC_URL
-        ? `${process.env.R2_PHOTO_PUBLIC_URL}/${profileImageKey}`
-        : null;
+    const signupData = await SignupBodySchema.parseAsync(req.body);
+    const { email, verificationToken } = signupData;
 
-    const user = await db
+    // Check if email was verified (verificationToken required)
+    if (!verificationToken) {
+      return res.status(400).json({
+        message: "Email verification required. Please verify your email first."
+      });
+    }
+
+    // Verify the verification token
+    const storedToken = await redis.get(`verified-email:${email}`);
+    if (!storedToken || storedToken !== verificationToken) {
+      return res.status(400).json({
+        message: "Invalid or expired verification token. Please verify your email again."
+      });
+    }
+
+    // check if user already exists (double check)
+    const existingUser = await db.select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: "User already exists." });
+    }
+
+    // CREATE USER IN DATABASE
+    const profileImage = signupData.profileImageKey && process.env.R2_PHOTO_PUBLIC_URL
+      ? `${process.env.R2_PHOTO_PUBLIC_URL}/${signupData.profileImageKey}`
+      : null;
+
+    const newUserResult = await db
       .insert(users)
       .values({
-        email,
-        username,
-        uid,
-        firstName,
-        lastName,
-        // TODO: wire real dateOfBirth / phone once model supports it
-        dateOfBirth: dateOfBirth ?? null,
+        email: signupData.email,
+        username: signupData.username,
+        uid: signupData.uid,
+        firstName: signupData.firstName,
+        lastName: signupData.lastName || null,
+        dateOfBirth: signupData.dateOfBirth || null,
+        phone: signupData.phone || null,
+        profileImage,
+        profileImageKey: signupData.profileImageKey || null,
         isAdmin: false,
         isSocial: false,
-        isVerified: false,
-        phone: phone ?? null,
-        profileImage,
-        profileImageKey: profileImageKey ?? null,
+        isVerified: true, // Already verified via OTP
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .returning();
 
-    return getResponseSuccess(res, SignupResponseSchema.parse(user), "User created successfully");
+    const newUser = Array.isArray(newUserResult) ? newUserResult[0] : newUserResult;
+
+    // Clean up verification token
+    await redis.del(`verified-email:${email}`);
+
+    return res.status(201).json({
+      message: "Account created successfully",
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        uid: newUser.uid,
+      },
+    });
   } catch (error) {
     return getResponseError(res, error);
   }
 };
-
-
-// 
-

@@ -30,7 +30,7 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
     const { email, otp }: VerifyOtpBody = await VerifyOtpBodySchema.parseAsync(req.body);
     
     //Get OTP from Redis
-    const otpKey = `otp:${email}`;
+    const otpKey = `forget-pw-otp:${email}`;
     const storedOtpData = await redis.get(otpKey);
 
     if (!storedOtpData) {

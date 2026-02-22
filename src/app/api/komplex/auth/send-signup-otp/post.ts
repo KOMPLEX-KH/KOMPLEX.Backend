@@ -28,40 +28,48 @@ export type SendOtpBody = z.infer<typeof SendOtpBodySchema>;
 
 
 
-// Handles the logic for sending OTP to user's email
-export const postSendOtp = async (req: Request, res: Response) => {
+// Handles the logic for sending OTP for SIGNUP (user must NOT exist)
+export const postSendSignupOtp = async (req: Request, res: Response) => {
     try{  
         const {email} : SendOtpBody = await SendOtpBodySchema.parseAsync(req.body);
         
-        // check if user exists
+        // check if user ALREADY exists (opposite of password reset)
         const user = await db
             .select()
             .from(users) 
             .where(eq(users.email, email))
             .limit(1);
 
-        if(!user.length){
-            return getResponseError(res, new ResponseError("No account found with this email address", 404));
+        if(user.length > 0){
+            return getResponseError(res, new ResponseError("User already exists with this email address", 400));
+        }
+        
+        // Check if OTP already sent and still valid
+        const existingOtp = await redis.get(`signup-otp:${email}`);
+        if(existingOtp){
+            return res.status(400).json({
+                message: "OTP already sent. Please check your email or wait for it to expire."
+            });
         }
         
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Store in Redis around 5 minutes
+        // Store in Redis (5 minutes) - only email + OTP for signup
         const otpData = {
             otp,
             email,
-            attemps: 0,
+            attempts: 0,
             createdAt: Date.now(),
         }
 
-        await redis.setEx(`otp:${email}`, 300, JSON.stringify(otpData)); // 5 minutes
+        await redis.setEx(`signup-otp:${email}`, 300, JSON.stringify(otpData)); // 5 minutes
         
-        //Send OTP via Gmail
-        await sendEmail(email, "KOMPLEX Password Reset OTP", EmailType.ForgetPassword, otp);
+        //Send OTP via Email for Signup
+        await sendEmail(email, "KOMPLEX Account Verification", EmailType.Signup, otp);
 
         return res.status(200).json({
-            message: "OTP sent to email",
+            message: "Verification code sent to your email",
             expiresIn: 300,
         });
     }catch(err){

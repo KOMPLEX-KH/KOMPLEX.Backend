@@ -5,7 +5,6 @@ import { redis } from "@/db/redis/redis.js";
 import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
 import admin from "@/config/firebase/admin.js";
 
 export const ResetPasswordBodySchema = z
@@ -54,7 +53,7 @@ export const postResetPassword = async (req: Request, res: Response) => {
         });
 
         //reset token
-        await redis.del(`reset-token:${email}`);
+        await redis.del(`resetToken:${email}`);
 
         return res.status(200).json({
             message: "Password reset successfully.",
