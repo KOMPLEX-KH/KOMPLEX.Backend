@@ -1,6 +1,6 @@
 import { SocialLoginBodySchema, SocialLoginResponseSchema } from "./social-login/post.js";
 import Router from "express";
-import { userLoginRateLimiter, userSignupRateLimiter, userResetPasswordRateLimiter, userSendOtpRateLimiter } from "@/middleware/rateLimiter.js";
+import { userLoginRateLimiter, userSignupRateLimiter, userResetPasswordRateLimiter, userSendOtpRateLimiter, userVerifyOtpRateLimiter } from "@/middleware/rateLimiter.js";
 import { postSignup, SignupBodySchema, SignupResponseSchema } from "../auth/signup/post.js";
 import { postSocialLogIn } from "../auth/social-login/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
@@ -18,7 +18,7 @@ const router = Router();
 // ============================================================================
 router.post("/send-signup-otp", userSendOtpRateLimiter, postSendSignupOtp as any);
 
-router.post("/verify-signup-otp", postVerifySignupOtp as any);
+router.post("/verify-signup-otp", userVerifyOtpRateLimiter, postVerifySignupOtp as any);
 
 router.post("/signup", userSignupRateLimiter, postSignup as any);
 
@@ -29,9 +29,9 @@ router.post("/signup", userSignupRateLimiter, postSignup as any);
 router.post("/social-login", userLoginRateLimiter, postSocialLogIn as any);
 
 // Password Reset Routes
-router.post("/send-forget-pw-otp", userSendOtpRateLimiter, postSendForgetPwOtp as any);
+router.post("/send-forget-password-otp", userSendOtpRateLimiter, postSendForgetPwOtp as any);
 
-router.post("/verify-forget-pw-otp", postVerifyOtp as any);
+router.post("/verify-forget-password-otp", userVerifyOtpRateLimiter, postVerifyOtp as any);
 
 router.post("/reset-password", userResetPasswordRateLimiter, postResetPassword as any);
 
@@ -113,7 +113,7 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.POST,
-    path: "/komplex/auth/send-forget-pw-otp",
+    path: "/komplex/auth/send-forget-password-otp",
     summary: "Send OTP for password reset",
     tag: "Auth",
     body: SendForgetPwOtpBodySchema,
@@ -135,7 +135,7 @@ registerOpenApiRoute({
 
 registerOpenApiRoute({
     method: HttpMethod.POST,
-    path: "/komplex/auth/verify-forget-pw-otp",
+    path: "/komplex/auth/verify-forget-password-otp",
     summary: "Verify OTP for password reset",
     tag: "Auth",
     body: VerifyOtpBodySchema,

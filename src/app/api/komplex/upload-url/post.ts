@@ -15,6 +15,7 @@ export const UploadUrlResponseSchema = z
   .object({
     signedUrl: z.string(),
     key: z.string(),
+    publicUrl: z.string(),
   })
   .openapi("UploadUrlResponse");
 
@@ -33,13 +34,13 @@ export const postUploadUrl = async (
       );
     }
 
-    const { signedUrl, key } = await getSignedUrlFromCloudflare(
+    const { signedUrl, key, publicUrl } = await getSignedUrlFromCloudflare(
       fileName,
       fileType,
       userId
     );
 
-    return getResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key }), "Upload URL fetched successfully");
+    return getResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key, publicUrl }), "Upload URL fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

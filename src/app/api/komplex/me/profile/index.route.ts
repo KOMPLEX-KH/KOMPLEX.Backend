@@ -2,8 +2,10 @@ import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { getMe, MeResponseSchema } from "../../me/get.js";
 import { getMeProfile, MeProfileResponseSchema } from "../../me/profile/get.js";
+import { updateMeProfile, UpdateProfileBodySchema } from "../../me/profile/put.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
 
 const router = Router();
 
@@ -12,6 +14,7 @@ const router = Router();
 // ============================================================================
 router.get("", verifyFirebaseToken as any, getMe as any);
 router.get("/profile", verifyFirebaseToken as any, getMeProfile as any);
+router.put("/profile", verifyFirebaseToken as any, updateMeProfile as any);
 
 registerOpenApiRoute({
     method: HttpMethod.GET,
@@ -42,6 +45,28 @@ registerOpenApiRoute({
         },
         400: {
             description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.PUT,
+    path: "/komplex/me/profile",
+    summary: "Update current user profile",
+    tag: "Me",
+    body: UpdateProfileBodySchema,
+    responses: {
+        200: {
+            description: "Profile updated successfully",
+            schema: getResponseSuccessSchema(z.null()),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+        401: {
+            description: "Unauthorized",
             schema: getResponseErrorSchema(),
         },
     },

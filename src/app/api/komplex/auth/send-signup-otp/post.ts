@@ -63,14 +63,14 @@ export const postSendSignupOtp = async (req: Request, res: Response) => {
             createdAt: Date.now(),
         }
 
-        await redis.setEx(`signup-otp:${email}`, 300, JSON.stringify(otpData)); // 5 minutes
+        await redis.setEx(`signup-otp:${email}`, 90, JSON.stringify(otpData)); // 1.5 minutes
         
         //Send OTP via Email for Signup
         await sendEmail(email, "KOMPLEX Account Verification", EmailType.Signup, otp);
 
         return res.status(200).json({
             message: "Verification code sent to your email",
-            expiresIn: 300,
+            expiresIn: 90,
         });
     }catch(err){
         return getResponseError(res, err);

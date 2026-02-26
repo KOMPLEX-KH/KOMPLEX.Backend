@@ -1,7 +1,5 @@
 import { Request } from "express";
 import { Response } from "express";
-import { db } from "@/db/drizzle/index.js";
-import { users } from "@/db/drizzle/schema.js";
 import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { redis } from "@/db/redis/redis.js";
@@ -18,7 +16,7 @@ export const VerifyOtpResponseSchema = z
   .object({
     message: z.string(),
     resetToken: z.string().optional(), // only return when OTP is verified successfully
-    attemptsLeft: z.number().optional(),
+    expiresIn: z.number().optional(), // seconds until resetToken expires
   })
   .openapi("VerifyOtpResponse");
 
@@ -40,43 +38,25 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
     }
 
     // convert string to object
-    const { otp: storedOtp, attempts } = JSON.parse(storedOtpData);
-
-    // check if otp over 3 attempts
-    if(attempts >=3){
-      await redis.del(otpKey);
-      return res.status(429).json({
-        message: "Maximum attempts exceeded",
-      });
-    }
+    const { otp: storedOtp } = JSON.parse(storedOtpData);
 
     // wrong otp
-    if(otp !== storedOtp){
-      const newAttempts = attempts + 1;
-
-      // update attempts in redis
-      const updatedOtpData = { ...JSON.parse(storedOtpData), attempts: newAttempts };
-
-      // keep the same expired time
-      const ttl = await redis.ttl(otpKey);
-      if (ttl > 0) {
-        await redis.setEx(otpKey, ttl, JSON.stringify(updatedOtpData));
-      }
-
+    if (otp !== storedOtp) {
       return res.status(400).json({
         message: "Invalid OTP. Please try again.",
-        attemptsLeft: 3 - newAttempts,
       });
     }
-
+    
+    // generate reset token
     const resetToken = randomUUID();
 
-    await redis.setEx(`resetToken:${email}`, 900, resetToken); // 15 minutes
+    await redis.setEx(`resetToken:${email}`, 300, resetToken); // 5 minutes
     await redis.del(otpKey);
 
     return res.status(200).json({
       message: "OTP verified successfully",
       resetToken,
+      expiresIn: 300, // 5 minutes
     });
 
   }catch(error){

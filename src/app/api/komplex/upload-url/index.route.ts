@@ -1,5 +1,5 @@
 import Router from "express";
-import { verifyFirebaseTokenAdmin } from "@/middleware/auth.js";
+import { verifyFirebaseToken } from "@/middleware/auth.js";
 import { postVideoRateLimiter } from "@/middleware/rateLimiter.js";
 import { postUploadUrl, UploadUrlResponseSchema, UploadUrlBodySchema } from "../upload-url/post.js";
 import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
@@ -12,7 +12,7 @@ const router = Router();
 // ============================================================================
 router.post(
     "/upload-url",
-    verifyFirebaseTokenAdmin as any,
+    verifyFirebaseToken as any,
     postVideoRateLimiter,
     postUploadUrl as any
 );

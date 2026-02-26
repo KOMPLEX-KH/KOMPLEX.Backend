@@ -25,8 +25,8 @@ export const MeResponseSchema = z
     lastTopicId: z.number().nullable().optional(),
     lastVideoId: z.number().nullable().optional(),
     lastAiTabId: z.number().nullable().optional(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
   })
   .openapi("MeResponse");
 

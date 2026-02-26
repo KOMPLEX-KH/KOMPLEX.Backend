@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
-import { db } from "@/db/drizzle/index.js";
-import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { getResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const VerifySignupOtpBodySchema = z
@@ -17,7 +15,6 @@ export const VerifySignupOtpResponseSchema = z
     message: z.string(),
     verificationToken: z.string(), // Token to use in signup step
     expiresIn: z.number(), // Time before token expires
-    attemptsLeft: z.number().optional(),
   })
   .openapi("VerifySignupOtpResponse");
 
@@ -37,32 +34,14 @@ export const postVerifySignupOtp = async (req: Request, res: Response) => {
       });
     }
 
-    // Parse stored OTP data (only OTP info, no user data)
+    // Parse stored OTP data
     const otpData = JSON.parse(storedOtpData);
-    const { otp: storedOtp, attempts } = otpData;
-
-    //Check attempt limits
-    if (attempts >= 3) {
-      await redis.del(otpKey);
-      return res.status(429).json({
-        message: "Maximum verification attempts exceeded. Please request a new OTP.",
-      });
-    }
+    const { otp: storedOtp } = otpData;
 
     // verify otp
     if (otp !== storedOtp) {
-      const newAttempts = attempts + 1;
-      const updatedOtpData = { ...otpData, attempts: newAttempts };
-      
-      // Keep same expiry time
-      const ttl = await redis.ttl(otpKey);
-      if (ttl > 0) {
-        await redis.setEx(otpKey, ttl, JSON.stringify(updatedOtpData));
-      }
-
       return res.status(400).json({
         message: "Invalid verification code. Please try again.",
-        attemptsLeft: 3 - newAttempts,
       });
     }
 

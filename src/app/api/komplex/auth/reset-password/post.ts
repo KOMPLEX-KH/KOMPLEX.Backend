@@ -28,9 +28,10 @@ export const postResetPassword = async (req: Request, res: Response) => {
         await ResetPasswordBodySchema.parseAsync(req.body);
     
     try{
-        // verify reset token from redis
+        // get reset token from redis
         const storedToken = await redis.get(`resetToken:${email}`);
 
+        // compare token
         if(!storedToken || storedToken !== resetToken){
             return res.status(400).json({ 
                 message: "Invalid or expired reset token" 
