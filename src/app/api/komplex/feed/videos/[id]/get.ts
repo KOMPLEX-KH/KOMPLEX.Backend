@@ -8,9 +8,9 @@ import {
   userSavedVideos,
   videoLikes,
   userVideoHistory,
-  exercises,
-  questions,
-  choices,
+  // exercises,
+  // questions,
+  // choices,
   followers,
 } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
@@ -24,28 +24,24 @@ import { FeedVideoItemSchema } from "../../videos/get.js";
 //   isFollowing: z.boolean(),
 // }).openapi("VideoByIdResponseSchema");
 
-const VideoByIdParamsSchema = z.object({
-  id: z.number(),
-}).openapi("GetVideoByIdParamsSchema");
-
 export const getVideoById = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = await VideoByIdParamsSchema.parseAsync(req.params);
+    const id = req.params.id;
     const videoId = Number(id);
-
 
     const cacheVideoKey = `video:${videoId}`;
     const cacheExercisesKey = `exercises:videoId:${videoId}`;
 
     const cacheVideoData = await redis.get(cacheVideoKey);
-    const cacheExercisesData = await redis.get(cacheExercisesKey);
-    if (cacheVideoData && cacheExercisesData) {
+    // const cacheExercisesData = await redis.get(cacheExercisesKey);
+    // if (cacheVideoData && cacheExercisesData) {
+    if (cacheVideoData) {
       let video = JSON.parse(cacheVideoData);
-      const exercises = JSON.parse(cacheExercisesData);
+      // const exercises = JSON.parse(cacheExercisesData);
 
       if (!video.userId) {
         const [fullVideo] = await db
@@ -146,7 +142,8 @@ export const getVideoById = async (
         updatedAt: new Date(),
       });
 
-      return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, exercises, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
+      // return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, exercises, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
+      return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
     }
 
     const [videoRow] = await db
@@ -225,43 +222,43 @@ export const getVideoById = async (
       throw new ResponseError("Video not found", 404);
     }
 
-    // get video exercises
-    const videoExercisesRows = await db
-      .select()
-      .from(exercises)
-      .where(eq(exercises.videoId, videoId))
-      .leftJoin(questions, eq(exercises.id, questions.exerciseId))
-      .leftJoin(choices, eq(questions.id, choices.questionId))
-      .groupBy(exercises.id, questions.id, choices.id);
+    // // get video exercises
+    // const videoExercisesRows = await db
+    //   .select()
+    //   .from(exercises)
+    //   .where(eq(exercises.videoId, videoId))
+    //   .leftJoin(questions, eq(exercises.id, questions.exerciseId))
+    //   .leftJoin(choices, eq(questions.id, choices.questionId))
+    //   .groupBy(exercises.id, questions.id, choices.id);
 
-    const videoExerciseMap = new Map();
+    // const videoExerciseMap = new Map();
 
-    for (const row of videoExercisesRows) {
-      const exercise = row.exercises;
-      if (!videoExerciseMap.has(exercise.id)) {
-        videoExerciseMap.set(exercise.id, {
-          ...exercise,
-          questions: [],
-        });
-      }
-      const exerciseObj = videoExerciseMap.get(exercise.id);
+    // for (const row of videoExercisesRows) {
+    //   const exercise = row.exercises;
+    //   if (!videoExerciseMap.has(exercise.id)) {
+    //     videoExerciseMap.set(exercise.id, {
+    //       ...exercise,
+    //       questions: [],
+    //     });
+    //   }
+    //   const exerciseObj = videoExerciseMap.get(exercise.id);
 
-      if (row.questions?.id) {
-        let question = exerciseObj.questions.find(
-          (q: any) => q.id === row.questions?.id
-        );
-        if (!question) {
-          question = { ...row.questions, choices: [] };
-          exerciseObj.questions.push(question);
-        }
+    //   if (row.questions?.id) {
+    //     let question = exerciseObj.questions.find(
+    //       (q: any) => q.id === row.questions?.id
+    //     );
+    //     if (!question) {
+    //       question = { ...row.questions, choices: [] };
+    //       exerciseObj.questions.push(question);
+    //     }
 
-        if (row.choices?.id) {
-          question.choices.push(row.choices);
-        }
-      }
-    }
+    //     if (row.choices?.id) {
+    //       question.choices.push(row.choices);
+    //     }
+    //   }
+    // }
 
-    const videoExercises = Array.from(videoExerciseMap.values());
+    // const videoExercises = Array.from(videoExerciseMap.values());
 
     // Always increment view count on every request
     await db
@@ -278,9 +275,11 @@ export const getVideoById = async (
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    await redis.set(cacheExercisesKey, JSON.stringify(videoExercises), {
-      EX: 600,
-    });
+
+    // await redis.set(cacheExercisesKey, JSON.stringify(videoExercises), {
+    //   EX: 600,
+    // });
+
     const isFollowing = await db
       .select()
       .from(followers)
@@ -293,7 +292,7 @@ export const getVideoById = async (
 
     const videoWithExercises = {
       ...videoRow,
-      exercises: videoExercises,
+      // exercises: videoExercises,
       isFollowing: isFollowing.length > 0,
       viewCount: Number(videoRow.viewCount), // Convert to number
       likeCount: Number(videoRow.likeCount), // Convert to number
@@ -316,5 +315,3 @@ export const getVideoById = async (
     return getResponseError(res, error);
   }
 };
-
-

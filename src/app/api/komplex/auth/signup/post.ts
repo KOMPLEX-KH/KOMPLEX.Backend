@@ -16,8 +16,8 @@ export const SignupBodySchema = z
     uid: z.string(),
     firstName: z.string(),
     lastName: z.string().nullable().optional(),
-    dateOfBirth: z.string().optional(),
-    phone: z.string().optional(),
+    dateOfBirth: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
     profileImageKey: z.string().optional(),
     verificationToken: z.string(), // Required from verify-otp step
   })

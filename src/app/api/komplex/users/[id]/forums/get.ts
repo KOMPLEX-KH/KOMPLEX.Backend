@@ -16,8 +16,8 @@ export const UserForumItemSchema = z.object({
   type: z.string(),
   topic: z.string().nullable().optional(),
   viewCount: z.number(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   username: z.string(),
   media: z.array(MediaSchema),
 });

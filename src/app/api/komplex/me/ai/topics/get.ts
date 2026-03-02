@@ -38,7 +38,15 @@ const getAllAiTopicNamesServiceInternal = async (userId: number) => {
       .innerJoin(topics, eq(userAITopicHistory.topicId, topics.id))
       .where(eq(userAITopicHistory.userId, userId))
       .orderBy(asc(userAITopicHistory.updatedAt));
-    return result;
+
+    const uniqueNames = result.filter((item, index, self) =>
+      index === self.findIndex((t) => t.id === item.id)
+    );
+
+    return uniqueNames.map((item) => ({
+      id: item.id,
+      name: item.name,
+    }));
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

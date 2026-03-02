@@ -7,6 +7,7 @@ import { users, userAIHistory } from "@/db/drizzle/schema.js";
 import { and, eq, asc } from "drizzle-orm";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { z } from "@/config/openapi/openapi.js";
+import { responseTypeEnum } from "@/db/drizzle/models/response_type.js";
 
 export const MeAiGeneralTabHistoryParamsSchema = z
   .object({
@@ -22,9 +23,13 @@ export const MeAiGeneralTabHistoryQuerySchema = z
   .openapi("MeAiGeneralTabHistoryQuery");
 
 export const MeAiGeneralTabHistoryItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
   prompt: z.string(),
   aiResult: z.string(),
-  responseType: z.string(),
+  responseType: z.enum(responseTypeEnum.enumValues),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 }).openapi("MeAiGeneralTabHistoryItemSchema");
 
 export const getAiGeneralTabHistory = async (
@@ -49,7 +54,7 @@ export const getAiGeneralTabHistory = async (
 
     const responseBody =
       MeAiGeneralTabHistoryItemSchema.array().parse(result);
-      
+
     return getResponseSuccess(res, responseBody, "AI history fetched successfully");
   } catch (error) {
     return getResponseError(res, error);
@@ -64,25 +69,29 @@ const getAiHistoryByTabServiceInternal = async (
 ) => {
   try {
     const cacheKey = `aiHistory:${userId}:tabId:${tabId}:page:${page ?? 1}`;
-    const cached = await redis.get(cacheKey);
-    const parseData = cached ? JSON.parse(cached) : null;
-    if (parseData) {
-      if (userId !== 0) {
-        await db
-          .update(users)
-          .set({ lastAiTabId: tabId })
-          .where(eq(users.id, userId))
-          .returning();
-      }
-      return {
-        data: parseData,
-      };
-    }
+    // const cached = await redis.get(cacheKey);
+    // const parseData = cached ? JSON.parse(cached) : null;
+    // if (parseData) {
+    //   if (userId !== 0) {
+    //     await db
+    //       .update(users)
+    //       .set({ lastAiTabId: tabId })
+    //       .where(eq(users.id, userId))
+    //       .returning();
+    //   }
+    //   return {
+    //     data: parseData,
+    //   };
+    // }
     const history = await db
       .select({
+        id: userAIHistory.id,
+        userId: userAIHistory.userId,
         prompt: userAIHistory.prompt,
         aiResult: userAIHistory.aiResult,
         responseType: userAIHistory.responseType,
+        createdAt: userAIHistory.createdAt,
+        updatedAt: userAIHistory.updatedAt,
       })
       .from(userAIHistory)
       .limit(limit ?? 20)
@@ -91,16 +100,20 @@ const getAiHistoryByTabServiceInternal = async (
         and(eq(userAIHistory.tabId, tabId), eq(userAIHistory.userId, userId))
       )
       .orderBy(asc(userAIHistory.updatedAt));
-    await redis.set(cacheKey, JSON.stringify(history), {
-      EX: 60 * 60 * 24,
-    });
+    // await redis.set(cacheKey, JSON.stringify(history), {
+    //   EX: 60 * 60 * 24,
+    // });
     const cleanedHistory = history.map((h) => ({
+      id: h.id,
+      userId: h.userId,
       prompt: h.prompt,
       aiResult: cleanKomplexResponse(
         h.aiResult ?? "",
         h.responseType === "komplex" ? "komplex" : "normal"
       ),
       responseType: h.responseType,
+      createdAt: h.createdAt,
+      updatedAt: h.updatedAt,
     }));
     if (userId !== 0) {
       await db
@@ -109,9 +122,7 @@ const getAiHistoryByTabServiceInternal = async (
         .where(eq(users.id, userId))
         .returning();
     }
-    return {
-      data: cleanedHistory,
-    };
+    return cleanedHistory;
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

@@ -6,6 +6,8 @@ import { redis } from "@/db/redis/redis.js";
 import { userAITopicHistory } from "@/db/drizzle/schema.js";
 import { and, eq, desc } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
+import { responseTypeEnum } from "@/db/drizzle/models/response_type.js";
+import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 
 export const MeAiTopicHistoryParamsSchema = z
   .object({
@@ -23,11 +25,11 @@ export const MeAiTopicHistoryQuerySchema = z
 export const MeAiTopicHistoryItemSchema = z.object({
   id: z.number(),
   userId: z.number(),
-  topicId: z.number(),
   prompt: z.string(),
-  response: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  aiResult: z.string(),
+  responseType: z.enum(responseTypeEnum.enumValues),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 }).openapi("MeAiTopicHistoryItem");
 
 export const getAiTopicHistory = async (
@@ -69,7 +71,15 @@ const getAiTopicHistoryInternal = async (
       return parseData;
     }
     const history = await db
-      .select()
+      .select({
+        id: userAITopicHistory.id,
+        userId: userAITopicHistory.userId,
+        prompt: userAITopicHistory.prompt,
+        aiResult: userAITopicHistory.aiResult,
+        responseType: userAITopicHistory.responseType,
+        createdAt: userAITopicHistory.createdAt,
+        updatedAt: userAITopicHistory.updatedAt,
+      })
       .from(userAITopicHistory)
       .where(
         and(
@@ -81,10 +91,15 @@ const getAiTopicHistoryInternal = async (
       .limit(limit ?? 20)
       .offset(((page ?? 1) - 1) * (limit ?? 20));
     const reversedHistory = history.reverse();
-    await redis.set(cacheKey, JSON.stringify(reversedHistory), {
-      EX: 60 * 60 * 24,
-    });
-    return reversedHistory;
+    return reversedHistory.map((h) => ({
+      id: h.id,
+      userId: h.userId,
+      prompt: h.prompt,
+      aiResult: cleanKomplexResponse(h.aiResult ?? "", h.responseType === "komplex" ? "komplex" : "normal"),
+      responseType: h.responseType,
+      createdAt: h.createdAt,
+      updatedAt: h.updatedAt,
+    }));
   } catch (error) {
     throw new ResponseError(error as string, 500);
   }

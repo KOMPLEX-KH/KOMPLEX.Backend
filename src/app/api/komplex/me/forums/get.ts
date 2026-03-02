@@ -61,8 +61,8 @@ export const getAllForums = async (
         })
       );
 
-      const responseBody = FeedForumItemSchema.array().parse(dataToSend);
-      return getResponseSuccess(res, responseBody, "Forums fetched successfully", parseData.length === limit);
+      // const responseBody = FeedForumItemSchema.array().parse(dataToSend);
+      return getResponseSuccess(res, dataToSend, "Forums fetched successfully", parseData.length === limit);
     }
 
     const forumRecords = await db
@@ -153,8 +153,8 @@ export const getAllForums = async (
       }
     );
 
-    const responseBody = FeedForumItemSchema.array().parse(forumsWithMedia);
-    return getResponseSuccess(res, responseBody, "Forums fetched successfully", forumsWithMedia.length === limit);
+    // const responseBody = FeedForumItemSchema.array().parse(forumsWithMedia);
+    return getResponseSuccess(res, forumsWithMedia, "Forums fetched successfully", forumsWithMedia.length === limit);
   } catch (error) {
     return getResponseError(res, error);
   }

@@ -49,12 +49,12 @@ export const getAllAiTabNamesService = async (
   limit?: number
 ) => {
   try {
-    const cacheKey = `aiTabs:${userId}:page:${page ?? 1}`;
-    const cached = await redis.get(cacheKey);
-    const parseData = cached ? JSON.parse(cached) : null;
-    if (parseData) {
-      return parseData;
-    }
+    // const cacheKey = `aiTabs:${userId}:page:${page ?? 1}`;
+    // const cached = await redis.get(cacheKey);
+    // const parseData = cached ? JSON.parse(cached) : null;
+    // if (parseData) {
+    //   return parseData;
+    // }
     const tabs = await db
       .select({ id: userAiTabs.id, name: userAiTabs.tabName })
       .from(userAiTabs)
@@ -62,9 +62,9 @@ export const getAllAiTabNamesService = async (
       .orderBy(asc(userAiTabs.updatedAt))
       .limit(limit ?? 20)
       .offset(((page ?? 1) - 1) * (limit ?? 20));
-    await redis.set(cacheKey, JSON.stringify(tabs), {
-      EX: 60 * 60 * 24,
-    });
+    // await redis.set(cacheKey, JSON.stringify(tabs), {
+    //   EX: 60 * 60 * 24,
+    // });
     return tabs;
   } catch (error) {
     throw new ResponseError(error as string, 500);

@@ -5,7 +5,29 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videos, users, userSavedVideos, videoLikes } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const RecommendedVideosItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+  topic: z.string().nullable().optional(),
+  duration: z.number().nullable().optional(),
+  videoUrl: z.string(),
+  thumbnailUrl: z.string().nullable().optional(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  viewCount: z.number(),
+  likeCount: z.number(),
+  saveCount: z.number(),
+  isLiked: z.boolean(),
+  isSaved: z.boolean(),
+}).openapi("RecommendedVideosItemSchema");
 
 export const getRecommendedVideos = async (
   req: AuthenticatedRequest,
@@ -42,7 +64,7 @@ export const getRecommendedVideos = async (
         .where(eq(videos.id, videoId));
 
       if (!videoRow) {
-        return res.status(200).json({ data: [] });
+        return getResponseSuccess(res, [], "Video not found", false);
       }
 
       baseVideo = videoRow;
@@ -135,17 +157,17 @@ export const getRecommendedVideos = async (
 
     const videosWithMedia = allVideos.map((v) => {
       const dynamic = dynamicData.find((d) => d.id === v.id);
-      return {
+      return RecommendedVideosItemSchema.parse({
         ...v,
         viewCount: Number(dynamic?.viewCount ?? 0) + 1,
         likeCount: Number(dynamic?.likeCount) || 0,
         saveCount: Number(dynamic?.saveCount) || 0,
         isLiked: !!dynamic?.isLiked,
         isSaved: !!dynamic?.isSaved,
-      };
+      });
     });
 
-    return res.status(200).json({ data: videosWithMedia, hasMore: allVideos.length === limitNum });
+    return getResponseSuccess(res, videosWithMedia, "Recommended videos fetched successfully", allVideos.length === limitNum);
   } catch (error) {
     return getResponseError(res, error);
   }

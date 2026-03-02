@@ -20,12 +20,6 @@ export const MeRateAiTopicBodySchema = z
   })
   .openapi("MeRateAiTopicBody");
 
-export const MeRateAiTopicResponseSchema = z
-  .object({
-    data: z.array(z.any()),
-  })
-  .openapi("MeRateAiTopicResponse");
-
 export const rateAiTopicResponse = async (
   req: AuthenticatedRequest,
   res: Response
@@ -35,13 +29,13 @@ export const rateAiTopicResponse = async (
     const { rating, ratingFeedback } =
       await MeRateAiTopicBodySchema.parseAsync(req.body);
 
-    const result = await rateAiTopicResponseInternal(
+    await rateAiTopicResponseInternal(
       id,
       Number(rating),
       ratingFeedback ?? ""
     );
-    const responseBody = MeRateAiTopicResponseSchema.parse(result);
-    return getResponseSuccess(res, responseBody, "AI topic response rated successfully");
+
+    return getResponseSuccess(res, z.any(), "AI topic response rated successfully");
   } catch (error) {
     return getResponseError(res, error);
   }
