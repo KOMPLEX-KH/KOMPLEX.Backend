@@ -28,8 +28,15 @@ export const createRateLimiterMiddleware = (limiter: RateLimiterRedis) => {
       await limiter.consume(req.ip ?? "unknown-ip");
       next();
     } catch (err: any) {
-      console.error("Rate limiter error:", err.message);
-      res.status(429).json({ message: "Too Many Requests - try again later" });
+      // rate-limiter-flexible throws a RateLimiterRes object (not an Error) when limit is exceeded
+      if (err?.msBeforeNext !== undefined) {
+        const retryAfterSec = Math.ceil(err.msBeforeNext / 1000);
+        res.set("Retry-After", String(retryAfterSec));
+        res.status(429).json({ message: `Too Many Requests - try again in ${retryAfterSec}s` });
+      } else {
+        console.error("Rate limiter unexpected error:", err);
+        res.status(500).json({ message: "Internal server error" });
+      }
     }
   };
 };
@@ -274,6 +281,34 @@ export const userSignupRateLimiter = createRateLimiterMiddleware(
     keyPrefix: "user-signup",
   })
 );
+export const userResetPasswordRateLimiter = createRateLimiterMiddleware(
+  createLimiter({
+    points: 3,
+    duration: 300,
+    blockDuration: 900,
+    keyPrefix: "user-reset-password",
+  })
+);
+
+export const userSendOtpRateLimiter = createRateLimiterMiddleware(
+  createLimiter({
+    points: 3,
+    duration: 300,
+    blockDuration: 900,
+    keyPrefix: "user-send-otp",
+  })
+);
+
+export const userVerifyOtpRateLimiter = createRateLimiterMiddleware(
+  createLimiter({
+    points: 3,       // 3 attempts
+    duration: 90,    // within the OTP validity window (1.5 min)
+    blockDuration: 900, // ban for 15 minutes on exceeded
+    keyPrefix: "user-verify-otp",
+  })
+);
+
+
 export const adminLoginRateLimiter = createRateLimiterMiddleware(
   createLimiter({
     points: 5,

@@ -74,10 +74,10 @@ export const getSignedUrlFromCloudflare = async (
   fileName: string,
   fileType: string,
   userId: number
-): Promise<{ signedUrl: string; key: string }> => {
+): Promise<{ signedUrl: string; key: string; publicUrl: string }> => {
   let bucket;
   if (fileType === "application/pdf") {
-    bucket = "komplex-assets"; // to change but works for now
+    bucket = "komplex-assets";
   } else {
     bucket = imageMimeTypes.includes(fileType)
       ? "komplex-image"
@@ -86,7 +86,7 @@ export const getSignedUrlFromCloudflare = async (
 
   const safeFileName = fileName
     .replace(/\s+/g, "_")
-    .replace(/[^\p{L}\p{N}._-]+/gu, "_"); // replace spaces with _
+    .replace(/[^\p{L}\p{N}._-]+/gu, "_");
 
   const key = `${
     bucket === "komplex-assets" ? "books" : userId
@@ -98,10 +98,18 @@ export const getSignedUrlFromCloudflare = async (
     ContentType: fileType,
   });
 
-  const signedUrl = await getSignedUrl(r2, command, { expiresIn: 300 }); // 5 min expiry
+  const signedUrl = await getSignedUrl(r2, command, { expiresIn: 300 });
+
+  const publicBaseUrl =
+    bucket === "komplex-assets"
+      ? process.env.R2_ASSET_PUBLIC_URL
+      : bucket === "komplex-image"
+      ? process.env.R2_PHOTO_PUBLIC_URL
+      : process.env.R2_VIDEO_PUBLIC_URL;
 
   return {
     signedUrl,
     key,
+    publicUrl: `${publicBaseUrl}/${key}`,
   };
 };

@@ -7,6 +7,8 @@ import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/rateLimiter.js";
 import { generateAdminOpenAPIDocument, generateUserOpenAPIDocument, userApiRegistry } from "./config/openapi/swagger.js";
 import swaggerUi from "swagger-ui-express";
+import { db } from "./db/drizzle/index.js";
+import { users } from "./db/drizzle/schema.js";
 
 dotenv.config();
 
