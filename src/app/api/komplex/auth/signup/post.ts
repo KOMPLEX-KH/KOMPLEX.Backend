@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
 import { sendEmail, EmailType } from "@/utils/emailService.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
 
@@ -21,7 +21,7 @@ export const SignupBodySchema = z
     profileImageKey: z.string().optional(),
     verificationToken: z.string(), // Required from verify-otp step
   })
-  .openapi("SignupBody"); 
+  .openapi("SignupBody");
 
 
 // Response schema - returns created user
@@ -44,17 +44,13 @@ export const postSignup = async (req: Request, res: Response) => {
 
     // Check if email was verified (verificationToken required)
     if (!verificationToken) {
-      return res.status(400).json({
-        message: "Email verification required. Please verify your email first."
-      });
+      return getResponseError(res, new ResponseError("Email verification required. Please verify your email first.", 400));
     }
 
     // Verify the verification token
     const storedToken = await redis.get(`verified-email:${email}`);
     if (!storedToken || storedToken !== verificationToken) {
-      return res.status(400).json({
-        message: "Invalid or expired verification token. Please verify your email again."
-      });
+      return getResponseError(res, new ResponseError("Invalid or expired verification token. Please verify your email again.", 400));
     }
 
     // check if user already exists (double check)
@@ -64,7 +60,7 @@ export const postSignup = async (req: Request, res: Response) => {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: "User already exists." });
+      return getResponseError(res, new ResponseError("User already exists.", 400));
     }
 
     // CREATE USER IN DATABASE
@@ -96,18 +92,9 @@ export const postSignup = async (req: Request, res: Response) => {
 
     // Clean up verification token
     await redis.del(`verified-email:${email}`);
+    const responseBody = SignupResponseSchema.parse(newUser);
 
-    return res.status(201).json({
-      message: "Account created successfully",
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        uid: newUser.uid,
-      },
-    });
+    return getResponseSuccess(res, responseBody, "Account created successfully");
   } catch (error) {
     return getResponseError(res, error);
   }

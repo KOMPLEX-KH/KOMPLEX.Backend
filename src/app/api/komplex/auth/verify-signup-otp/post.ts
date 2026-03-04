@@ -18,12 +18,11 @@ export const VerifySignupOtpResponseSchema = z
   })
   .openapi("VerifySignupOtpResponse");
 
-export type VerifySignupOtpBody = z.infer<typeof VerifySignupOtpBodySchema>;
 
 export const postVerifySignupOtp = async (req: Request, res: Response) => {
   try {
-    const { email, otp }: VerifySignupOtpBody = await VerifySignupOtpBodySchema.parseAsync(req.body);
-    
+    const { email, otp } = await VerifySignupOtpBodySchema.parseAsync(req.body);
+
     //Get OTP data from Redis (changed key to match send-signup-otp)
     const otpKey = `signup-otp:${email}`;
     const storedOtpData = await redis.get(otpKey);
@@ -47,10 +46,10 @@ export const postVerifySignupOtp = async (req: Request, res: Response) => {
 
     // OTP VERIFIED - Generate verification token for signup
     const verificationToken = `verified:${email}:${Date.now()}`;
-    
+
     // Store verification token (15 minutes) - user can now signup
     await redis.setEx(`verified-email:${email}`, 900, verificationToken);
-    
+
     // Remove OTP data
     await redis.del(otpKey);
 

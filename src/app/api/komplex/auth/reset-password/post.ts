@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError } from "@/utils/response.js";
-import { z } from "@/config/openapi/openapi.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import admin from "@/config/firebase/admin.js";
+import { z } from "@/config/openapi/openapi.js";
 
 export const ResetPasswordBodySchema = z
     .object({
@@ -21,31 +21,28 @@ export const ResetPasswordResponseSchema = z
     })
     .openapi("ResetPasswordResponse");
 
-export type ResetPasswordBody = z.infer<typeof ResetPasswordBodySchema>;
 
 export const postResetPassword = async (req: Request, res: Response) => {
-    const { email, resetToken, newPassword }: ResetPasswordBody = 
+    const { email, resetToken, newPassword } =
         await ResetPasswordBodySchema.parseAsync(req.body);
-    
-    try{
+
+    try {
         // get reset token from redis
         const storedToken = await redis.get(`resetToken:${email}`);
 
         // compare token
-        if(!storedToken || storedToken !== resetToken){
-            return res.status(400).json({ 
-                message: "Invalid or expired reset token" 
-            });
+        if (!storedToken || storedToken !== resetToken) {
+            return getResponseError(res, new ResponseError("Invalid or expired reset token", 400));
         }
-        
+
         // get user by email to find firebase uid
         const [user] = await db
-            .select({uid: users.uid})
+            .select({ uid: users.uid })
             .from(users)
             .where(eq(users.email, email));
-        
+
         if (!user || !user.uid) {
-            return res.status(404).json({ message: "User not found" });
+            return getResponseError(res, new ResponseError("User not found", 404));
         }
 
         // update password in firebase
@@ -56,11 +53,13 @@ export const postResetPassword = async (req: Request, res: Response) => {
         //reset token
         await redis.del(`resetToken:${email}`);
 
-        return res.status(200).json({
+        const responseBody = ResetPasswordResponseSchema.parse({
             message: "Password reset successfully.",
         });
 
-    }catch(err){
+        return getResponseSuccess(res, responseBody, "Password reset successfully.");
+
+    } catch (err) {
         return getResponseError(res, err);
     }
 }

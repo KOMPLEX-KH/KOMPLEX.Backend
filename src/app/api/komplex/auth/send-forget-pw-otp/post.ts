@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
 import { EmailType, sendEmail } from "@/utils/emailService.js";
@@ -20,13 +20,11 @@ export const SendForgetPwOtpResponseSchema = z
   })
   .openapi("SendForgetPwOtpResponse");
 
-export type SendForgetPwOtpBody = z.infer<typeof SendForgetPwOtpBodySchema>;
-
 export const postSendForgetPwOtp = async (req: Request, res: Response) => {
   try {
-    
-    const { email }: SendForgetPwOtpBody = await SendForgetPwOtpBodySchema.parseAsync(req.body);
-    
+
+    const { email } = await SendForgetPwOtpBodySchema.parseAsync(req.body);
+
     // Check if user exist in database
     const user = await db
       .select()
@@ -35,17 +33,13 @@ export const postSendForgetPwOtp = async (req: Request, res: Response) => {
       .limit(1);
 
     if (user.length === 0) {
-      return res.status(404).json({
-        message: "No account found with this email"
-      });
+      return getResponseError(res, new ResponseError("No account found with this email", 404));
     }
 
     // Check if OTP already sent and still valid
     const existingOtp = await redis.get(`forget-pw-otp:${email}`);
     if (existingOtp) {
-      return res.status(400).json({
-        message: "OTP already sent. Please check your email or wait for it to expire."
-      });
+      return getResponseError(res, new ResponseError("OTP already sent. Please check your email or wait for it to expire.", 400));
     }
 
     // Generate 6-digit OTP
@@ -64,10 +58,12 @@ export const postSendForgetPwOtp = async (req: Request, res: Response) => {
     // Send OTP via Email for Password Reset
     await sendEmail(email, "KOMPLEX Password Reset", EmailType.ForgetPassword, otp);
 
-    return res.status(200).json({
+    const responseBody = SendForgetPwOtpResponseSchema.parse({
       message: "Verification code sent to your email",
       expiresIn: 90,
     });
+
+    return getResponseSuccess(res, responseBody, "Verification code sent to your email");
   } catch (err) {
     return getResponseError(res, err);
   }

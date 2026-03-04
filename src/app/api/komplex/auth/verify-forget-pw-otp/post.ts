@@ -1,16 +1,16 @@
 import { Request } from "express";
 import { Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { redis } from "@/db/redis/redis.js";
 import { randomUUID } from "crypto";
 
 export const VerifyOtpBodySchema = z
-    .object({
-        email: z.string().email(),
-        otp: z.string().length(6),
-    })
-    .openapi("VerifyOtpBody");
+  .object({
+    email: z.string().email(),
+    otp: z.string().length(6),
+  })
+  .openapi("VerifyOtpBody");
 
 export const VerifyOtpResponseSchema = z
   .object({
@@ -20,21 +20,17 @@ export const VerifyOtpResponseSchema = z
   })
   .openapi("VerifyOtpResponse");
 
-export type VerifyOtpBody = z.infer<typeof VerifyOtpBodySchema>;
-
 export const postVerifyOtp = async (req: Request, res: Response) => {
-  try{
-    
-    const { email, otp }: VerifyOtpBody = await VerifyOtpBodySchema.parseAsync(req.body);
-    
+  try {
+
+    const { email, otp } = await VerifyOtpBodySchema.parseAsync(req.body);
+
     //Get OTP from Redis
     const otpKey = `forget-pw-otp:${email}`;
     const storedOtpData = await redis.get(otpKey);
 
     if (!storedOtpData) {
-      return res.status(400).json({
-        message: "OTP has expired or does not exist. Please request a new one.",
-      });
+      return getResponseError(res, new ResponseError("OTP has expired or does not exist. Please request a new one.", 400));
     }
 
     // convert string to object
@@ -42,24 +38,23 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
 
     // wrong otp
     if (otp !== storedOtp) {
-      return res.status(400).json({
-        message: "Invalid OTP. Please try again.",
-      });
+      return getResponseError(res, new ResponseError("Invalid OTP. Please try again.", 400));
     }
-    
+
     // generate reset token
     const resetToken = randomUUID();
 
     await redis.setEx(`resetToken:${email}`, 300, resetToken); // 5 minutes
     await redis.del(otpKey);
 
-    return res.status(200).json({
-      message: "OTP verified successfully",
+    const responseBody = VerifyOtpResponseSchema.parse({
       resetToken,
-      expiresIn: 300, // 5 minutes
+      expiresIn: 300, // 5 minutes,
     });
 
-  }catch(error){
+    return getResponseSuccess(res, responseBody, "OTP verified successfully");
+
+  } catch (error) {
     return getResponseError(res, error);
   }
 }
