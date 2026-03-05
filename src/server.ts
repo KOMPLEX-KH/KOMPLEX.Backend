@@ -7,12 +7,12 @@ import routes from "./app/route.js";
 import { globalRateLimiter } from "./middleware/rateLimiter.js";
 import { generateAdminOpenAPIDocument, generateUserOpenAPIDocument, userApiRegistry } from "./config/openapi/swagger.js";
 import swaggerUi from "swagger-ui-express";
-import { db } from "./db/drizzle/index.js";
-import { users } from "./db/drizzle/schema.js";
 
 dotenv.config();
 
 const app = express();
+
+const isProduction = process.env.ENVIRONMENT === "production";
 
 // ! INIT APP =================================
 
@@ -46,7 +46,7 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({
     message: "Internal Server Error",
     error:
-      process.env.ENVIRONMENT === "development"
+      !isProduction
         ? err.message
         : "Something went wrong",
   });
@@ -54,16 +54,14 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 app.use(
   cors({
-    origin: [
+    origin: isProduction ? [
       process.env.CORS_ORIGIN as string,
-      "http://localhost:3000",
-      "http://localhost:4000",
-    ],
+    ] : "*",
     credentials: true,
   })
 );
 
-if (process.env.ENVIRONMENT === "development") {
+if (!isProduction) {
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(null, {
     swaggerOptions: { url: "/open.json" }
   }));
@@ -72,7 +70,7 @@ if (process.env.ENVIRONMENT === "development") {
   // }));
 }
 
-app.use(morgan(process.env.ENVIRONMENT === "production" ? "combined" : "dev"));
+app.use(morgan(isProduction ? "combined" : "dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(globalRateLimiter);
 
@@ -94,7 +92,7 @@ app.get("/open.json", (req, res) => {
   res.json(generateUserOpenAPIDocument());
 });
 
-if (process.env.ENVIRONMENT === "development") {
+if (!isProduction) {
   app.get("/open-admin.json", (req, res) => {
     res.json(generateAdminOpenAPIDocument());
   });
