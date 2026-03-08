@@ -1,0 +1,41 @@
+import { Request, Response } from "express";
+import { getResponseError, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { userAIHistory } from "@/db/drizzle/schema.js";
+import { eq } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+
+export const GeneralAiResponseByIdResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  prompt: z.string(),
+  response: z.string(),
+  rating: z.number().nullable(),
+  ratingFeedback: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+}).openapi("GeneralAiResponseByIdResponse");
+
+export const getGeneralAiResponseById = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      throw new ResponseError("Invalid ID parameter", 400);
+    }
+
+    const result = await db
+      .select()
+      .from(userAIHistory)
+      .where(eq(userAIHistory.id, id))
+      .limit(1);
+
+    if (result.length === 0) {
+      throw new ResponseError("AI response not found", 404);
+    }
+
+    return res.status(200).json({ data: GeneralAiResponseByIdResponseSchema.parse(result[0]) });
+  } catch (error) {
+    return getResponseError(res, error as Error);
+  }
+};
+

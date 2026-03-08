@@ -1,0 +1,52 @@
+import Router from "express";
+import { verifyFirebaseTokenOptional } from "@/middleware/auth.js";
+import { getSmallContentRateLimiter } from "@/middleware/rateLimiter.js";
+import { getCurriculums, GradeSchema } from "../../feed/curriculums/get.js";
+import { getCurriculumTopic, CurriculumTopicResponseSchema } from "../../feed/curriculums/[id]/get.js";
+import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
+import { getResponseErrorSchema, getResponseSuccessSchema } from "@/utils/response.js";
+
+const router = Router();
+
+// ============================================================================
+// Feed Curriculums Routes
+// ============================================================================
+
+router.get("",  getSmallContentRateLimiter, getCurriculums as any);
+router.get("/:id", verifyFirebaseTokenOptional as any, getSmallContentRateLimiter, getCurriculumTopic as any);
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/feed/curriculums",
+    summary: "Get all curriculums",
+    tag: "Feed",
+    responses: {
+        200: {
+            description: "Curriculums retrieved successfully",
+            schema: getResponseSuccessSchema(GradeSchema.array()),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+registerOpenApiRoute({
+    method: HttpMethod.GET,
+    path: "/komplex/feed/curriculums/:id",
+    summary: "Get curriculum topic by ID",
+    tag: "Feed",
+    responses: {
+        200: {
+            description: "Curriculum topic retrieved successfully",
+            schema: getResponseSuccessSchema(CurriculumTopicResponseSchema),
+        },
+        400: {
+            description: "Invalid input",
+            schema: getResponseErrorSchema(),
+        },
+    },
+});
+
+export default router;

@@ -1,0 +1,106 @@
+import { Response } from "express";
+import { AuthenticatedRequest } from "@/types/request.js";
+import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import { userAITopicHistory } from "@/db/drizzle/schema.js";
+import { and, eq, desc } from "drizzle-orm";
+import { z } from "@/config/openapi/openapi.js";
+import { responseTypeEnum } from "@/db/drizzle/models/response_type.js";
+import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
+
+export const MeAiTopicHistoryParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeAiTopicHistoryParams");
+
+export const MeAiTopicHistoryQuerySchema = z
+  .object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  })
+  .openapi("MeAiTopicHistoryQuery");
+
+export const MeAiTopicHistoryItemSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  prompt: z.string(),
+  aiResult: z.string(),
+  responseType: z.enum(responseTypeEnum.enumValues),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+}).openapi("MeAiTopicHistoryItem");
+
+export const getAiTopicHistory = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = await MeAiTopicHistoryParamsSchema.parseAsync(req.params);
+    const { page, limit } =
+      await MeAiTopicHistoryQuerySchema.parseAsync(req.query);
+
+    const result = await getAiTopicHistoryInternal(
+      Number(userId),
+      Number(id),
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined,
+    );
+    const responseBody = MeAiTopicHistoryItemSchema.array().parse(result);
+    return getResponseSuccess(res, responseBody, "AI topic history fetched successfully");
+  } catch (error) {
+    return getResponseError(res, error);
+  }
+};
+
+const getAiTopicHistoryInternal = async (
+  userId: number,
+  topicId: number,
+  page?: number,
+  limit?: number,
+  offset?: number
+) => {
+  try {
+    const cacheKey = `aiTopicHistory:${userId}:topicId:${topicId}:page:${page ?? 1
+      }`;
+    const cached = await redis.get(cacheKey);
+    const parseData = cached ? JSON.parse(cached) : null;
+    if (parseData) {
+      return parseData;
+    }
+    const history = await db
+      .select({
+        id: userAITopicHistory.id,
+        userId: userAITopicHistory.userId,
+        prompt: userAITopicHistory.prompt,
+        aiResult: userAITopicHistory.aiResult,
+        responseType: userAITopicHistory.responseType,
+        createdAt: userAITopicHistory.createdAt,
+        updatedAt: userAITopicHistory.updatedAt,
+      })
+      .from(userAITopicHistory)
+      .where(
+        and(
+          eq(userAITopicHistory.userId, Number(userId)),
+          eq(userAITopicHistory.topicId, Number(topicId))
+        )
+      )
+      .orderBy(desc(userAITopicHistory.createdAt))
+      .limit(limit ?? 20)
+      .offset(((page ?? 1) - 1) * (limit ?? 20));
+    const reversedHistory = history.reverse();
+    return reversedHistory.map((h) => ({
+      id: h.id,
+      userId: h.userId,
+      prompt: h.prompt,
+      aiResult: cleanKomplexResponse(h.aiResult ?? "", h.responseType === "komplex" ? "komplex" : "normal"),
+      responseType: h.responseType,
+      createdAt: h.createdAt,
+      updatedAt: h.updatedAt,
+    }));
+  } catch (error) {
+    throw new ResponseError(error as string, 500);
+  }
+};

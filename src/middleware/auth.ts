@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../types/request.js";
 import admin from "../config/firebase/admin.js";
-import { users } from "../db/schema.js";
+import { users } from "../db/drizzle/schema.js";
 import { and, eq } from "drizzle-orm";
-import { db } from "../db/index.js";
+import { db } from "../db/drizzle/index.js";
 
 export const verifyFirebaseToken = async (
   req: AuthenticatedRequest,

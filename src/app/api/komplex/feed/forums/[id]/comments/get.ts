@@ -1,0 +1,183 @@
+import { and, eq, desc, sql } from "drizzle-orm";
+import { db } from "@/db/drizzle/index.js";
+import { redis } from "@/db/redis/redis.js";
+import {
+  forumComments,
+  forumCommentMedias,
+  users,
+  forumCommentLikes,
+} from "@/db/drizzle/schema.js";
+import { AuthenticatedRequest } from "@/types/request.js";
+import { Response } from "express";
+import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+import { MediaSchema } from "@/types/zod/media.schema.js";
+
+// Zod schema for a single forum comment item with all returned fields
+export const FeedForumCommentItemResponseSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  forumId: z.number(),
+  description: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  media: z.array(MediaSchema),
+  username: z.string(),
+  profileImage: z.string().nullable().optional(),
+  likeCount: z.number(),
+  isLiked: z.boolean(),
+}).openapi("FeedForumCommentItemResponseSchema");
+
+export const getForumComments = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const { page } = req.query;
+    const pageNumber = Number(page) || 1;
+    const limit = 40;
+    const offset = (pageNumber - 1) * limit;
+
+    const cacheKey = `forumComments:forum:${id}:page:${pageNumber}`;
+    const cached = await redis.get(cacheKey);
+
+    let cachedComments: any[] = [];
+    if (cached) {
+      try {
+        cachedComments = (JSON.parse(cached));
+      } catch {
+        cachedComments = [];
+      }
+    }
+
+    const dynamicData = await db
+      .select({
+        id: forumComments.id,
+        likeCount: sql`COUNT(DISTINCT ${forumCommentLikes.forumCommentId})`,
+        isLiked: sql`CASE WHEN ${forumCommentLikes.forumCommentId} IS NOT NULL THEN true ELSE false END`,
+        profileImage: users.profileImage,
+      })
+      .from(forumComments)
+      .leftJoin(
+        forumCommentLikes,
+        and(
+          eq(forumCommentLikes.forumCommentId, forumComments.id),
+          eq(forumCommentLikes.userId, Number(userId))
+        )
+      )
+      .leftJoin(users, eq(users.id, forumComments.userId))
+      .where(eq(forumComments.forumId, Number(id)))
+      .groupBy(
+        forumComments.id,
+        forumCommentLikes.forumCommentId,
+        users.profileImage
+      )
+      .offset(offset)
+      .limit(limit);
+
+    if (!cachedComments.length) {
+      const commentRows = await db
+        .select({
+          id: forumComments.id,
+          userId: forumComments.userId,
+          forumId: forumComments.forumId,
+          description: forumComments.description,
+          createdAt: forumComments.createdAt,
+          updatedAt: forumComments.updatedAt,
+          mediaUrl: forumCommentMedias.url,
+          mediaType: forumCommentMedias.mediaType,
+          username: sql`${users.firstName} || ' ' || ${users.lastName}`,
+          profileImage: users.profileImage,
+        })
+        .from(forumComments)
+        .leftJoin(
+          forumCommentMedias,
+          eq(forumComments.id, forumCommentMedias.forumCommentId)
+        )
+        .leftJoin(users, eq(users.id, forumComments.userId))
+        .leftJoin(
+          forumCommentLikes,
+          eq(forumComments.id, forumCommentLikes.forumCommentId)
+        )
+        .where(eq(forumComments.forumId, Number(id)))
+        .groupBy(
+          forumComments.id,
+          forumComments.userId,
+          forumComments.forumId,
+          forumComments.description,
+          forumComments.createdAt,
+          forumComments.updatedAt,
+          forumCommentMedias.url,
+          forumCommentMedias.mediaType,
+          users.firstName,
+          users.lastName,
+          users.profileImage
+        )
+        .orderBy(
+          desc(sql`COUNT(DISTINCT ${forumCommentLikes.id})`),
+          desc(
+            sql`CASE WHEN DATE(${forumComments.updatedAt}) = CURRENT_DATE THEN 1 ELSE 0 END`
+          ),
+          desc(forumComments.updatedAt)
+        )
+        .offset(offset)
+        .limit(limit);
+
+      const commentsById: { [key: number]: any } = {};
+      for (const comment of commentRows) {
+        if (!commentsById[comment.id]) {
+          commentsById[comment.id] = {
+            id: comment.id,
+            userId: comment.userId,
+            forumId: comment.forumId,
+            description: comment.description,
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+            media: [] as { url: string; type: string }[],
+            username: comment.username,
+            profileImage: comment.profileImage,
+          };
+        }
+        if (comment.mediaUrl) {
+          commentsById[comment.id].media.push({
+            url: comment.mediaUrl,
+            type: comment.mediaType,
+          });
+        }
+      }
+      cachedComments = Object.values(commentsById);
+
+      // At this stage we don't have likeCount/isLiked yet
+
+      // Save to redis after schema parsing and serializing for consistency
+      // (Add placeholder for likeCount/isLiked, those will always be overwritten after mapping below)
+      const parsedCache = FeedForumCommentItemResponseSchema.array().parse(
+        cachedComments.map((c) => ({
+          ...c,
+          likeCount: 0,
+          isLiked: false,
+        })),
+      );
+      await redis.set(cacheKey, JSON.stringify(parsedCache), { EX: 60 });
+    }
+
+    // Compose final comments with dynamic like info, using zod to validate each
+    const commentsWithMedia = cachedComments.map((c) => {
+      const dynamic = dynamicData.find((d) => d.id === c.id);
+      return FeedForumCommentItemResponseSchema.parse({
+        ...c,
+        likeCount: Number(dynamic?.likeCount) || 0,
+        isLiked: !!dynamic?.isLiked,
+        profileImage: dynamic?.profileImage || c.profileImage || null,
+      });
+    });
+
+    const responseBody = FeedForumCommentItemResponseSchema.array().parse(commentsWithMedia);
+
+    return getResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
+  } catch (error) {
+    return getResponseError(res, error);
+  }
+};
