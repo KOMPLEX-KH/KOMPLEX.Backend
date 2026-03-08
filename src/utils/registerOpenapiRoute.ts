@@ -71,6 +71,7 @@ export const registerOpenApiRoute = ({
         });
         return;
     }
+    
     userApiRegistry.registerPath({
         method,
         path,

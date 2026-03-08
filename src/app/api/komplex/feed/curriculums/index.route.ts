@@ -11,7 +11,8 @@ const router = Router();
 // ============================================================================
 // Feed Curriculums Routes
 // ============================================================================
-router.get("", verifyFirebaseTokenOptional as any, getSmallContentRateLimiter, getCurriculums as any);
+
+router.get("",  getSmallContentRateLimiter, getCurriculums as any);
 router.get("/:id", verifyFirebaseTokenOptional as any, getSmallContentRateLimiter, getCurriculumTopic as any);
 
 registerOpenApiRoute({

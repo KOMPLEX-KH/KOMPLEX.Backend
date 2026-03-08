@@ -71,6 +71,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
         lessons.orderIndex,
         topics.orderIndex
       );
+
     // Structure the data according to the required format
     const structuredData: any[] = [];
     const gradeMap = new Map();

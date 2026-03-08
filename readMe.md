@@ -213,8 +213,6 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----\n"
 
-# Meilisearch Configuration (Choose one option)
-MEILI_API_KEY=your_meili_api_key
 
 # Option 1: If using hosted Meilisearch
 MEILI_HOST_URL=https://your-meilisearch-host.com
