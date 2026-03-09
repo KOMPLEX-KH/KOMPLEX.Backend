@@ -28,7 +28,7 @@ export const SignupBodySchema = z
 export const SignupResponseSchema = z.object({
   message: z.string(),
   user: z.object({
-    id: z.string(),
+    id: z.number(),
     email: z.string(),
     username: z.string(),
     firstName: z.string(),
@@ -90,11 +90,21 @@ export const postSignup = async (req: Request, res: Response) => {
 
     const newUser = Array.isArray(newUserResult) ? newUserResult[0] : newUserResult;
 
-    // Clean up verification token
-    await redis.del(`verified-email:${email}`);
-    const responseBody = SignupResponseSchema.parse(newUser);
+    try {
+      // Clean up verification token
+      await redis.del(`verified-email:${email}`);
 
-    return getResponseSuccess(res, responseBody, "Account created successfully");
+      const responseBody = SignupResponseSchema.parse({
+        message: "Account created successfully",
+        user: newUser,
+      });
+
+      return getResponseSuccess(res, responseBody, "Account created successfully");
+    } catch (postInsertError) {
+      // Rollback: delete the inserted user so the client can retry cleanly
+      await db.delete(users).where(eq(users.id, newUser.id));
+      throw postInsertError;
+    }
   } catch (error) {
     return getResponseError(res, error);
   }
