@@ -1,6 +1,6 @@
 import Router from "express";
 import authRouter from "./auth/index.route.js";
-import uploadUrlRouter from "./upload-url/index.route.js";
+import uploadUrlRouter from "./upload/index.route.js";
 import feedRouter from "./feed/index.route.js";
 import searchRouter from "./search/index.route.js";
 import usersRouter from "./users/index.route.js";
