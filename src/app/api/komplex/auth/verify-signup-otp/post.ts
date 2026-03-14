@@ -37,9 +37,7 @@ export const postVerifySignupOtp = async (req: Request, res: Response) => {
 
     // verify otp
     if (otp !== storedOtp) {
-      return res.status(400).json({
-        message: "Invalid verification code. Please try again.",
-      });
+      return sendResponseError(res, new ResponseError("Invalid verification code. Please try again.", 400));
     }
 
     // OTP VERIFIED - Generate verification token for signup
