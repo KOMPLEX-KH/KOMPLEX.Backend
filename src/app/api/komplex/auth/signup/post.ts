@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
 import { sendEmail, EmailType } from "@/utils/emailService.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
 
@@ -44,13 +44,13 @@ export const postSignup = async (req: Request, res: Response) => {
 
     // Check if email was verified (verificationToken required)
     if (!verificationToken) {
-      return getResponseError(res, new ResponseError("Email verification required. Please verify your email first.", 400));
+      return sendResponseError(res, new ResponseError("Email verification required. Please verify your email first.", 400));
     }
 
     // Verify the verification token
     const storedToken = await redis.get(`verified-email:${email}`);
     if (!storedToken || storedToken !== verificationToken) {
-      return getResponseError(res, new ResponseError("Invalid or expired verification token. Please verify your email again.", 400));
+      return sendResponseError(res, new ResponseError("Invalid or expired verification token. Please verify your email again.", 400));
     }
 
     // check if user already exists (double check)
@@ -60,7 +60,7 @@ export const postSignup = async (req: Request, res: Response) => {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return getResponseError(res, new ResponseError("User already exists.", 400));
+      return sendResponseError(res, new ResponseError("User already exists.", 400));
     }
 
     // CREATE USER IN DATABASE
@@ -94,8 +94,8 @@ export const postSignup = async (req: Request, res: Response) => {
     await redis.del(`verified-email:${email}`);
     const responseBody = SignupResponseSchema.parse(newUser);
 
-    return getResponseSuccess(res, responseBody, "Account created successfully");
+    return sendResponseSuccess(res, responseBody, "Account created successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

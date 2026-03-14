@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import {
   uploadPdfToCloudflare,
   uploadImageToCloudflare,
@@ -51,6 +51,6 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

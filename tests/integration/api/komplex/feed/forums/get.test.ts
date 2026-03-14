@@ -10,7 +10,7 @@ describe("GET /api/komplex/feed/forums", () => {
         expect(res.body).toBeDefined();
         expect(res.body.success).toBe(true);
         expect(res.body.data).toBeDefined();
-        
+
         expect(Array.isArray(res.body.data)).toBe(true);
     });
 });

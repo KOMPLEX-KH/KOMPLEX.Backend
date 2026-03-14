@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { videoReplies, videoReplyMedias, videoReplyLike } from "@/db/drizzle/schema.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redis.js";
 
@@ -44,7 +44,7 @@ export const deleteVideoReply = async (
       },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { forumMedias } from "@/db/drizzle/models/forum_medias.js";
 import { forums } from "@/db/drizzle/models/forums.js";
@@ -33,7 +33,7 @@ export const searchForums = async (req: AuthenticatedRequest, res: Response) => 
     const userId = req.user.userId;
     const { query, limit = "10", offset = "0" } = req.query;
     if (!query || query.trim() === "") {
-      return getResponseError(res, new ResponseError("Query parameter is required", 400));
+      return sendResponseError(res, new ResponseError("Query parameter is required", 400));
     }
 
     const searchResults = await meilisearch.index("forums").search(query as string, {
@@ -197,8 +197,8 @@ export const searchForums = async (req: AuthenticatedRequest, res: Response) => 
     });
 
     const responseBody = ForumSearchItemSchema.array().parse(forumsWithMedia);
-    return getResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === Number(limit));
+    return sendResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === Number(limit));
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

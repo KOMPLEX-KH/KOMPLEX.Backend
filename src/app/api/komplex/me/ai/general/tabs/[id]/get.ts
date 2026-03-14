@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { users, userAIHistory } from "@/db/drizzle/schema.js";
@@ -55,9 +55,9 @@ export const getAiGeneralTabHistory = async (
     const responseBody =
       MeAiGeneralTabHistoryItemSchema.array().parse(result);
 
-    return getResponseSuccess(res, responseBody, "AI history fetched successfully");
+    return sendResponseSuccess(res, responseBody, "AI history fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

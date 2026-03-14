@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumComments, forumCommentMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -164,6 +164,6 @@ export const postForumComment = async (
 
     return res.status(201).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -4,7 +4,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeFollowersQuerySchema = z
@@ -37,7 +37,7 @@ export const getFollowers = async (
     if (redisData) {
       const data = JSON.parse(redisData);
       const responseBody = MeFollowersItemSchema.array().parse(data);
-      return getResponseSuccess(res, responseBody, "Followers fetched successfully", data.length === limit);
+      return sendResponseSuccess(res, responseBody, "Followers fetched successfully", data.length === limit);
     }
 
     const followersList = await db
@@ -52,8 +52,8 @@ export const getFollowers = async (
     });
 
     const responseBody = MeFollowersItemSchema.array().parse(followersList);
-    return getResponseSuccess(res, responseBody, "Followers fetched successfully", followersList.length === limit);
+    return sendResponseSuccess(res, responseBody, "Followers fetched successfully", followersList.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

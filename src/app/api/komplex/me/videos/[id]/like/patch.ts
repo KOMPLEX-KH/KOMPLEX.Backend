@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/drizzle/index.js";
 import { videoLikes } from "@/db/drizzle/schema.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 
 export const likeVideo = async (
   req: AuthenticatedRequest,
@@ -28,6 +28,6 @@ export const likeVideo = async (
 
     return res.status(200).json({ data: { like } });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

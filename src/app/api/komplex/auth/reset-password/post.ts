@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import admin from "@/config/firebase/admin.js";
 import { z } from "@/config/openapi/openapi.js";
@@ -32,7 +32,7 @@ export const postResetPassword = async (req: Request, res: Response) => {
 
         // compare token
         if (!storedToken || storedToken !== resetToken) {
-            return getResponseError(res, new ResponseError("Invalid or expired reset token", 400));
+            return sendResponseError(res, new ResponseError("Invalid or expired reset token", 400));
         }
 
         // get user by email to find firebase uid
@@ -42,7 +42,7 @@ export const postResetPassword = async (req: Request, res: Response) => {
             .where(eq(users.email, email));
 
         if (!user || !user.uid) {
-            return getResponseError(res, new ResponseError("User not found", 404));
+            return sendResponseError(res, new ResponseError("User not found", 404));
         }
 
         // update password in firebase
@@ -57,9 +57,9 @@ export const postResetPassword = async (req: Request, res: Response) => {
             message: "Password reset successfully.",
         });
 
-        return getResponseSuccess(res, responseBody, "Password reset successfully.");
+        return sendResponseSuccess(res, responseBody, "Password reset successfully.");
 
     } catch (err) {
-        return getResponseError(res, err);
+        return sendResponseError(res, err);
     }
 }

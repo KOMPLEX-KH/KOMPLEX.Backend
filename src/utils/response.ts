@@ -49,7 +49,9 @@ const getGenericErrorMessage = (code: string) => {
 
 const isProd = process.env.ENVIRONMENT === "production";
 
-export const getResponseError = (res: Response, err: unknown) => {
+// send out response based on error or success
+
+export const sendResponseError = (res: Response, err: unknown) => {
 	if (err instanceof ResponseError) {
 		const response: ResponseErrorWrapper = {
 			success: false,
@@ -75,7 +77,7 @@ export const getResponseError = (res: Response, err: unknown) => {
 	return res.status(500).json(response);
 }
 
-export const getResponseSuccess = (res: Response, data: any, message?: string, hasMore?: boolean) => {
+export const sendResponseSuccess = (res: Response, data: any, message?: string, hasMore?: boolean) => {
 	const response: ResponseSuccessWrapper = {
 		success: true,
 		message: message ? isProd ? "Success" : message : undefined,

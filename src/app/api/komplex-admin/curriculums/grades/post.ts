@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { grades } from "@/db/drizzle/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
@@ -51,7 +51,7 @@ export const createGrade = async (req: Request, res: Response) => {
 
     return res.status(201).json({ message: "grade created successfully" });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

@@ -14,7 +14,7 @@ import {
   followers,
 } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { FeedVideoItemSchema } from "../../videos/get.js";
 
@@ -143,7 +143,7 @@ export const getVideoById = async (
       });
 
       // return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, exercises, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
-      return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
+      return sendResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
     }
 
     const [videoRow] = await db
@@ -312,6 +312,6 @@ export const getVideoById = async (
 
     return res.status(200).json({ data: videoWithExercises });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -11,7 +11,7 @@ import {
   choices,
 } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MePostVideoQuestionChoiceSchema = z.object({
@@ -222,6 +222,6 @@ export const postVideo = async (
 
     return res.status(201).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

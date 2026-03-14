@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers } from "@/db/drizzle/schema.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeFollowUserParamsSchema = z
@@ -36,8 +36,8 @@ export const followUser = async (
       await redis.del(myFollowingKeys);
     }
 
-    return getResponseSuccess(res, null, "Successfully followed the user.");
+    return sendResponseSuccess(res, null, "Successfully followed the user.");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

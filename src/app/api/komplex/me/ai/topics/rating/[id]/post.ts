@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAITopicHistory } from "@/db/drizzle/models/user_ai_topic_history.js";
 import { ResponseError } from "@/utils/response.js";
@@ -35,9 +35,9 @@ export const rateAiTopicResponse = async (
       ratingFeedback ?? ""
     );
 
-    return getResponseSuccess(res, z.any(), "AI topic response rated successfully");
+    return sendResponseSuccess(res, z.any(), "AI topic response rated successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

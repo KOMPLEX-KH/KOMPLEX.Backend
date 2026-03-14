@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
@@ -23,7 +23,7 @@ export const deleteRole = async (req: Request, res: Response) => {
 
     return res.status(200).json(DeleteRoleResponseSchema.parse({ message: "Role deleted successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

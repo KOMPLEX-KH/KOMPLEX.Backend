@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const VerifySignupOtpBodySchema = z
@@ -28,9 +28,7 @@ export const postVerifySignupOtp = async (req: Request, res: Response) => {
     const storedOtpData = await redis.get(otpKey);
 
     if (!storedOtpData) {
-      return res.status(400).json({
-        message: "Verification code has expired or does not exist. Please request a new one.",
-      });
+      return sendResponseError(res, new ResponseError("Verification code has expired or does not exist. Please request a new one.", 400));
     }
 
     // Parse stored OTP data
@@ -54,13 +52,14 @@ export const postVerifySignupOtp = async (req: Request, res: Response) => {
     await redis.del(otpKey);
 
     // Return success - no user creation here
-    return res.status(200).json({
+    const responseBody = VerifySignupOtpResponseSchema.parse({
       message: "Email verified successfully. You can now complete your signup.",
       verificationToken,
       expiresIn: 900, // 15 minutes to complete signup
     });
+    return sendResponseSuccess(res, responseBody, "Email verified successfully. You can now complete your signup.");
 
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -4,7 +4,7 @@ import { eq, sql, and } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users, forumLikes } from "@/db/drizzle/schema.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { FeedForumItemSchema } from "../../feed/forums/get.js";
 
@@ -62,7 +62,7 @@ export const getAllForums = async (
       );
 
       // const responseBody = FeedForumItemSchema.array().parse(dataToSend);
-      return getResponseSuccess(res, dataToSend, "Forums fetched successfully", parseData.length === limit);
+      return sendResponseSuccess(res, dataToSend, "Forums fetched successfully", parseData.length === limit);
     }
 
     const forumRecords = await db
@@ -154,8 +154,8 @@ export const getAllForums = async (
     );
 
     // const responseBody = FeedForumItemSchema.array().parse(forumsWithMedia);
-    return getResponseSuccess(res, forumsWithMedia, "Forums fetched successfully", forumsWithMedia.length === limit);
+    return sendResponseSuccess(res, forumsWithMedia, "Forums fetched successfully", forumsWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

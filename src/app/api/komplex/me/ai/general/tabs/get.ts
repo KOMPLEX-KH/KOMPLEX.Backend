@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
@@ -37,9 +37,9 @@ export const getAllAiGeneralTabs = async (
 
     const responseBody = MeAiGeneralTabItemSchema.array().parse(result);
 
-    return getResponseSuccess(res, responseBody, "AI general tabs fetched successfully");
+    return sendResponseSuccess(res, responseBody, "AI general tabs fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

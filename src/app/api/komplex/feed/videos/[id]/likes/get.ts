@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/drizzle/index.js";
 import { users, videoLikes } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 
 export const getVideoLikes = async (
   req: AuthenticatedRequest,
@@ -30,6 +30,6 @@ export const getVideoLikes = async (
 
     return res.status(200).json({ data });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

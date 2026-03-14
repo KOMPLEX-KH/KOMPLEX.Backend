@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { topics, users, videos } from "@/db/drizzle/schema.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
@@ -29,7 +29,7 @@ export const getLastAccessed = async (
   try {
     const { userId } = req.user;
     if (!userId) {
-      return getResponseError(res, new ResponseError("User ID is required", 400));
+      return sendResponseError(res, new ResponseError("User ID is required", 400));
     }
 
     const lastAccessed = await db
@@ -50,7 +50,7 @@ export const getLastAccessed = async (
 
     if (!lastAccessed || lastAccessed.length === 0) {
       const emptyBody = MeLastAccessedResponseSchema.parse(null);
-      return getResponseSuccess(res, emptyBody, "No last accessed content found", false);
+      return sendResponseSuccess(res, emptyBody, "No last accessed content found", false);
     }
 
     const responseBody = MeLastAccessedResponseSchema.parse({
@@ -74,8 +74,8 @@ export const getLastAccessed = async (
         : null,
     });
 
-    return getResponseSuccess(res, responseBody);
+    return sendResponseSuccess(res, responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

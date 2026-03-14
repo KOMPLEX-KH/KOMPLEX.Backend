@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { eq } from "drizzle-orm";
 import { topics, users } from "@/db/drizzle/schema.js";
@@ -26,11 +26,11 @@ export const getCurriculumTopic = async (req: AuthenticatedRequest, res: Respons
           .where(eq(users.id, userId))
           .returning();
         if (!updatedUser) {
-          return getResponseError(res, new ResponseError("Failed to update user last topic", 500));
+          return sendResponseError(res, new ResponseError("Failed to update user last topic", 500));
         }
       }
       const responseBody = CurriculumTopicResponseSchema.parse(JSON.parse(cached));
-      return getResponseSuccess(res, responseBody);
+      return sendResponseSuccess(res, responseBody);
     }
 
     const [topic] = await db
@@ -39,7 +39,7 @@ export const getCurriculumTopic = async (req: AuthenticatedRequest, res: Respons
       .where(eq(topics.id, Number(id)));
 
     if (!topic) {
-      return getResponseError(res, new ResponseError("Topic not found", 404));
+      return sendResponseError(res, new ResponseError("Topic not found", 404));
     }
 
     if (userId !== 0) {
@@ -49,7 +49,7 @@ export const getCurriculumTopic = async (req: AuthenticatedRequest, res: Respons
         .where(eq(users.id, userId))
         .returning();
       if (!updatedUser) {
-        return getResponseError(res, new ResponseError("Failed to update user last topic", 500));
+        return sendResponseError(res, new ResponseError("Failed to update user last topic", 500));
       }
     }
 
@@ -68,8 +68,8 @@ export const getCurriculumTopic = async (req: AuthenticatedRequest, res: Respons
       component: topic.component,
       componentCode: topic.componentCode,
     });
-    return getResponseSuccess(res, responseBody);
+    return sendResponseSuccess(res, responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

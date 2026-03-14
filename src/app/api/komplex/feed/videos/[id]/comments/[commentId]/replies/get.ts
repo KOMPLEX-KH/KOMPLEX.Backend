@@ -6,7 +6,7 @@ import { videoReplyMedias } from "@/db/drizzle/models/video_reply_medias.js";
 import { videoReplyLike } from "@/db/drizzle/models/video_reply_like.js";
 import { redis } from "@/db/redis/redis.js";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
 
@@ -163,9 +163,9 @@ export const getVideoReplies = async (
 
     const responseBody = FeedVideoReplyItemResponseSchema.array().parse(repliesWithMedia);
 
-    return getResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
+    return sendResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

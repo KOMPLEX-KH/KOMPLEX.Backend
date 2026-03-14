@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { books } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
@@ -31,7 +31,7 @@ export const getAllBooks = async (req: Request, res: Response) => {
     if (cached) {
       const parsedCached = JSON.parse(cached);
       const responseBody = BookItemSchema.array().parse(parsedCached);
-      getResponseSuccess(res, responseBody, "Books fetched successfully");
+      sendResponseSuccess(res, responseBody, "Books fetched successfully");
       return;
     }
 
@@ -40,10 +40,10 @@ export const getAllBooks = async (req: Request, res: Response) => {
 
     const responseBody = BookItemSchema.array().parse(allBooks);
 
-    getResponseSuccess(res, responseBody, "Books fetched successfully");
+    sendResponseSuccess(res, responseBody, "Books fetched successfully");
     return;
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

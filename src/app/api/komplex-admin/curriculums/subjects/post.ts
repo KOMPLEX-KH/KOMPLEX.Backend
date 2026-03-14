@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { subjects } from "@/db/drizzle/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
@@ -54,7 +54,7 @@ export const createSubject = async (req: Request, res: Response) => {
 
     return res.status(201).json(CreateSubjectResponseSchema.parse({ message: "subject created successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

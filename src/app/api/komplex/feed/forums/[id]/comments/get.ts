@@ -9,7 +9,7 @@ import {
 } from "@/db/drizzle/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
 
@@ -176,8 +176,8 @@ export const getForumComments = async (
 
     const responseBody = FeedForumCommentItemResponseSchema.array().parse(commentsWithMedia);
 
-    return getResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
+    return sendResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

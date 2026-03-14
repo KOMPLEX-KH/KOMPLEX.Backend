@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videos, users, userSavedVideos, videoLikes } from "@/db/drizzle/schema.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const RecommendedVideosItemSchema = z.object({
@@ -64,7 +64,7 @@ export const getRecommendedVideos = async (
         .where(eq(videos.id, videoId));
 
       if (!videoRow) {
-        return getResponseSuccess(res, [], "Video not found", false);
+        return sendResponseSuccess(res, [], "Video not found", false);
       }
 
       baseVideo = videoRow;
@@ -167,8 +167,8 @@ export const getRecommendedVideos = async (
       });
     });
 
-    return getResponseSuccess(res, videosWithMedia, "Recommended videos fetched successfully", allVideos.length === limitNum);
+    return sendResponseSuccess(res, videosWithMedia, "Recommended videos fetched successfully", allVideos.length === limitNum);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

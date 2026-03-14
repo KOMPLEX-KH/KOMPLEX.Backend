@@ -15,7 +15,7 @@ import {
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { deleteVideoCommentInternal } from "./comments/[id]/delete.js";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -152,6 +152,6 @@ export const deleteVideo = async (
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

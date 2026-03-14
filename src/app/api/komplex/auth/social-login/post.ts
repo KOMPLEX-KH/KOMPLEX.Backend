@@ -1,4 +1,4 @@
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { userOauth } from "@/db/drizzle/models/user_oauth.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { z } from "@/config/openapi/openapi.js";
-import { HttpMethod, registerOpenApiRoute } from "@/utils/registerOpenapiRoute.js";
 
 export const SocialLoginBodySchema = z.object({
   email: z.string().email(),
@@ -65,7 +64,7 @@ export const postSocialLogIn = async (
       .from(users)
       .where(eq(users.uid, uid));
     if (isUserExists.length > 0) {
-      return getResponseSuccess(res, SocialLoginResponseSchema.parse(isUserExists[0]), "User already exists");
+      return sendResponseSuccess(res, SocialLoginResponseSchema.parse(isUserExists[0]), "User already exists");
     }
 
     const user = await db
@@ -94,9 +93,9 @@ export const postSocialLogIn = async (
       createdAt: new Date(),
     });
 
-    return getResponseSuccess(res, SocialLoginResponseSchema.parse(user), "User created successfully");
+    return sendResponseSuccess(res, SocialLoginResponseSchema.parse(user), "User created successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

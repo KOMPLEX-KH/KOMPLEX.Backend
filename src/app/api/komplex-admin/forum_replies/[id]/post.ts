@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { forumReplies } from "@/db/drizzle/schema.js";
 import { forumReplyMedias } from "@/db/drizzle/models/forum_reply_media.js";
@@ -49,6 +49,6 @@ export const postForumReply = async (
 
     return res.status(201).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

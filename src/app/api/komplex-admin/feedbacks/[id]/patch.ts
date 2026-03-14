@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { feedbacks } from "@/db/drizzle/schema.js";
@@ -35,6 +35,6 @@ export const updateFeedbackStatus = async (req: Request, res: Response) => {
 
     return res.status(200).json(UpdateFeedbackStatusResponseSchema.parse({ message: "Feedback status updated successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

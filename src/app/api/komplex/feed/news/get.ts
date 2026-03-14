@@ -10,7 +10,7 @@ import {
   users,
   userSavedNews,
 } from "@/db/drizzle/schema.js";
-import { getResponseError, getResponseSuccess, getResponseSuccessSchema } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, getResponseSuccessSchema } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
 
@@ -103,7 +103,7 @@ export const getAllNews = async (
     );
 
     if (!newsIdRows.length) {
-      getResponseSuccess(res, FeedNewsItemSchema.array(), "No news found", false);
+      sendResponseSuccess(res, FeedNewsItemSchema.array(), "No news found", false);
     }
 
     const cachedResults = (await redis.mGet(
@@ -237,8 +237,8 @@ export const getAllNews = async (
 
     const responseBody = FeedNewsItemSchema.array().parse(newsWithMediaAndIsFollowing);
 
-    return getResponseSuccess(res, responseBody, "News fetched successfully", allNews.length === limit);
+    return sendResponseSuccess(res, responseBody, "News fetched successfully", allNews.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

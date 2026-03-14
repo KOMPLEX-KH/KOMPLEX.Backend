@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -46,6 +46,6 @@ export const updateAdmin = async (req: Request, res: Response) => {
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

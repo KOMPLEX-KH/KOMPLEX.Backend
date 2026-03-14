@@ -8,7 +8,7 @@ import {
   uploadVideoToCloudflare,
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const updateVideoComment = async (
@@ -137,6 +137,6 @@ export const updateVideoComment = async (
       data: { updateComment, newCommentMedia, deleteMedia },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import {
@@ -145,6 +145,6 @@ export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import {
@@ -131,6 +131,6 @@ export const getAllForums = async (
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

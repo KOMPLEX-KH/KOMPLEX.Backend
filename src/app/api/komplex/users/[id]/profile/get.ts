@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import {
@@ -40,7 +40,7 @@ export const getUserProfile = async (
     const { id } = req.params;
     const userId = req.user?.userId;
     if (!id || !userId) {
-      return getResponseError(res, new ResponseError("User ID is required", 400));
+      return sendResponseError(res, new ResponseError("User ID is required", 400));
     }
 
     const cacheKey = `user:${userId}:profile`;
@@ -48,7 +48,7 @@ export const getUserProfile = async (
     const cachedProfile = await redis.get(cacheKey);
     if (cachedProfile) {
       const responseBody = UserProfileResponseSchema.parse(JSON.parse(cachedProfile));
-      return getResponseSuccess(res, responseBody, "User profile fetched successfully");
+      return sendResponseSuccess(res, responseBody, "User profile fetched successfully");
     }
 
     const userProfile = await db
@@ -86,8 +86,8 @@ export const getUserProfile = async (
     await redis.set(cacheKey, JSON.stringify(profileData), { EX: 300 });
 
     const responseBody = UserProfileResponseSchema.parse(profileData);
-    return getResponseSuccess(res, responseBody, "User profile fetched successfully");
+    return sendResponseSuccess(res, responseBody, "User profile fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { and, eq, desc, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
@@ -160,8 +160,8 @@ export const getForumReplies = async (
 
     const responseBody = FeedForumReplyItemResponseSchema.array().parse(repliesWithMedia);
 
-    return getResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
+    return sendResponseSuccess(res, responseBody, "Replies fetched successfully", repliesWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { grades } from "@/db/drizzle/schema.js";
@@ -31,6 +31,6 @@ export const getGrades = async (req: Request, res: Response) => {
     await redis.set(cacheKey, JSON.stringify(parsed), { EX: 60 * 60 * 24 });
     return res.status(200).json(parsed);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

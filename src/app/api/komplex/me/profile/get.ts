@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { redis } from "@/db/redis/redis.js";
 import { db } from "@/db/drizzle/index.js";
 import { followers, users } from "@/db/drizzle/schema.js";
@@ -38,7 +38,7 @@ export const getMeProfile = async (
 ) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return getResponseError(res, new ResponseError("Missing user ID", 400));
+    return sendResponseError(res, new ResponseError("Missing user ID", 400));
   }
   try {
     const cacheKey = `users:${userId}`;
@@ -46,7 +46,7 @@ export const getMeProfile = async (
     const cachedProfile = await redis.get(cacheKey);
     if (cachedProfile) {
       const responseBody = MeProfileResponseSchema.parse(JSON.parse(cachedProfile));
-      return getResponseSuccess(res, responseBody, "User profile fetched successfully");
+      return sendResponseSuccess(res, responseBody, "User profile fetched successfully");
     }
     const userProfile = await db
       .select()
@@ -72,8 +72,8 @@ export const getMeProfile = async (
     await redis.set(cacheKey, JSON.stringify(profileData), { EX: 300 });
 
     const responseBody = MeProfileResponseSchema.parse(profileData);
-    return getResponseSuccess(res, responseBody, "User profile fetched successfully");
+    return sendResponseSuccess(res, responseBody, "User profile fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
