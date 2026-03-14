@@ -1,0 +1,74 @@
+name: Database Backup + Restore
+
+on:
+  schedule:
+    - cron: "0 3 */3 * *"   # every 3 days
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      STANDBY_DATABASE_URL: ${{ secrets.STANDBY_DATABASE_URL }}
+      TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+      R2_BUCKET: komplex-system
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client gnupg
+          pip install awscli
+
+      - name: Dump production database
+        run: |
+          pg_dump --no-owner --no-acl $DATABASE_URL > backup.sql
+
+      - name: Compress backup
+        run: |
+          gzip backup.sql
+
+      - name: Encrypt backup
+        run: |
+          gpg --batch --yes \
+            --passphrase "${{ secrets.BACKUP_GPG_PASSPHRASE }}" \
+            -c backup.sql.gz
+
+      - name: Set backup filename
+        run: |
+          echo "BACKUP_NAME=komplex-db-$(date +'%Y-%m-%d').sql.gz.gpg" >> $GITHUB_ENV
+          mv backup.sql.gz.gpg $BACKUP_NAME
+
+      - name: Upload backup to R2
+        run: |
+          aws s3 cp $BACKUP_NAME \
+          s3://$R2_BUCKET/backups/$BACKUP_NAME \
+          --endpoint-url $R2_ENDPOINT
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: Decrypt backup
+        run: |
+          gpg --batch --yes \
+            --passphrase "${{ secrets.BACKUP_GPG_PASSPHRASE }}" \
+            -o backup.sql.gz \
+            -d $BACKUP_NAME
+
+      - name: Decompress backup
+        run: |
+          gunzip backup.sql.gz
+
+      - name: Restore to standby database
+        run: |
+          psql $STANDBY_DATABASE_URL -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+          psql $STANDBY_DATABASE_URL < backup.sql
+
+      - name: Restore to dev database
+        run: |
+          psql $DEV_DATABASE_URL -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+          psql $DEV_DATABASE_URL < backup.sql
