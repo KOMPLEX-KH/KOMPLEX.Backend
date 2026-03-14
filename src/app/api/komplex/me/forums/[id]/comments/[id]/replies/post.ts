@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumReplies, forumReplyMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const postForumReply = async (
@@ -130,6 +130,6 @@ export const postForumReply = async (
       },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

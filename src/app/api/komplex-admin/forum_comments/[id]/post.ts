@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { forumComments } from "@/db/drizzle/schema.js";
 import { forumCommentMedias } from "@/db/drizzle/models/forum_comment_media.js";
@@ -94,6 +94,6 @@ export const postForumComment = async (
       newCommentMedia,
     }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
 import { ResponseError } from "@/utils/response.js";
@@ -34,9 +34,9 @@ export const rateAiGeneralResponse = async (
       Number(rating),
       ratingFeedback ?? ""
     );
-    return getResponseSuccess(res, z.any(), "AI general response rated successfully");
+    return sendResponseSuccess(res, z.any(), "AI general response rated successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

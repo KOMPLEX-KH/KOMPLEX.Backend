@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videoComments, videoCommentMedias, users } from "@/db/drizzle/schema.js";
 import { uploadVideoToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const postVideoComment = async (
@@ -133,6 +133,6 @@ export const postVideoComment = async (
       },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

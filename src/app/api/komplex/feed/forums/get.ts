@@ -10,7 +10,7 @@ import {
   forumLikes,
   followers,
 } from "@/db/drizzle/schema.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
 
@@ -96,7 +96,7 @@ export const getAllForums = async (
 
     if (!forumIdRows.length) {
       const emptyBody = FeedForumItemSchema.array().parse([]);
-      return getResponseSuccess(res, emptyBody, "No forums found", false);
+      return sendResponseSuccess(res, emptyBody, "No forums found", false);
     }
 
     const cachedResults = (await redis.mGet(
@@ -255,8 +255,8 @@ export const getAllForums = async (
 
     const responseBody = FeedForumItemSchema.array().parse(forumsWithMediaAndIsFollowing);
 
-    return getResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === limit);
+    return sendResponseSuccess(res, responseBody, "Forums fetched successfully", allForums.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
@@ -35,7 +35,7 @@ export const getGeneralAiResponseById = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: GeneralAiResponseByIdResponseSchema.parse(result[0]) });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

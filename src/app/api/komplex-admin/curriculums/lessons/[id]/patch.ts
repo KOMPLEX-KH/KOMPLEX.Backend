@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { lessons } from "@/db/drizzle/schema.js";
 import { eq, gt, gte, sql } from "drizzle-orm";
@@ -84,7 +84,7 @@ export const updateLesson = async (req: Request, res: Response) => {
 
     return res.status(200).json(UpdateLessonResponseSchema.parse({ message: "lesson updated successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

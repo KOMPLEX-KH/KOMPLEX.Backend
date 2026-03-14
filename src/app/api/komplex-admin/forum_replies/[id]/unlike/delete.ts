@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { forumReplyLikes } from "@/db/drizzle/models/forum_reply_like.js";
@@ -48,6 +48,6 @@ export const unlikeForumReply = async (
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

@@ -1,8 +1,8 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import {
-  getResponseError,
-  getResponseSuccess,
+  sendResponseError,
+  sendResponseSuccess,
   ResponseError,
 } from "@/utils/response.js";
 import { redis } from "@/db/redis/redis.js";
@@ -24,12 +24,12 @@ export const updateMeProfile = async (
 ) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return getResponseError(res, new ResponseError("Unauthorized", 401));
+    return sendResponseError(res, new ResponseError("Unauthorized", 401));
   }
 
   const parsed = UpdateProfileBodySchema.safeParse(req.body);
   if (!parsed.success) {
-    return getResponseError(
+    return sendResponseError(
       res,
       new ResponseError(parsed.error.issues[0].message, 400)
     );
@@ -45,8 +45,8 @@ export const updateMeProfile = async (
 
     await redis.del(`users:${userId}`);
 
-    return getResponseSuccess(res, null, "Profile updated successfully");
+    return sendResponseSuccess(res, null, "Profile updated successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

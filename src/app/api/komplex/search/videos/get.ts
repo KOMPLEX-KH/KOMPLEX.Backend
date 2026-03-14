@@ -1,6 +1,6 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { videos } from "@/db/drizzle/models/videos.js";
 import { redis } from "@/db/redis/redis.js";
@@ -38,7 +38,7 @@ export const searchVideos = async (
     const userId = req.user.userId;
     const { query, limit = "10", offset = "0" } = req.query;
     if (!query || query.trim() === "") {
-      return getResponseError(res, new ResponseError("Query parameter is required", 400));
+      return sendResponseError(res, new ResponseError("Query parameter is required", 400));
     }
 
     const searchResults = await meilisearch.index("videos").search(query as string, {
@@ -160,8 +160,8 @@ export const searchVideos = async (
     });
 
     const responseBody = VideoSearchItemSchema.array().parse(videosWithMedia);
-    return getResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === Number(limit));
+    return sendResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === Number(limit));
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

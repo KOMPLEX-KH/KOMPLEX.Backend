@@ -9,7 +9,7 @@ import {
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 
 export const updateForum = async (
@@ -175,6 +175,6 @@ export const updateForum = async (
       data: { updateForum, newForumMedia, deleteMedia },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

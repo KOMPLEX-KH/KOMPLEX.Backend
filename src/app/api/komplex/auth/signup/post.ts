@@ -3,8 +3,7 @@ import { Response } from "express";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { sendEmail, EmailType } from "@/utils/emailService.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { eq } from "drizzle-orm";
 
@@ -28,7 +27,7 @@ export const SignupBodySchema = z
 export const SignupResponseSchema = z.object({
   message: z.string(),
   user: z.object({
-    id: z.string(),
+    id: z.number(),
     email: z.string(),
     username: z.string(),
     firstName: z.string(),
@@ -44,13 +43,13 @@ export const postSignup = async (req: Request, res: Response) => {
 
     // Check if email was verified (verificationToken required)
     if (!verificationToken) {
-      return getResponseError(res, new ResponseError("Email verification required. Please verify your email first.", 400));
+      return sendResponseError(res, new ResponseError("Email verification required. Please verify your email first.", 400));
     }
 
     // Verify the verification token
     const storedToken = await redis.get(`verified-email:${email}`);
     if (!storedToken || storedToken !== verificationToken) {
-      return getResponseError(res, new ResponseError("Invalid or expired verification token. Please verify your email again.", 400));
+      return sendResponseError(res, new ResponseError("Invalid or expired verification token. Please verify your email again.", 400));
     }
 
     // check if user already exists (double check)
@@ -60,7 +59,7 @@ export const postSignup = async (req: Request, res: Response) => {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return getResponseError(res, new ResponseError("User already exists.", 400));
+      return sendResponseError(res, new ResponseError("User already exists.", 400));
     }
 
     // CREATE USER IN DATABASE
@@ -90,12 +89,22 @@ export const postSignup = async (req: Request, res: Response) => {
 
     const newUser = Array.isArray(newUserResult) ? newUserResult[0] : newUserResult;
 
-    // Clean up verification token
-    await redis.del(`verified-email:${email}`);
-    const responseBody = SignupResponseSchema.parse(newUser);
+    try {
+      // Clean up verification token
+      await redis.del(`verified-email:${email}`);
 
-    return getResponseSuccess(res, responseBody, "Account created successfully");
+      const responseBody = SignupResponseSchema.parse({
+        message: "Account created successfully",
+        user: newUser,
+      });
+
+      return sendResponseSuccess(res, responseBody, "Account created successfully");
+    } catch (postInsertError) {
+      // Rollback: delete the inserted user so the client can retry cleanly
+      await db.delete(users).where(eq(users.id, newUser.id));
+      throw postInsertError;
+    }
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

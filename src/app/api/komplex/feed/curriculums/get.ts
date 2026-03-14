@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { eq } from "drizzle-orm";
 import { grades, lessons, subjects, topics } from "@/db/drizzle/schema.js";
@@ -41,7 +41,7 @@ export const getCurriculums = async (req: Request, res: Response) => {
     const cached = await redis.get("curriculums");
     if (cached) {
       const responseBody = GradeSchema.array().parse(JSON.parse(cached));
-      return getResponseSuccess(res, responseBody);
+      return sendResponseSuccess(res, responseBody);
     }
     const allData = await db
       .select({
@@ -164,8 +164,8 @@ export const getCurriculums = async (req: Request, res: Response) => {
 
     const responseBody = GradeSchema.array().parse(structuredData);
 
-    return getResponseSuccess(res, responseBody, "Curriculums fetched successfully");
+    return sendResponseSuccess(res, responseBody, "Curriculums fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
 import { redis } from "@/db/redis/redis.js";
@@ -38,9 +38,9 @@ export const createAiGeneralTab = async (
       Number(userId)
     );
     const responseBody = MeCreateAiGeneralTabResponseSchema.parse(result);
-    return getResponseSuccess(res, responseBody, "AI general first time called successfully");
+    return sendResponseSuccess(res, responseBody, "AI general first time called successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

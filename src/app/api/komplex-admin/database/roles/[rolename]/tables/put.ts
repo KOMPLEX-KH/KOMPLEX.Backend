@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
@@ -67,7 +67,7 @@ export const updateRoleTableAccess = async (req: Request, res: Response) => {
       .status(200)
       .json(UpdateRoleTableAccessResponseSchema.parse({ message: "Table access of role updated successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

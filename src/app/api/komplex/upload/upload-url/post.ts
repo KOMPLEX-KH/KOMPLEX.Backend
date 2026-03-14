@@ -1,7 +1,7 @@
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { getSignedUrlFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const UploadUrlBodySchema = z
@@ -28,7 +28,7 @@ export const postUploadUrl = async (
     const userId = req.user.userId;
 
     if (!fileName || !fileType) {
-      return getResponseError(
+      return sendResponseError(
         res,
         new ResponseError("fileName and fileType are required", 400)
       );
@@ -40,8 +40,8 @@ export const postUploadUrl = async (
       userId
     );
 
-    return getResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key, publicUrl }), "Upload URL fetched successfully");
+    return sendResponseSuccess(res, UploadUrlResponseSchema.parse({ signedUrl, key, publicUrl }), "Upload URL fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

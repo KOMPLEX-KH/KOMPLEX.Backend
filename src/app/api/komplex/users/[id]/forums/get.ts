@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
@@ -31,7 +31,7 @@ export const getUserForums = async (
     const { page, type, topic } = req.query;
 
     if (!id) {
-      return getResponseError(res, new ResponseError("User ID is required", 400));
+      return sendResponseError(res, new ResponseError("User ID is required", 400));
     }
 
     const pageNumber = Number(page) || 1;
@@ -42,7 +42,7 @@ export const getUserForums = async (
     const parse = cacheData ? JSON.parse(cacheData) : null;
     if (parse) {
       const responseBody = UserForumItemSchema.array().parse(parse);
-      return getResponseSuccess(res, responseBody, "User forums fetched successfully", parse.length === limit);
+      return sendResponseSuccess(res, responseBody, "User forums fetched successfully", parse.length === limit);
     }
 
     const userForums = await db
@@ -100,8 +100,8 @@ export const getUserForums = async (
     await redis.set(cacheKey, JSON.stringify(forumsWithMedia), { EX: 300 });
 
     const responseBody = UserForumItemSchema.array().parse(forumsWithMedia);
-    return getResponseSuccess(res, responseBody, "User forums fetched successfully", forumsWithMedia.length === limit);
+    return sendResponseSuccess(res, responseBody, "User forums fetched successfully", forumsWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,4 +1,4 @@
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { redis } from "@/db/redis/redis.js";
 import { db } from "@/db/drizzle/index.js";
 import { users } from "@/db/drizzle/schema.js";
@@ -33,14 +33,14 @@ export const MeResponseSchema = z
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return getResponseError(res, new ResponseError("Missing user ID", 400));
+    return sendResponseError(res, new ResponseError("Missing user ID", 400));
   }
   try {
     const cacheKey = `users:${userId}`;
     const cachedUser = await redis.get(cacheKey);
     if (cachedUser) {
       const parsed = MeResponseSchema.parse(JSON.parse(cachedUser));
-      return getResponseSuccess(res, parsed, "User fetched successfully");
+      return sendResponseSuccess(res, parsed, "User fetched successfully");
     }
     const user = await db
       .select()
@@ -49,13 +49,13 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
       .limit(1);
 
     if (!user[0]) {
-      return getResponseError(res, new ResponseError("User not found", 404));
+      return sendResponseError(res, new ResponseError("User not found", 404));
     }
     await redis.set(cacheKey, JSON.stringify(user[0]), { EX: 60 * 60 * 24 });
 
     const parsed = MeResponseSchema.parse(user[0]);
-    return getResponseSuccess(res, parsed, "User fetched successfully");
+    return sendResponseSuccess(res, parsed, "User fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { feedbacks, feedbackMedia, users } from "@/db/drizzle/schema.js";
@@ -95,6 +95,6 @@ export const getFeedbacks = async (req: Request, res: Response) => {
       hasMore: feedbackIds.length === limit,
     }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

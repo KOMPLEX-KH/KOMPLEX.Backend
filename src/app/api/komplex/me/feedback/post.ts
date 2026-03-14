@@ -1,7 +1,7 @@
 import { db } from "@/db/drizzle/index.js";
 import { feedbacks } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
-import { ResponseError, getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { ResponseError, sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { Response } from "express";
 import { z } from "@/config/openapi/openapi.js";
@@ -38,8 +38,8 @@ export const postFeedback = async (
     await redis.set(cacheKey, JSON.stringify(feedback[0]), { EX: 600 });
 
 
-    return getResponseSuccess(res, feedback[0], "Feedback posted successfully");
+    return sendResponseSuccess(res, feedback[0], "Feedback posted successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

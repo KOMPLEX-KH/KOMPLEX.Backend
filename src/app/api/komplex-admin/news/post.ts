@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { news, users } from "@/db/drizzle/schema.js";
 import { eq } from "drizzle-orm";
@@ -122,6 +122,6 @@ export const postNews = async (req: AuthenticatedRequest, res: Response) => {
 
     return res.status(201).json(AdminPostNewsResponseSchema.parse({ success: true, newNews, newNewsMedia }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

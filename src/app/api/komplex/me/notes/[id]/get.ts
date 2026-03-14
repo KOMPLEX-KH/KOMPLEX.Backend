@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { notes } from "@/db/drizzle/models/notes.js";
 import { and, eq } from "drizzle-orm";
@@ -22,7 +22,7 @@ export const getMyNoteById = async (
       .limit(1);
 
     if (!result.length) {
-      return getResponseError(
+      return sendResponseError(
         res,
         new ResponseError("Note not found or not authorized", 404)
       );
@@ -30,7 +30,7 @@ export const getMyNoteById = async (
 
     return res.status(200).json(result[0]);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

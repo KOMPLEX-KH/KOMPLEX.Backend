@@ -10,7 +10,7 @@ import {
   videoLikes,
   followers,
 } from "@/db/drizzle/schema.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const FeedVideoItemSchema = z.object({
@@ -104,7 +104,7 @@ export const getAllVideos = async (
     ).map((id) => ({ id }));
 
     if (!videoIdRows.length) {
-      return getResponseSuccess(res, [], "No videos found");
+      return sendResponseSuccess(res, [], "No videos found");
     }
 
     const cachedResults = (await redis.mGet(
@@ -237,8 +237,8 @@ export const getAllVideos = async (
     const responseBody = FeedVideoItemSchema.array().parse(videosWithMediaAndIsFollowing);
     console.log("Response Body Video:", responseBody);
 
-    return getResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === limit);
+    return sendResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

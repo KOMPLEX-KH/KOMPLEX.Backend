@@ -6,7 +6,7 @@ import { newsMedia } from "@/db/drizzle/schema.js";
 import { and, sql } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { FeedNewsItemSchema } from "../get.js";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -118,8 +118,8 @@ export const getNewsById = async (
       isSaved: !!dynamic[0]?.isSaved,
     };
     const responseBody = FeedNewsItemSchema.parse(newsWithMedia);
-    return getResponseSuccess(res, responseBody, "News fetched successfully");
+    return sendResponseSuccess(res, responseBody, "News fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

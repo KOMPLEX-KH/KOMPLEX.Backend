@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { grades, subjects, lessons, topics } from "@/db/drizzle/schema.js";
 import { isNull, sql } from "drizzle-orm";
@@ -49,7 +49,7 @@ export const getCurriculumsDashboard = async (
 
     return res.status(200).json(CurriculumsDashboardResponseSchema.parse(data));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

@@ -6,7 +6,7 @@ import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -36,7 +36,7 @@ export const postForum = async (
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (!userId) {
-      getResponseError(res, new ResponseError("Missing required user", 400));
+      sendResponseError(res, new ResponseError("Missing required user", 400));
       return;
     }
 
@@ -78,7 +78,7 @@ export const postForum = async (
             .returning();
           newForumMedia.push(media);
         } catch (error) {
-          getResponseError(res, new ResponseError(error as string, 500));
+          sendResponseError(res, new ResponseError(error as string, 500));
           return;
         }
       }
@@ -125,8 +125,8 @@ export const postForum = async (
       await redis.del(myForumKeys);
     }
 
-    return getResponseSuccess(res, forumWithMedia, "Forum posted successfully");
+    return sendResponseSuccess(res, forumWithMedia, "Forum posted successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

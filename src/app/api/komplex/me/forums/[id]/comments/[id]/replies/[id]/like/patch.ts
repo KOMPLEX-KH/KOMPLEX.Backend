@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
 import { db } from "@/db/drizzle/index.js";
 import { forumReplyLikes } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 
 export const likeForumReply = async (
   req: AuthenticatedRequest,
@@ -30,6 +30,6 @@ export const likeForumReply = async (
       },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

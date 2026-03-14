@@ -9,7 +9,7 @@ import {
 } from "@/db/drizzle/schema.js";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { redis } from "@/db/redis/redis.js";
-import { getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
 
@@ -171,8 +171,8 @@ export const getVideoComments = async (
 
     const responseBody = FeedVideoCommentItemResponseSchema.array().parse(commentsWithMedia);
 
-    return getResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
+    return sendResponseSuccess(res, responseBody, "Comments fetched successfully", commentsWithMedia.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

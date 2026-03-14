@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { exercises, questions, choices } from "@/db/drizzle/schema.js";
@@ -76,6 +76,6 @@ export const updateExercise = async (req: Request, res: Response) => {
     await redis.del(cacheKey);
     return res.status(200).json(UpdateExerciseResponseSchema.parse({ message: "Exercise updated successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };

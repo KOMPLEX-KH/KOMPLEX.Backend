@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from "@/types/request.js";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { forumLikes } from "@/db/drizzle/schema.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 
 export const unlikeForum = async (
   req: AuthenticatedRequest,
@@ -29,6 +29,6 @@ export const unlikeForum = async (
 
     return res.status(200).json({ data: { unlike } });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

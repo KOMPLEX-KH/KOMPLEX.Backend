@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAITopicHistory, topics } from "@/db/drizzle/schema.js";
 import { asc, eq } from "drizzle-orm";
@@ -21,9 +21,9 @@ export const getAllAiTopics = async (
     const userId = req.user.userId;
     const result = await getAllAiTopicNamesServiceInternal(Number(userId));
     const responseBody = MeAiTopicItemSchema.array().parse(result);
-    return getResponseSuccess(res, responseBody, "AI topic names fetched successfully");
+    return sendResponseSuccess(res, responseBody, "AI topic names fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

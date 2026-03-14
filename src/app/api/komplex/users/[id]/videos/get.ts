@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videos, users } from "@/db/drizzle/schema.js";
@@ -33,7 +33,7 @@ export const getUserVideos = async (
     const { page, topic, type } = req.query;
 
     if (!id) {
-      return getResponseError(res, new ResponseError("User ID is required", 400));
+      return sendResponseError(res, new ResponseError("User ID is required", 400));
     }
 
     const cacheKey = `userVideos:${id}:type:${type || "all"}:topic:${topic || "all"}:page:${page || 1}`;
@@ -45,7 +45,7 @@ export const getUserVideos = async (
     const parsedData = cachedVideos ? JSON.parse(cachedVideos) : null;
     if (parsedData) {
       const responseBody = UserVideoItemSchema.array().parse(parsedData);
-      return getResponseSuccess(res, responseBody, "User videos fetched successfully", parsedData.length === limit);
+      return sendResponseSuccess(res, responseBody, "User videos fetched successfully", parsedData.length === limit);
     }
 
     const userVideos = await db
@@ -77,8 +77,8 @@ export const getUserVideos = async (
     });
 
     const responseBody = UserVideoItemSchema.array().parse(userVideos);
-    return getResponseSuccess(res, responseBody, "User videos fetched successfully", userVideos.length === limit);
+    return sendResponseSuccess(res, responseBody, "User videos fetched successfully", userVideos.length === limit);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

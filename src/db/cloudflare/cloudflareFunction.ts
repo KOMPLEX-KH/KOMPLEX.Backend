@@ -73,7 +73,7 @@ export const deleteFromCloudflare = async (
 export const getSignedUrlFromCloudflare = async (
   fileName: string,
   fileType: string,
-  userId: number
+  userId?: number
 ): Promise<{ signedUrl: string; key: string; publicUrl: string }> => {
   let bucket;
   if (fileType === "application/pdf") {
@@ -89,7 +89,7 @@ export const getSignedUrlFromCloudflare = async (
     .replace(/[^\p{L}\p{N}._-]+/gu, "_");
 
   const key = `${
-    bucket === "komplex-assets" ? "books" : userId
+    bucket === "komplex-assets" ? "books" : userId ? `users/${userId}` : "profile"
   }/${safeFileName}-${crypto.randomUUID()}`;
 
   const command = await new PutObjectCommand({

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { notes } from "@/db/drizzle/models/notes.js";
 
@@ -31,7 +31,7 @@ export const createMyNote = async (
 
     return res.status(201).json(newNote);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

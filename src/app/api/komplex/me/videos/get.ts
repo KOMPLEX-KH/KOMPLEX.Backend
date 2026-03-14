@@ -9,7 +9,7 @@ import {
   userSavedVideos,
   videoLikes,
 } from "@/db/drizzle/schema.js";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const MeGetMyVideosQuerySchema = z
@@ -176,6 +176,6 @@ export const getAllMyVideos = async (
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

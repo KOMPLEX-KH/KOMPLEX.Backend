@@ -14,7 +14,7 @@ import {
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 
 export const updateVideo = async (
   req: AuthenticatedRequest,
@@ -280,6 +280,6 @@ export const updateVideo = async (
       data: { success: true },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

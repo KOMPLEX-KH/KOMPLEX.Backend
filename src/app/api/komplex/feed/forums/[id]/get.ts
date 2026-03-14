@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers, forumLikes, forumMedias, forums, users } from "@/db/drizzle/schema.js";
 import { and, eq, sql } from "drizzle-orm";
@@ -147,8 +147,8 @@ export const getForumById = async (
     const responseBody = FeedForumItemResponseSchema.parse(forumWithMedia);
     // wrap in success and data
     console.log("Response Body:", responseBody);
-    return getResponseSuccess(res, responseBody);
+    return sendResponseSuccess(res, responseBody);
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { books } from "@/db/drizzle/schema.js";
 import { redis } from "@/db/redis/redis.js";
@@ -45,7 +45,7 @@ export const deleteBook = async (req: Request, res: Response) => {
 
     return res.status(200).json(responseBody);
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

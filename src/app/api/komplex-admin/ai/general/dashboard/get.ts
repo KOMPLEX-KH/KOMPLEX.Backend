@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError } from "@/utils/response.js";
+import { sendResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
 import { sql } from "drizzle-orm";
@@ -76,7 +76,7 @@ export const getGeneralAiDashboard = async (req: Request, res: Response) => {
       }),
     });
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

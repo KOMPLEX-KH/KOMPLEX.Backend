@@ -3,7 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { userVideoHistory, videos } from "@/db/drizzle/schema.js";
 import { AuthenticatedRequest } from "@/types/request.js";
-import { ResponseError, getResponseError, getResponseSuccess } from "@/utils/response.js";
+import { ResponseError, sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const VideoHistoryItemSchema = z.object({
@@ -39,8 +39,8 @@ export const getMyVideoHistory = async (
     }));
 
     const responseBody = VideoHistoryItemSchema.array().parse(mapped);
-    return getResponseSuccess(res, responseBody, "Video history fetched successfully");
+    return sendResponseSuccess(res, responseBody, "Video history fetched successfully");
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };

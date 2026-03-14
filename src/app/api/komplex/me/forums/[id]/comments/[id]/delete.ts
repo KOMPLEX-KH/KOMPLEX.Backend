@@ -10,7 +10,7 @@ import {
   forumReplies,
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { deleteReply } from "./replies/[id]/delete.js";
 
 export const deleteForumComment = async (
@@ -55,7 +55,7 @@ export const deleteForumComment = async (
       },
     });
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 };
 

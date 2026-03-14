@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getResponseError, ResponseError } from "@/utils/response.js";
+import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { db } from "@/db/drizzle/index.js";
 import { subjects } from "@/db/drizzle/schema.js";
 import { eq, gt, sql } from "drizzle-orm";
@@ -38,7 +38,7 @@ export const deleteSubject = async (req: Request, res: Response) => {
 
     return res.status(200).json(DeleteSubjectResponseSchema.parse({ message: "subject deleted successfully" }));
   } catch (error) {
-    return getResponseError(res, error as Error);
+    return sendResponseError(res, error as Error);
   }
 };
 

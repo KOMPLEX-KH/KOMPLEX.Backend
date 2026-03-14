@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { Response } from "express";
-import { getResponseError, getResponseSuccess, ResponseError } from "@/utils/response.js";
+import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 import { redis } from "@/db/redis/redis.js";
 import { randomUUID } from "crypto";
@@ -30,7 +30,7 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
     const storedOtpData = await redis.get(otpKey);
 
     if (!storedOtpData) {
-      return getResponseError(res, new ResponseError("OTP has expired or does not exist. Please request a new one.", 400));
+      return sendResponseError(res, new ResponseError("OTP has expired or does not exist. Please request a new one.", 400));
     }
 
     // convert string to object
@@ -38,7 +38,7 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
 
     // wrong otp
     if (otp !== storedOtp) {
-      return getResponseError(res, new ResponseError("Invalid OTP. Please try again.", 400));
+      return sendResponseError(res, new ResponseError("Invalid OTP. Please try again.", 400));
     }
 
     // generate reset token
@@ -52,9 +52,9 @@ export const postVerifyOtp = async (req: Request, res: Response) => {
       expiresIn: 300, // 5 minutes,
     });
 
-    return getResponseSuccess(res, responseBody, "OTP verified successfully");
+    return sendResponseSuccess(res, responseBody, "OTP verified successfully");
 
   } catch (error) {
-    return getResponseError(res, error);
+    return sendResponseError(res, error);
   }
 }
