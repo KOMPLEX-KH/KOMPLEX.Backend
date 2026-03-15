@@ -31,7 +31,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Unit tests
-        run: npm run test -- --run --testPathPattern="tests/unit"
+        run: npm run test -- --run tests/unit
 
       - name: Integration tests
-        run: npm run test -- --run --testPathPattern="tests/integration"
+        run: npm run test -- --run tests/integration
