@@ -1,6 +1,11 @@
 import "dotenv/config";
 import { vi } from "vitest";
 
+// Avoid Resend throwing when app loads in CI/tests (no real key needed for integration tests).
+if (!process.env.RESEND_API_KEY) {
+  process.env.RESEND_API_KEY = "re_123";
+}
+
 // Simple chainable query builder mock that always resolves to an empty array.
 const makeQuery = () => {
   const query: any = {};
