@@ -45,98 +45,51 @@ export const deleteForum = async (req: AuthenticatedRequest, res: Response) => {
       .from(forums)
       .where(eq(forums.id, Number(id)));
 
-    if (doesForumExist.length > 0) {
-      const doesCommentExist = await db
-        .select()
-        .from(forumComments)
-        .where(eq(forumComments.forumId, Number(id)));
-
-      const deletedCommentsId = doesCommentExist.map((comment) => comment.id);
-
-      if (deletedCommentsId.length > 0) {
-        await db
-          .delete(forumReplies)
-          .where(inArray(forumReplies.forumCommentId, deletedCommentsId))
-          .returning();
-      }
-
-      await db
-        .delete(forumComments)
-        .where(inArray(forumComments.id, deletedCommentsId))
-        .returning();
-
-      await db.delete(forums).where(eq(forums.id, Number(id))).returning();
-    } else {
+    if (doesForumExist.length === 0) {
       throw new ResponseError("Forum not found", 404);
     }
 
-    const mediaForum = await db
-      .select()
-      .from(forumMedias)
-      .where(eq(forumMedias.forumId, Number(id)));
-
     const comments = await db
-      .select()
+      .select({ id: forumComments.id })
       .from(forumComments)
       .where(eq(forumComments.forumId, Number(id)));
-
     const commentIds = comments.map((c) => c.id);
 
-    let mediaForumComment: Array<{
-      id: number;
-      forumCommentId: number | null;
-      url: string | null;
-      mediaType: "image" | "video" | null;
-      createdAt: Date | null;
-      updatedAt: Date | null;
-    }> = [];
-
+    let replyIds: number[] = [];
     if (commentIds.length > 0) {
-      mediaForumComment = await db
-        .select()
-        .from(forumCommentMedias)
-        .where(inArray(forumCommentMedias.forumCommentId, commentIds));
-    }
-
-    let replies: Array<typeof forumReplies.$inferSelect> = [];
-    if (commentIds.length > 0) {
-      replies = await db
-        .select()
+      const replies = await db
+        .select({ id: forumReplies.id })
         .from(forumReplies)
         .where(inArray(forumReplies.forumCommentId, commentIds));
+      replyIds = replies.map((r) => r.id);
     }
 
-    const replyIds = replies.map((r) => r.id);
-
-    let mediaForumReply: Array<{
-      id: number;
-      forumReplyId: number | null;
-      url: string | null;
-      mediaType: "image" | "video" | null;
-      createdAt: Date | null;
-      updatedAt: Date | null;
-    }> = [];
-
-    if (replyIds.length > 0) {
-      mediaForumReply = await db
-        .select()
-        .from(forumReplyMedias)
-        .where(inArray(forumReplyMedias.forumReplyId, replyIds));
-    }
-
-    await db.delete(forumMedias).where(eq(forumMedias.forumId, Number(id)));
-
-    if (commentIds.length > 0) {
-      await db
-        .delete(forumCommentMedias)
-        .where(inArray(forumCommentMedias.forumCommentId, commentIds));
-    }
-
-    if (replyIds.length > 0) {
-      await db
-        .delete(forumReplyMedias)
-        .where(inArray(forumReplyMedias.forumReplyId, replyIds));
-    }
+    await db.transaction(async (tx) => {
+      if (replyIds.length > 0) {
+        await tx
+          .delete(forumReplyMedias)
+          .where(inArray(forumReplyMedias.forumReplyId, replyIds));
+      }
+      if (commentIds.length > 0) {
+        await tx
+          .delete(forumCommentMedias)
+          .where(inArray(forumCommentMedias.forumCommentId, commentIds));
+      }
+      if (replyIds.length > 0) {
+        await tx
+          .delete(forumReplies)
+          .where(inArray(forumReplies.forumCommentId, commentIds));
+      }
+      if (commentIds.length > 0) {
+        await tx
+          .delete(forumComments)
+          .where(inArray(forumComments.id, commentIds));
+      }
+      await tx
+        .delete(forumMedias)
+        .where(eq(forumMedias.forumId, Number(id)));
+      await tx.delete(forums).where(eq(forums.id, Number(id)));
+    });
 
     const responseBody = AdminDeleteForumResponseSchema.parse({
       success: true,

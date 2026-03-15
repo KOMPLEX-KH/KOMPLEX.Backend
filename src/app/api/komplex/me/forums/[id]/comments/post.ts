@@ -60,45 +60,48 @@ export const postForumComment = async (
       throw new ResponseError("Missing required user", 400);
     }
 
-    const [newForumComment] = await db
-      .insert(forumComments)
-      .values({
-        userId: Number(userId),
-        forumId: Number(id),
-        description,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    let newCommentMedia: any[] = [];
+    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${newForumComment.id}-${crypto.randomUUID()}-${file.originalname
-            }`;
-          const url = await uploadImageToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(forumCommentMedias)
-            .values({
-              forumCommentId: newForumComment.id,
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newCommentMedia.push(media);
-        } catch (error) {
-          console.error("Error uploading file or saving media:", error);
-        }
+        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadImageToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
       }
     }
+
+    let newCommentMedia: any[] = [];
+    const [newForumComment] = await db.transaction(async (tx) => {
+      const [comment] = await tx
+        .insert(forumComments)
+        .values({
+          userId: Number(userId),
+          forumId: Number(id),
+          description,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      for (const { url, uniqueKey, mimetype } of uploads) {
+        const [media] = await tx
+          .insert(forumCommentMedias)
+          .values({
+            forumCommentId: comment.id,
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newCommentMedia.push(media);
+      }
+      return [comment];
+    });
 
     const [username] = await db
       .select({

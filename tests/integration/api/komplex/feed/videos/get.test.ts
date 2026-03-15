@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import request from "supertest";
 import { createApp } from "../../../../../../src/app.js";
 import { feedGet, FEED_BASE } from "../helpers.js";
-import request from "supertest";
 
-describe("GET /api/komplex/feed/forums", () => {
+describe("GET /api/komplex/feed/videos", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
     app = createApp();
   });
 
-  it("returns 200 and success wrapper with data array when no forums", async () => {
-    const res = await request(app).get(`${FEED_BASE}/forums`).expect(200);
+  it("returns 200 and success wrapper with data array when no videos", async () => {
+    const res = await request(app).get(`${FEED_BASE}/videos`).expect(200);
 
     expect(res.body).toBeDefined();
     expect(res.body.success).toBe(true);
@@ -21,10 +21,10 @@ describe("GET /api/komplex/feed/forums", () => {
   });
 
   it("accepts query params type, topic, page without error", async () => {
-    const res = await feedGet(app, "/forums", {
-      type: "discussion",
-      topic: "science",
-      page: "1",
+    const res = await feedGet(app, "/videos", {
+      type: "lesson",
+      topic: "math",
+      page: "2",
     }).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -32,7 +32,7 @@ describe("GET /api/komplex/feed/forums", () => {
   });
 
   it("response data items have expected shape when present", async () => {
-    const res = await request(app).get(`${FEED_BASE}/forums`).expect(200);
+    const res = await request(app).get(`${FEED_BASE}/videos`).expect(200);
     const data = res.body.data;
 
     expect(Array.isArray(data)).toBe(true);
@@ -41,11 +41,12 @@ describe("GET /api/komplex/feed/forums", () => {
       expect(first).toHaveProperty("id");
       expect(first).toHaveProperty("userId");
       expect(first).toHaveProperty("title");
-      expect(first).toHaveProperty("media");
+      expect(first).toHaveProperty("videoUrl");
+      expect(first).toHaveProperty("thumbnailUrl");
       expect(first).toHaveProperty("viewCount");
       expect(first).toHaveProperty("likeCount");
       expect(first).toHaveProperty("isLiked");
-      expect(first).toHaveProperty("isFollowing");
+      expect(first).toHaveProperty("isSaved");
     }
   });
 });

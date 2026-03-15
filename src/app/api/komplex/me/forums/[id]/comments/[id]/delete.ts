@@ -42,9 +42,9 @@ export const deleteForumComment = async (
       .where(eq(forumReplies.forumCommentId, Number(id)));
     let replyResults = null;
     if (doesThisCommentHasReply.length > 0) {
-      replyResults = await deleteReply(Number(userId), null, Number(id));
+      replyResults = await deleteReply(Number(userId), null, Number(id), undefined);
     }
-    const commentResults = await deleteComment(Number(userId), Number(id), null);
+    const commentResults = await deleteComment(Number(userId), Number(id), null, undefined);
 
     return res.status(200).json({
       data: {
@@ -62,14 +62,16 @@ export const deleteForumComment = async (
 export const deleteComment = async (
   userId: number,
   commentId: number | null,
-  forumId: number | null
+  forumId: number | null,
+  tx?: typeof db
 ) => {
+  const client = tx ?? db;
   if (commentId === null && forumId === null) {
     throw new ResponseError("Either commentId or forumId must be provided", 400);
   }
 
   if (commentId && forumId === null) {
-    const mediasToDelete = await db
+    const mediasToDelete = await client
       .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
       .from(forumCommentMedias)
       .where(eq(forumCommentMedias.forumCommentId, commentId));
@@ -80,7 +82,7 @@ export const deleteComment = async (
       }
     }
 
-    const deletedMedia = await db
+    const deletedMedia = await client
       .delete(forumCommentMedias)
       .where(eq(forumCommentMedias.forumCommentId, commentId))
       .returning({
@@ -88,12 +90,12 @@ export const deleteComment = async (
         mediaType: forumCommentMedias.mediaType,
       });
 
-    const deletedLikes = await db
+    const deletedLikes = await client
       .delete(forumCommentLikes)
       .where(eq(forumCommentLikes.forumCommentId, commentId))
       .returning();
 
-    const deletedComment = await db
+    const deletedComment = await client
       .delete(forumComments)
       .where(
         and(eq(forumComments.id, commentId), eq(forumComments.userId, userId))
@@ -124,13 +126,13 @@ export const deleteComment = async (
   }
 
   if (forumId && commentId === null) {
-    const getCommentIdsByForumId = await db
+    const getCommentIdsByForumId = await client
       .select({ id: forumComments.id })
       .from(forumComments)
       .where(eq(forumComments.forumId, forumId));
     const commentIds = getCommentIdsByForumId.map((c) => c.id);
 
-    const mediasToDelete = await db
+    const mediasToDelete = await client
       .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
       .from(forumCommentMedias)
       .where(
@@ -145,7 +147,7 @@ export const deleteComment = async (
       }
     }
 
-    const deletedMedia = await db
+    const deletedMedia = await client
       .delete(forumCommentMedias)
       .where(
         commentIds.length > 0
@@ -154,7 +156,7 @@ export const deleteComment = async (
       )
       .returning();
 
-    const deletedLikes = await db
+    const deletedLikes = await client
       .delete(forumCommentLikes)
       .where(
         commentIds.length > 0
@@ -163,7 +165,7 @@ export const deleteComment = async (
       )
       .returning();
 
-    const deletedComment = await db
+    const deletedComment = await client
       .delete(forumComments)
       .where(
         commentIds.length > 0

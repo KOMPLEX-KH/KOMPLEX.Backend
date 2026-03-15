@@ -48,75 +48,85 @@ export const updateVideoReply = async (
       }
     }
 
-    let newVideoReplyMedia: any[] = [];
+    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-          const url = await uploadVideoToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(videoReplyMedias)
-            .values({
-              videoReplyId: Number(id),
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newVideoReplyMedia.push(media);
-        } catch (error) {
-          throw new ResponseError(error as string, 500);
+        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadVideoToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
+      }
+    }
+
+    if (videosToRemoveParse && videosToRemoveParse.length > 0) {
+      for (const mediaToRemove of videosToRemoveParse) {
+        const [row] = await db
+          .select({ urlForDeletion: videoReplyMedias.urlForDeletion })
+          .from(videoReplyMedias)
+          .where(eq(videoReplyMedias.url, mediaToRemove.url));
+        if (row?.urlForDeletion) {
+          await deleteFromCloudflare("komplex-image", row.urlForDeletion);
         }
       }
     }
 
-    let deleteMedia = null;
-    if (videosToRemoveParse && videosToRemoveParse.length > 0) {
-      const deleteResults = await Promise.all(
-        videosToRemoveParse.map(async (mediaToRemove: any) => {
-          const [urlForDeletion] = await db
+    let newVideoReplyMedia: any[] = [];
+    let deleteMedia: any[] = [];
+    const [updateReply] = await db.transaction(async (tx) => {
+      for (const { url, uniqueKey, mimetype } of uploads) {
+        const [media] = await tx
+          .insert(videoReplyMedias)
+          .values({
+            videoReplyId: Number(id),
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newVideoReplyMedia.push(media);
+      }
+
+      if (videosToRemoveParse && videosToRemoveParse.length > 0) {
+        for (const mediaToRemove of videosToRemoveParse) {
+          const [urlRow] = await tx
             .select({ urlForDeletion: videoReplyMedias.urlForDeletion })
             .from(videoReplyMedias)
-            .where(eq(videoReplyMedias.url, mediaToRemove.url));
-          let deleted = null;
-          if (urlForDeletion) {
-            await deleteFromCloudflare(
-              "komplex-image",
-              urlForDeletion.urlForDeletion ?? ""
+            .where(
+              and(
+                eq(videoReplyMedias.videoReplyId, Number(id)),
+                eq(videoReplyMedias.url, mediaToRemove.url)
+              )
             );
-            deleted = await db
+          if (urlRow?.urlForDeletion) {
+            const deleted = await tx
               .delete(videoReplyMedias)
               .where(
                 and(
                   eq(videoReplyMedias.videoReplyId, Number(id)),
-                  eq(
-                    videoReplyMedias.urlForDeletion,
-                    urlForDeletion.urlForDeletion ?? ""
-                  )
+                  eq(videoReplyMedias.urlForDeletion, urlRow.urlForDeletion)
                 )
               )
               .returning();
+            deleteMedia = deleteMedia.concat(deleted);
           }
-          return deleted;
-        })
-      );
-      deleteMedia = deleteResults.flat();
-    }
+        }
+      }
 
-    const [updateReply] = await db
-      .update(videoReplies)
-      .set({
-        description,
-        updatedAt: new Date(),
-      })
-      .where(eq(videoReplies.id, Number(id)))
-      .returning();
+      const updated = await tx
+        .update(videoReplies)
+        .set({
+          description,
+          updatedAt: new Date(),
+        })
+        .where(eq(videoReplies.id, Number(id)))
+        .returning();
+      return updated;
+    });
 
     const pattern = `videoReplies:comment:${updateReply.videoCommentId}:page:*`;
     let cursor = "0";

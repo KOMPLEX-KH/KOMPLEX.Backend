@@ -40,13 +40,15 @@ export const deleteVideoComment = async (
 			replyResults = await deleteReplyInternal(
 				Number(userId),
 				null,
-				Number(id)
+				Number(id),
+				undefined
 			);
 		}
 		const commentResults = await deleteVideoCommentInternal(
 			Number(userId),
 			Number(id),
-			null
+			null,
+			undefined
 		);
 
 		return res.status(200).json({
@@ -64,12 +66,14 @@ export const deleteVideoComment = async (
 export const deleteComment = async (
 	userId: number,
 	commentId: number | null,
-	videoId: number | null
+	videoId: number | null,
+	tx?: typeof db
 ) => {
-	return await deleteVideoCommentInternal(userId, commentId, videoId);
+	return await deleteVideoCommentInternal(userId, commentId, videoId, tx);
 };
 
-export const deleteVideoCommentInternal = async (userId: number, commentId: number | null, videoId: number | null) => {
+export const deleteVideoCommentInternal = async (userId: number, commentId: number | null, videoId: number | null, tx?: typeof db) => {
+	const client = tx ?? db;
 	try {
 		if (commentId === null && videoId === null) {
 			throw new ResponseError("Either commentId or videoId must be provided", 400);
@@ -77,46 +81,45 @@ export const deleteVideoCommentInternal = async (userId: number, commentId: numb
 
 		// Delete by commentId
 		if (commentId && videoId === null) {
-			const doesThisCommentHasReply = await db
+			const doesThisCommentHasReply = await client
 				.select()
 				.from(videoReplies)
 				.where(eq(videoReplies.videoCommentId, Number(commentId)))
 				.limit(1);
 
 			let deleteReply = null;
-			console.log("ABOUT TO CHECK IF COMMENT HAS REPLY");
 			if (doesThisCommentHasReply.length > 0) {
-				console.log("COMMENT HAS REPLY");
 				deleteReply = await deleteReplyInternal(
 					Number(userId),
 					null,
-					Number(commentId)
+					Number(commentId),
+					client
 				);
 			}
 
-			const mediaToDelete = await db
-				.select({ urlForDeletion: videoReplyMedias.urlForDeletion })
-				.from(videoReplyMedias)
+			const mediaToDelete = await client
+				.select({ urlForDeletion: videoCommentMedias.urlForDeletion })
+				.from(videoCommentMedias)
 				.where(eq(videoCommentMedias.videoCommentId, commentId));
 
 			for (const media of mediaToDelete) {
 				await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
 			}
 
-			const deletedMedia = await db
-				.delete(videoReplyMedias)
+			const deletedMedia = await client
+				.delete(videoCommentMedias)
 				.where(eq(videoCommentMedias.videoCommentId, commentId))
 				.returning({
 					url: videoCommentMedias.url,
 					mediaType: videoCommentMedias.mediaType,
 				});
 
-			const deletedLikes = await db
+			const deletedLikes = await client
 				.delete(videoCommentLike)
 				.where(eq(videoCommentLike.videoCommentId, commentId))
 				.returning();
 
-			const deletedComment = await db
+			const deletedComment = await client
 				.delete(videoComments)
 				.where(and(eq(videoComments.id, commentId), eq(videoComments.userId, userId)))
 				.returning();
@@ -144,17 +147,17 @@ export const deleteVideoCommentInternal = async (userId: number, commentId: numb
 
 		// Delete all comments for a videoId
 		if (videoId && commentId === null) {
-			const getCommentIdsByVideoId = await db
+			const getCommentIdsByVideoId = await client
 				.select({ id: videoComments.id })
 				.from(videoComments)
 				.where(eq(videoComments.videoId, videoId));
 			const commentIds = getCommentIdsByVideoId.map((c) => c.id);
 
-			for (const commentId of commentIds) {
-				await deleteReplyInternal(Number(userId), null, commentId);
+			for (const cId of commentIds) {
+				await deleteReplyInternal(Number(userId), null, cId, client);
 			}
 
-			const mediaToDelete = await db
+			const mediaToDelete = await client
 				.select({ urlForDeletion: videoCommentMedias.urlForDeletion })
 				.from(videoCommentMedias)
 				.where(
@@ -167,7 +170,7 @@ export const deleteVideoCommentInternal = async (userId: number, commentId: numb
 				await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
 			}
 
-			const deletedMedia = await db
+			const deletedMedia = await client
 				.delete(videoCommentMedias)
 				.where(
 					commentIds.length > 0
@@ -179,7 +182,7 @@ export const deleteVideoCommentInternal = async (userId: number, commentId: numb
 					mediaType: videoCommentMedias.mediaType,
 				});
 
-			const deletedLikes = await db
+			const deletedLikes = await client
 				.delete(videoCommentLike)
 				.where(
 					commentIds.length > 0
@@ -188,7 +191,7 @@ export const deleteVideoCommentInternal = async (userId: number, commentId: numb
 				)
 				.returning();
 
-			const deletedComment = await db
+			const deletedComment = await client
 				.delete(videoComments)
 				.where(commentIds.length > 0 ? inArray(videoComments.id, commentIds) : eq(videoComments.id, -1))
 				.returning();

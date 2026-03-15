@@ -1,6 +1,11 @@
 import "dotenv/config";
 import { vi } from "vitest";
 
+// Avoid third-party clients throwing when app loads in CI/tests (no real services needed for integration tests).
+if (!process.env.RESEND_API_KEY) process.env.RESEND_API_KEY = "re_123";
+if (!process.env.MEILI_HOST_URL) process.env.MEILI_HOST_URL = "http://localhost:7700";
+if (!process.env.MEILI_MASTER_KEY) process.env.MEILI_MASTER_KEY = "test-key";
+
 // Simple chainable query builder mock that always resolves to an empty array.
 const makeQuery = () => {
   const query: any = {};
