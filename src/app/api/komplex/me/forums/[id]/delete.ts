@@ -68,28 +68,33 @@ export const deleteForum = async (
       );
     }
 
-    const deletedMedia = await db
-      .delete(forumMedias)
-      .where(eq(forumMedias.forumId, Number(id)))
-      .returning();
-
-    const commentRecords = await db
-      .select()
-      .from(forumComments)
-      .where(eq(forumComments.forumId, Number(id)));
+    let deletedMedia: any[] = [];
     let deleteReplies = null;
     let deleteComments = null;
-    if (commentRecords.length > 0) {
-      for (const commentRecord of commentRecords) {
-        deleteReplies = await deleteReply(Number(userId), null, commentRecord.id);
-      }
-      deleteComments = await deleteComment(Number(userId), null, Number(id));
-    }
+    const deletedForum = await db.transaction(async (tx) => {
+      deletedMedia = await tx
+        .delete(forumMedias)
+        .where(eq(forumMedias.forumId, Number(id)))
+        .returning();
 
-    const deletedForum = await db
-      .delete(forums)
-      .where(eq(forums.id, Number(id)))
-      .returning();
+      const commentRecords = await tx
+        .select()
+        .from(forumComments)
+        .where(eq(forumComments.forumId, Number(id)));
+
+      if (commentRecords.length > 0) {
+        for (const commentRecord of commentRecords) {
+          deleteReplies = await deleteReply(Number(userId), null, commentRecord.id, tx as unknown as typeof db);
+        }
+        deleteComments = await deleteComment(Number(userId), null, Number(id), tx as unknown as typeof db);
+      }
+
+      const deleted = await tx
+        .delete(forums)
+        .where(eq(forums.id, Number(id)))
+        .returning();
+      return deleted;
+    });
 
     await redis.del(`forums:${id}`);
     const myForumKeys: string[] = await redis.keys(

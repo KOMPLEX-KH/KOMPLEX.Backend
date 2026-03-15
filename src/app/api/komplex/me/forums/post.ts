@@ -40,49 +40,51 @@ export const postForum = async (
       return;
     }
 
-    const [newForum] = await db
-      .insert(forums)
-      .values({
-        userId: Number(userId),
-        title,
-        description,
-        type,
-        topic,
-        viewCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    let newForumMedia: any[] = [];
+    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${newForum.id}-${crypto.randomUUID()}-${file.originalname
-            }`;
-          const url = await uploadImageToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(forumMedias)
-            .values({
-              forumId: newForum.id,
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newForumMedia.push(media);
-        } catch (error) {
-          sendResponseError(res, new ResponseError(error as string, 500));
-          return;
-        }
+        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadImageToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
       }
     }
+
+    let newForumMedia: any[] = [];
+    const [newForum] = await db.transaction(async (tx) => {
+      const [forum] = await tx
+        .insert(forums)
+        .values({
+          userId: Number(userId),
+          title,
+          description,
+          type,
+          topic,
+          viewCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      for (const { url, uniqueKey, mimetype } of uploads) {
+        const [media] = await tx
+          .insert(forumMedias)
+          .values({
+            forumId: forum.id,
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newForumMedia.push(media);
+      }
+      return [forum];
+    });
 
     const [username] = await db
       .select({ firstName: users.firstName, lastName: users.lastName })

@@ -51,15 +51,17 @@ export const deleteForumReply = async (
 export const deleteReply = async (
   userId: number,
   replyId: number | null,
-  commentId: number | null
+  commentId: number | null,
+  tx?: typeof db
 ) => {
+  const client = tx ?? db;
   try {
     if (replyId === null && commentId === null) {
       throw new ResponseError("Either replyId or commentId must be provided", 400);
     }
 
     if (replyId && commentId === null) {
-      const mediasToDelete = await db
+      const mediasToDelete = await client
         .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
         .from(forumReplyMedias)
         .where(eq(forumReplyMedias.forumReplyId, replyId));
@@ -70,7 +72,7 @@ export const deleteReply = async (
         }
       }
 
-      const deletedMedia = await db
+      const deletedMedia = await client
         .delete(forumReplyMedias)
         .where(eq(forumReplyMedias.forumReplyId, replyId))
         .returning({
@@ -78,12 +80,12 @@ export const deleteReply = async (
           mediaType: forumReplyMedias.mediaType,
         });
 
-      const deletedLikes = await db
+      const deletedLikes = await client
         .delete(forumReplyLikes)
         .where(eq(forumReplyLikes.forumReplyId, replyId))
         .returning();
 
-      const deletedReply = await db
+      const deletedReply = await client
         .delete(forumReplies)
         .where(and(eq(forumReplies.id, replyId), eq(forumReplies.userId, userId)))
         .returning();
@@ -112,7 +114,7 @@ export const deleteReply = async (
     }
 
     if (commentId && replyId === null) {
-      const getReplyIdsByCommentId = await db
+      const getReplyIdsByCommentId = await client
         .select({ id: forumReplies.id })
         .from(forumReplies)
         .where(eq(forumReplies.forumCommentId, commentId));
@@ -133,7 +135,7 @@ export const deleteReply = async (
         }
       }
 
-      const deletedMedia = await db
+      const deletedMedia = await client
         .delete(forumReplyMedias)
         .where(
           replyIds.length > 0
@@ -142,7 +144,7 @@ export const deleteReply = async (
         )
         .returning();
 
-      const deletedLikes = await db
+      const deletedLikes = await client
         .delete(forumReplyLikes)
         .where(
           replyIds.length > 0
@@ -151,7 +153,7 @@ export const deleteReply = async (
         )
         .returning();
 
-      const deletedReply = await db
+      const deletedReply = await client
         .delete(forumReplies)
         .where(
           replyIds.length > 0

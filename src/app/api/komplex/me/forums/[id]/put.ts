@@ -40,81 +40,80 @@ export const updateForum = async (
       }
     }
 
-    let newForumMedia: any[] = [];
+    const urlsToInsert: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-          const url = await uploadImageToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(forumMedias)
-            .values({
-              forumId: Number(id),
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newForumMedia.push(media);
-        } catch (error) {
-          throw new ResponseError(error as string, 500);
+        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadImageToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        urlsToInsert.push({ url, uniqueKey, mimetype: file.mimetype });
+      }
+    }
+
+    let newForumMedia: any[] = [];
+    let deleteMedia: any[] = [];
+    const [updateForum] = await db.transaction(async (tx) => {
+      for (const { url, uniqueKey, mimetype } of urlsToInsert) {
+        const [media] = await tx
+          .insert(forumMedias)
+          .values({
+            forumId: Number(id),
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newForumMedia.push(media);
+      }
+
+      if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+        for (const photoToRemove of photosToRemoveParse) {
+          const [urlForDeletionRow] = await tx
+            .select({ urlForDeletion: forumMedias.urlForDeletion })
+            .from(forumMedias)
+            .where(
+              and(
+                eq(forumMedias.forumId, Number(id)),
+                eq(forumMedias.url, photoToRemove.url)
+              )
+            );
+          if (urlForDeletionRow?.urlForDeletion) {
+            await deleteFromCloudflare(
+              "komplex-image",
+              urlForDeletionRow.urlForDeletion
+            );
+            const deleted = await tx
+              .delete(forumMedias)
+              .where(
+                and(
+                  eq(forumMedias.forumId, Number(id)),
+                  eq(forumMedias.urlForDeletion, urlForDeletionRow.urlForDeletion)
+                )
+              )
+              .returning();
+            deleteMedia = deleteMedia.concat(deleted);
+          }
         }
       }
-    }
 
-    let deleteMedia = null;
-    if (photosToRemoveParse && photosToRemoveParse.length > 0) {
-      try {
-        const deleteResults = await Promise.all(
-          photosToRemoveParse.map(async (photoToRemove: any) => {
-            const urlForDeletion = await db
-              .select({
-                urlForDeletion: forumMedias.urlForDeletion,
-              })
-              .from(forumMedias)
-              .where(eq(forumMedias.url, photoToRemove.url));
-            let deleted = null;
-            if (urlForDeletion[0]?.urlForDeletion) {
-              await deleteFromCloudflare(
-                "komplex-image",
-                urlForDeletion[0].urlForDeletion
-              );
-              deleted = await db
-                .delete(forumMedias)
-                .where(
-                  and(
-                    eq(forumMedias.forumId, Number(id)),
-                    eq(forumMedias.urlForDeletion, urlForDeletion[0].urlForDeletion)
-                  )
-                )
-                .returning();
-            }
-            return deleted;
-          })
-        );
-        deleteMedia = deleteResults.flat();
-      } catch (error) {
-        throw new ResponseError(error as string, 500);
-      }
-    }
-
-    const [updateForum] = await db
-      .update(forums)
-      .set({
-        title,
-        description,
-        type,
-        topic,
-        updatedAt: new Date(),
-      })
-      .where(eq(forums.id, Number(id)))
-      .returning();
+      const updated = await tx
+        .update(forums)
+        .set({
+          title,
+          description,
+          type,
+          topic,
+          updatedAt: new Date(),
+        })
+        .where(eq(forums.id, Number(id)))
+        .returning();
+      return updated;
+    });
 
     const forum = await db
       .select({

@@ -39,17 +39,20 @@ export const deleteNews = async (req: AuthenticatedRequest, res: Response) => {
       );
     }
 
-    const deletedMedia = await db
-      .delete(newsMedia)
-      .where(eq(newsMedia.newsId, Number(id)))
-      .returning();
-
-    await db.delete(userSavedNews).where(eq(userSavedNews.newsId, Number(id)));
-
-    const deletedNews = await db
-      .delete(news)
-      .where(eq(news.id, Number(id)))
-      .returning();
+    let deletedNews: any[] = [];
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(newsMedia)
+        .where(eq(newsMedia.newsId, Number(id)))
+        .returning();
+      await tx
+        .delete(userSavedNews)
+        .where(eq(userSavedNews.newsId, Number(id)));
+      deletedNews = await tx
+        .delete(news)
+        .where(eq(news.id, Number(id)))
+        .returning();
+    });
 
     await redis.del(`news:${id}`);
     await redis.del(`dashboardData:${userId}`);

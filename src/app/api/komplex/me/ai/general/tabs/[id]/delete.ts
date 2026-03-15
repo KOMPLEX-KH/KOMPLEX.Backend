@@ -43,13 +43,13 @@ export const deleteAiGeneralTab = async (
 
 const deleteAiGeneralTabInternal = async (userId: number, tabId: number) => {
   try {
-    const response = await db
-      .delete(userAIHistory)
-      .where(
+    let response;
+    await db.transaction(async (tx) => {
+      response = await tx.delete(userAIHistory).where(
         and(eq(userAIHistory.userId, userId), eq(userAIHistory.tabId, tabId))
-      )
-      .returning();
-    await db.delete(userAiTabs).where(eq(userAiTabs.id, tabId));
+      ).returning();
+      await tx.delete(userAiTabs).where(eq(userAiTabs.id, tabId));
+    });
     await redis.flushAll(); // TO CHANGE
     return response;
   } catch (error) {

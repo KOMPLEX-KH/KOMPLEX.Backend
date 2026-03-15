@@ -51,15 +51,17 @@ export const deleteVideoReply = async (
 export const deleteReplyInternal = async (
   userId: number,
   videoReplyId: number | null,
-  commentId: number | null
+  commentId: number | null,
+  tx?: typeof db
 ) => {
+  const client = tx ?? db;
   try {
     if (videoReplyId === null && commentId === null) {
       throw new ResponseError("Either videoReplyId or commentId must be provided", 400);
     }
 
     if (videoReplyId && commentId === null) {
-      const mediaToDelete = await db
+      const mediaToDelete = await client
         .select({ urlForDeletion: videoReplyMedias.urlForDeletion })
         .from(videoReplyMedias)
         .where(eq(videoReplyMedias.videoReplyId, videoReplyId));
@@ -68,18 +70,18 @@ export const deleteReplyInternal = async (
         await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
       }
 
-      const deletedMedia = await db
+      const deletedMedia = await client
         .delete(videoReplyMedias)
         .where(eq(videoReplyMedias.videoReplyId, videoReplyId))
         .returning({
           url: videoReplyMedias.url,
           mediaType: videoReplyMedias.mediaType,
         });
-      const deleteLikeReply = await db
+      const deleteLikeReply = await client
         .delete(videoReplyLike)
         .where(eq(videoReplyLike.videoReplyId, videoReplyId))
         .returning();
-      const deletedReply = await db
+      const deletedReply = await client
         .delete(videoReplies)
         .where(
           and(eq(videoReplies.id, videoReplyId), eq(videoReplies.userId, userId))
@@ -107,13 +109,13 @@ export const deleteReplyInternal = async (
     }
 
     if (commentId && videoReplyId === null) {
-      const getVideoReplyIdByCommentId = await db
+      const getVideoReplyIdByCommentId = await client
         .select({ id: videoReplies.id })
         .from(videoReplies)
         .where(eq(videoReplies.videoCommentId, commentId));
       const videoReplyIds = getVideoReplyIdByCommentId.map((r) => r.id);
 
-      const mediaToDelete = await db
+      const mediaToDelete = await client
         .select({ urlForDeletion: videoReplyMedias.urlForDeletion })
         .from(videoReplyMedias)
         .where(
@@ -126,7 +128,7 @@ export const deleteReplyInternal = async (
         await deleteFromCloudflare("komplex-image", media.urlForDeletion ?? "");
       }
 
-      const deletedMedia = await db
+      const deletedMedia = await client
         .delete(videoReplyMedias)
         .where(
           videoReplyIds.length > 0
@@ -137,7 +139,7 @@ export const deleteReplyInternal = async (
           url: videoReplyMedias.url,
           mediaType: videoReplyMedias.mediaType,
         });
-      const deleteLikeReply = await db
+      const deleteLikeReply = await client
         .delete(videoReplyLike)
         .where(
           videoReplyIds.length > 0
@@ -145,7 +147,7 @@ export const deleteReplyInternal = async (
             : eq(videoReplyLike.videoReplyId, -1)
         )
         .returning();
-      const deletedReply = await db
+      const deletedReply = await client
         .delete(videoReplies)
         .where(
           videoReplyIds.length > 0

@@ -22,45 +22,48 @@ export const postVideoReply = async (
       throw new ResponseError("Missing required fields", 400);
     }
 
-    const [insertReply] = await db
-      .insert(videoReplies)
-      .values({
-        userId: Number(userId),
-        videoCommentId: Number(id),
-        description,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    let newVideoReplyMedia: any[] = [];
+    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${insertReply.id}-${crypto.randomUUID()}-${file.originalname
-            }`;
-          const url = await uploadVideoToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(videoReplyMedias)
-            .values({
-              videoReplyId: insertReply.id,
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newVideoReplyMedia.push(media);
-        } catch (error) {
-          throw new ResponseError(error as string, 500);
-        }
+        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadVideoToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
       }
     }
+
+    let newVideoReplyMedia: any[] = [];
+    const [insertReply] = await db.transaction(async (tx) => {
+      const [reply] = await tx
+        .insert(videoReplies)
+        .values({
+          userId: Number(userId),
+          videoCommentId: Number(id),
+          description,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      for (const { url, uniqueKey, mimetype } of uploads) {
+        const [media] = await tx
+          .insert(videoReplyMedias)
+          .values({
+            videoReplyId: reply.id,
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newVideoReplyMedia.push(media);
+      }
+      return [reply];
+    });
 
     const [username] = await db
       .select({

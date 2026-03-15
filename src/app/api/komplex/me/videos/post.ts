@@ -67,25 +67,75 @@ export const postVideo = async (
     const videoUrl = `${process.env.R2_VIDEO_PUBLIC_URL}/${videoKey}`;
     const thumbnailUrl = `${process.env.R2_PHOTO_PUBLIC_URL}/${thumbnailKey}`;
 
-    const newVideoResult = await db
-      .insert(videos)
-      .values({
-        videoUrlForDeletion: videoKey,
-        videoUrl,
-        thumbnailUrlForDeletion: thumbnailKey,
-        thumbnailUrl,
-        title,
-        description,
-        topic,
-        type,
-        viewCount: 0,
-        duration: duration || 0,
-        userId: Number(userId),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    const newVideo = newVideoResult as any[];
+    const newVideo = await db.transaction(async (tx) => {
+      const newVideoResult = await tx
+        .insert(videos)
+        .values({
+          videoUrlForDeletion: videoKey,
+          videoUrl,
+          thumbnailUrlForDeletion: thumbnailKey,
+          thumbnailUrl,
+          title,
+          description,
+          topic,
+          type,
+          viewCount: 0,
+          duration: duration || 0,
+          userId: Number(userId),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      const result = newVideoResult as any[];
+
+      if (questions && questions.length > 0) {
+        const newExerciseResult = await tx
+          .insert(exercises)
+          .values({
+            videoId: result[0].id,
+            title: `Quiz for ${title}`,
+            description: `Multiple choice questions for the video: ${title}`,
+            subject: topic || "General",
+            grade: "All",
+            duration: 0,
+            userId: Number(userId),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        const newExercise = newExerciseResult as any[];
+
+        for (const question of questions) {
+          const newQuestionResult = await tx
+            .insert(questionsTable)
+            .values({
+              exerciseId: newExercise[0].id,
+              title: question.title,
+              questionType: "",
+              section: "",
+              imageUrl: "",
+              userId: Number(userId),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .returning();
+          const newQuestion = newQuestionResult as any[];
+
+          for (const choice of question.choices) {
+            await tx.insert(choices).values({
+              questionId: newQuestion[0].id,
+              text: choice.text,
+              isCorrect: choice.isCorrect,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+      }
+
+      return result;
+    });
+
     const [username] = await db
       .select({ firstName: users.firstName, lastName: users.lastName })
       .from(users)
@@ -114,96 +164,19 @@ export const postVideo = async (
     await meilisearch.index("videos").addDocuments([meilisearchData]);
 
     if (questions && questions.length > 0) {
-      const newExerciseResult = await db
-        .insert(exercises)
-        .values({
-          videoId: newVideo[0].id,
-          title: `Quiz for ${title}`,
-          description: `Multiple choice questions for the video: ${title}`,
-          subject: topic || "General",
-          grade: "All",
-          duration: 0,
-          userId: Number(userId),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-      const newExercise = newExerciseResult as any[];
-
       let exercise = {
         title: `Quiz for ${title}`,
         description: `Multiple choice questions for the video: ${title}`,
         subject: topic || "General",
         grade: "All",
-      } as {
-        title: string;
-        description: string;
-        subject: string;
-        grade: string;
-        questions: {
-          title: string | null;
-          questionType: string | null;
-          section: string | null;
-          imageUrl: string | null;
-          choices?: { text: string; isCorrect: boolean }[];
-        }[];
+        questions: questions.map((q) => ({
+          title: q.title,
+          questionType: null as string | null,
+          section: null as string | null,
+          imageUrl: null as string | null,
+          choices: q.choices,
+        })),
       };
-
-      let questionsForExercise: {
-        title: string | null;
-        questionType: string | null;
-        section: string | null;
-        imageUrl: string | null;
-        choices: { text: string; isCorrect: boolean }[];
-      }[] = [];
-
-      for (const question of questions) {
-        const newQuestionResult = await db
-          .insert(questionsTable)
-          .values({
-            exerciseId: newExercise[0].id,
-            title: question.title,
-            questionType: "",
-            section: "",
-            imageUrl: "",
-            userId: Number(userId),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .returning();
-        const newQuestion = newQuestionResult as any[];
-
-        let questionToAdd = {
-          title: newQuestion[0].title,
-          questionType: newQuestion[0].questionType,
-          section: newQuestion[0].section,
-          imageUrl: newQuestion[0].imageUrl,
-        } as {
-          title: string | null;
-          questionType: string | null;
-          section: string | null;
-          imageUrl: string | null;
-          choices: { text: string; isCorrect: boolean }[];
-        };
-
-        let choicesForQuestion: { text: string; isCorrect: boolean }[] = [];
-        for (const choice of question.choices) {
-          await db.insert(choices).values({
-            questionId: newQuestion[0].id,
-            text: choice.text,
-            isCorrect: choice.isCorrect,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-          choicesForQuestion.push({
-            text: choice.text,
-            isCorrect: choice.isCorrect,
-          });
-        }
-        questionToAdd = { ...questionToAdd, choices: choicesForQuestion };
-        questionsForExercise.push(questionToAdd);
-      }
-      exercise = { ...exercise, questions: questionsForExercise };
       const cacheKey = `exercises:videoId:${newVideo[0].id}`;
       await redis.set(cacheKey, JSON.stringify(exercise), { EX: 600 });
     }

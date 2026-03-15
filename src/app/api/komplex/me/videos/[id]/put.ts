@@ -68,11 +68,112 @@ export const updateVideo = async (
       updateData.thumbnailUrlForDeletion = thumbnailKey;
     }
 
-    const updatedVideo = await db
-      .update(videos)
-      .set(updateData)
-      .where(eq(videos.id, Number(id)))
-      .returning({ id: videos.id });
+    const [updatedVideo] = await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(videos)
+        .set(updateData)
+        .where(eq(videos.id, Number(id)))
+        .returning({ id: videos.id });
+
+      if (Array.isArray(questionsPayload) && questionsPayload.length > 0) {
+        const [exercise] = await tx
+          .select()
+          .from(exercises)
+          .where(eq(exercises.videoId, Number(id)))
+          .limit(1);
+
+        const exerciseIdToUse = async () => {
+          if (exercise) {
+            await tx
+              .update(exercises)
+              .set({ updatedAt: new Date() })
+              .where(eq(exercises.id, exercise.id));
+            return exercise.id;
+          }
+          const createdExerciseResult = await tx
+            .insert(exercises)
+            .values({
+              videoId: Number(id),
+              userId: Number(userId),
+              duration: 0,
+              title: title ?? null,
+              description: description ?? null,
+              subject: null,
+              grade: null as any,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .returning();
+          const createdExercise = (createdExerciseResult as any[])[0];
+          return createdExercise.id;
+        };
+
+        const ensuredExerciseId = await exerciseIdToUse();
+
+        for (const question of questionsPayload) {
+          let questionIdToUse: number | null = null;
+
+          if (question.id && !isNaN(Number(question.id))) {
+            const [existingQuestionById] = await tx
+              .select()
+              .from(questions)
+              .where(eq(questions.id, Number(question.id)))
+              .limit(1);
+
+            if (existingQuestionById) {
+              questionIdToUse = existingQuestionById.id;
+              await tx
+                .update(questions)
+                .set({ title: question.title, updatedAt: new Date() })
+                .where(eq(questions.id, existingQuestionById.id));
+            }
+          }
+
+          if (!questionIdToUse) {
+            const [insertedQuestion] = await tx
+              .insert(questions)
+              .values({
+                exerciseId: ensuredExerciseId,
+                title: question.title,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .returning();
+            questionIdToUse = insertedQuestion.id;
+          }
+
+          for (const choice of question.choices) {
+            if (choice.id && !isNaN(Number(choice.id))) {
+              const [existingChoice] = await tx
+                .select()
+                .from(choices)
+                .where(eq(choices.id, Number(choice.id)))
+                .limit(1);
+              if (existingChoice) {
+                await tx
+                  .update(choices)
+                  .set({
+                    text: choice.text,
+                    isCorrect: choice.isCorrect,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(choices.id, existingChoice.id));
+                continue;
+              }
+            }
+            await tx.insert(choices).values({
+              questionId: Number(questionIdToUse),
+              text: choice.text,
+              isCorrect: choice.isCorrect,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+      }
+
+      return updated;
+    });
 
     const [videoRow] = await db
       .select({
@@ -112,7 +213,7 @@ export const updateVideo = async (
           eq(videoLikes.userId, Number(userId))
         )
       )
-      .where(eq(videos.id, updatedVideo[0].id))
+      .where(eq(videos.id, updatedVideo.id))
       .groupBy(
         videos.id,
         users.firstName,
@@ -132,141 +233,46 @@ export const updateVideo = async (
     await meilisearch.index("videos").addDocuments([meilisearchData]);
 
     if (Array.isArray(questionsPayload) && questionsPayload.length > 0) {
-      const [exercise] = await db
+      const videoExercisesRows = await db
         .select()
         .from(exercises)
         .where(eq(exercises.videoId, Number(id)))
-        .limit(1);
+        .leftJoin(questions, eq(exercises.id, questions.exerciseId))
+        .leftJoin(choices, eq(questions.id, choices.questionId))
+        .groupBy(exercises.id, questions.id, choices.id);
 
-      const exerciseIdToUse = async () => {
-        if (exercise) {
-          await db
-            .update(exercises)
-            .set({ updatedAt: new Date() })
-            .where(eq(exercises.id, exercise.id));
-          return exercise.id;
-        }
-        const createdExerciseResult = await db
-          .insert(exercises)
-          .values({
-            videoId: Number(id),
-            userId: Number(userId),
-            duration: 0,
-            title: title ?? null,
-            description: description ?? null,
-            subject: null,
-            grade: null as any,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .returning();
-        const createdExercise = (createdExerciseResult as any[])[0];
-        return createdExercise.id;
-      };
+      const videoExerciseMap = new Map();
 
-      const ensuredExerciseId = await exerciseIdToUse();
-
-      for (const question of questionsPayload) {
-        let questionIdToUse: number | null = null;
-
-        if (question.id && !isNaN(Number(question.id))) {
-          const [existingQuestionById] = await db
-            .select()
-            .from(questions)
-            .where(eq(questions.id, Number(question.id)))
-            .limit(1);
-
-          if (existingQuestionById) {
-            questionIdToUse = existingQuestionById.id;
-            await db
-              .update(questions)
-              .set({ title: question.title, updatedAt: new Date() })
-              .where(eq(questions.id, existingQuestionById.id));
-          }
-        }
-
-        if (!questionIdToUse) {
-          const [insertedQuestion] = await db
-            .insert(questions)
-            .values({
-              exerciseId: ensuredExerciseId,
-              title: question.title,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          questionIdToUse = insertedQuestion.id;
-        }
-
-        for (const choice of question.choices) {
-          if (choice.id && !isNaN(Number(choice.id))) {
-            const [existingChoice] = await db
-              .select()
-              .from(choices)
-              .where(eq(choices.id, Number(choice.id)))
-              .limit(1);
-            if (existingChoice) {
-              await db
-                .update(choices)
-                .set({
-                  text: choice.text,
-                  isCorrect: choice.isCorrect,
-                  updatedAt: new Date(),
-                })
-                .where(eq(choices.id, existingChoice.id));
-              continue;
-            }
-          }
-          await db.insert(choices).values({
-            questionId: Number(questionIdToUse),
-            text: choice.text,
-            isCorrect: choice.isCorrect,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+      for (const row of videoExercisesRows) {
+        const exercise = row.exercises;
+        if (!videoExerciseMap.has(exercise.id)) {
+          videoExerciseMap.set(exercise.id, {
+            ...exercise,
+            questions: [],
           });
         }
+        const exerciseObj = videoExerciseMap.get(exercise.id);
 
-        const videoExercisesRows = await db
-          .select()
-          .from(exercises)
-          .where(eq(exercises.videoId, Number(id)))
-          .leftJoin(questions, eq(exercises.id, questions.exerciseId))
-          .leftJoin(choices, eq(questions.id, choices.questionId))
-          .groupBy(exercises.id, questions.id, choices.id);
-
-        const videoExerciseMap = new Map();
-
-        for (const row of videoExercisesRows) {
-          const exercise = row.exercises;
-          if (!videoExerciseMap.has(exercise.id)) {
-            videoExerciseMap.set(exercise.id, {
-              ...exercise,
-              questions: [],
-            });
+        if (row.questions?.id) {
+          let question = exerciseObj.questions.find(
+            (q: any) => q.id === row.questions?.id
+          );
+          if (!question) {
+            question = { ...row.questions, choices: [] };
+            exerciseObj.questions.push(question);
           }
-          const exerciseObj = videoExerciseMap.get(exercise.id);
 
-          if (row.questions?.id) {
-            let question = exerciseObj.questions.find(
-              (q: any) => q.id === row.questions?.id
-            );
-            if (!question) {
-              question = { ...row.questions, choices: [] };
-              exerciseObj.questions.push(question);
-            }
-
-            if (row.choices?.id) {
-              question.choices.push(row.choices);
-            }
+          if (row.choices?.id) {
+            question.choices.push(row.choices);
           }
         }
-
-        const videoExercises = Array.from(videoExerciseMap.values());
-        const cacheExercisesKey = `video:exercises:${id}`;
-        await redis.set(cacheExercisesKey, JSON.stringify(videoExercises), {
-          EX: 600,
-        });
       }
+
+      const videoExercises = Array.from(videoExerciseMap.values());
+      const cacheExercisesKey = `video:exercises:${id}`;
+      await redis.set(cacheExercisesKey, JSON.stringify(videoExercises), {
+        EX: 600,
+      });
     }
     await redis.del(`dashboardData:${userId}`);
     const myVideoKeys: string[] = await redis.keys(

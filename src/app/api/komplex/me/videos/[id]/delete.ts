@@ -57,53 +57,6 @@ export const deleteVideo = async (
       .where(eq(videoComments.videoId, Number(id)))
       .limit(1);
 
-    let deleteComments = null;
-    if (doesThisVideoHasComments) {
-      deleteComments = await deleteVideoCommentInternal(
-        Number(userId),
-        null,
-        Number(id)
-      );
-    }
-
-    const deletedLikes = await db
-      .delete(videoLikes)
-      .where(eq(videoLikes.videoId, Number(id)))
-      .returning();
-
-    const deletedSaves = await db
-      .delete(userSavedVideos)
-      .where(eq(userSavedVideos.videoId, Number(id)))
-      .returning();
-
-    const exerciseId = await db
-      .select()
-      .from(exercises)
-      .where(eq(exercises.videoId, Number(id)));
-    if (exerciseId && exerciseId.length > 0) {
-      const questionIds = await db
-        .select()
-        .from(questions)
-        .where(eq(questions.exerciseId, Number(exerciseId[0].id)));
-
-      for (const questionId of questionIds) {
-        await db
-          .delete(choices)
-          .where(eq(choices.questionId, Number(questionId.id)))
-          .returning();
-      }
-
-      await db
-        .delete(questions)
-        .where(eq(questions.exerciseId, Number(exerciseId[0].id)))
-        .returning();
-
-      await db
-        .delete(exercises)
-        .where(eq(exercises.videoId, Number(id)))
-        .returning();
-    }
-
     if (doesThisUserOwnThisVideo.videoUrlForDeletion) {
       try {
         await deleteFromCloudflare(
@@ -126,14 +79,65 @@ export const deleteVideo = async (
       }
     }
 
-    await db
-      .delete(userVideoHistory)
-      .where(eq(userVideoHistory.videoId, Number(id)));
+    let deleteComments = null;
+    const deletedVideo = await db.transaction(async (tx) => {
+      if (doesThisVideoHasComments) {
+        deleteComments = await deleteVideoCommentInternal(
+          Number(userId),
+          null,
+          Number(id),
+          tx as unknown as typeof db
+        );
+      }
 
-    const deletedVideo = await db
-      .delete(videos)
-      .where(and(eq(videos.id, Number(id)), eq(videos.userId, Number(userId))))
-      .returning();
+      await tx
+        .delete(videoLikes)
+        .where(eq(videoLikes.videoId, Number(id)))
+        .returning();
+
+      await tx
+        .delete(userSavedVideos)
+        .where(eq(userSavedVideos.videoId, Number(id)))
+        .returning();
+
+      const exerciseId = await tx
+        .select()
+        .from(exercises)
+        .where(eq(exercises.videoId, Number(id)));
+      if (exerciseId && exerciseId.length > 0) {
+        const questionIds = await tx
+          .select()
+          .from(questions)
+          .where(eq(questions.exerciseId, Number(exerciseId[0].id)));
+
+        for (const questionId of questionIds) {
+          await tx
+            .delete(choices)
+            .where(eq(choices.questionId, Number(questionId.id)))
+            .returning();
+        }
+
+        await tx
+          .delete(questions)
+          .where(eq(questions.exerciseId, Number(exerciseId[0].id)))
+          .returning();
+
+        await tx
+          .delete(exercises)
+          .where(eq(exercises.videoId, Number(id)))
+          .returning();
+      }
+
+      await tx
+        .delete(userVideoHistory)
+        .where(eq(userVideoHistory.videoId, Number(id)));
+
+      const deleted = await tx
+        .delete(videos)
+        .where(and(eq(videos.id, Number(id)), eq(videos.userId, Number(userId))))
+        .returning();
+      return deleted;
+    });
     await redis.del(`videos:${id}`);
     const myVideoKeys: string[] = await redis.keys(
       `myVideos:${userId}:type:*:topic:*`

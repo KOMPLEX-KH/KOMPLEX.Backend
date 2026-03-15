@@ -45,78 +45,85 @@ export const updateForumComment = async (
       }
     }
 
-    let newCommentMedia: any[] = [];
+    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
     if (files) {
       for (const file of files) {
-        try {
-          const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-          const url = await uploadImageToCloudflare(
-            uniqueKey,
-            file.buffer,
-            file.mimetype
-          );
-          const [media] = await db
-            .insert(forumCommentMedias)
-            .values({
-              forumCommentId: Number(id),
-              url: url,
-              urlForDeletion: uniqueKey,
-              mediaType: file.mimetype.startsWith("video") ? "video" : "image",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning();
-          newCommentMedia.push(media);
-        } catch (error) {
-          throw new ResponseError(error as string, 500);
+        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
+        const url = await uploadImageToCloudflare(
+          uniqueKey,
+          file.buffer,
+          file.mimetype
+        );
+        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
+      }
+    }
+
+    if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+      for (const photoToRemove of photosToRemoveParse) {
+        const [row] = await db
+          .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
+          .from(forumCommentMedias)
+          .where(eq(forumCommentMedias.url, photoToRemove.url));
+        if (row?.urlForDeletion) {
+          await deleteFromCloudflare("komplex-image", row.urlForDeletion);
         }
       }
     }
 
-    let deleteMedia = null;
-    if (photosToRemoveParse && photosToRemoveParse.length > 0) {
-      const deleteResults = await Promise.all(
-        photosToRemoveParse.map(async (photoToRemove: any) => {
-          const urlForDeletion = await db
-            .select({
-              urlForDeletion: forumCommentMedias.urlForDeletion,
-            })
+    let newCommentMedia: any[] = [];
+    let deleteMedia: any[] = [];
+    const [updateComment] = await db.transaction(async (tx) => {
+      for (const { url, uniqueKey, mimetype } of uploads) {
+        const [media] = await tx
+          .insert(forumCommentMedias)
+          .values({
+            forumCommentId: Number(id),
+            url,
+            urlForDeletion: uniqueKey,
+            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        newCommentMedia.push(media);
+      }
+
+      if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+        for (const photoToRemove of photosToRemoveParse) {
+          const [urlRow] = await tx
+            .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
             .from(forumCommentMedias)
-            .where(eq(forumCommentMedias.url, photoToRemove.url));
-          let deleted = null;
-          if (urlForDeletion[0]?.urlForDeletion) {
-            await deleteFromCloudflare(
-              "komplex-image",
-              urlForDeletion[0].urlForDeletion
+            .where(
+              and(
+                eq(forumCommentMedias.forumCommentId, Number(id)),
+                eq(forumCommentMedias.url, photoToRemove.url)
+              )
             );
-            deleted = await db
+          if (urlRow?.urlForDeletion) {
+            const deleted = await tx
               .delete(forumCommentMedias)
               .where(
                 and(
                   eq(forumCommentMedias.forumCommentId, Number(id)),
-                  eq(
-                    forumCommentMedias.urlForDeletion,
-                    urlForDeletion[0].urlForDeletion
-                  )
+                  eq(forumCommentMedias.urlForDeletion, urlRow.urlForDeletion)
                 )
               )
               .returning();
+            deleteMedia = deleteMedia.concat(deleted);
           }
-          return deleted;
+        }
+      }
+
+      const updated = await tx
+        .update(forumComments)
+        .set({
+          description,
+          updatedAt: new Date(),
         })
-      );
-
-      deleteMedia = deleteResults.flat();
-    }
-
-    const [updateComment] = await db
-      .update(forumComments)
-      .set({
-        description,
-        updatedAt: new Date(),
-      })
-      .where(eq(forumComments.id, Number(id)))
-      .returning();
+        .where(eq(forumComments.id, Number(id)))
+        .returning();
+      return updated;
+    });
 
     const pattern = `forumComments:forum:${updateComment.forumId}:page:*`;
     let cursor = "0";
