@@ -4,9 +4,42 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumReplies, forumReplyMedias, users } from "@/db/drizzle/schema.js";
-import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+const ForumMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
+
+export const MePostForumReplyParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MePostForumReplyParams");
+
+export const MePostForumReplyBodySchema = z
+  .object({
+    description: z.string(),
+    mediaKeys: z.array(ForumMediaKeySchema).optional().default([]),
+  })
+  .openapi("MePostForumReplyBody");
+
+export const MePostForumReplyResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+      reply: z.any(),
+      newReplyMedia: z.array(
+        z.object({
+          url: z.string(),
+          type: z.string(),
+        })
+      ),
+    }),
+  })
+  .openapi("MePostForumReplyResponse");
 
 export const postForumReply = async (
   req: AuthenticatedRequest,
@@ -14,29 +47,17 @@ export const postForumReply = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { id } = req.params;
-    const { description } = req.body;
-    const files = req.files as Express.Multer.File[] | undefined;
+    const { id } = await MePostForumReplyParamsSchema.parseAsync(req.params);
+    const { description, mediaKeys } = await MePostForumReplyBodySchema.parseAsync(
+      req.body ?? {}
+    );
     const limit = 20;
 
     if (!userId || !id || !description) {
       throw new ResponseError("Missing required fields", 400);
     }
 
-    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    let newReplyMedia: any[] = [];
+    const newReplyMedia: { url: string; mediaType: string }[] = [];
     const [insertedForumReply] = await db.transaction(async (tx) => {
       const [reply] = await tx
         .insert(forumReplies)
@@ -49,19 +70,22 @@ export const postForumReply = async (
         })
         .returning();
 
-      for (const { url, uniqueKey, mimetype } of uploads) {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumReplyMedias)
           .values({
             forumReplyId: reply.id,
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType,
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newReplyMedia.push(media);
+        newReplyMedia.push({
+          url: media.url ?? "",
+          mediaType: (media.mediaType ?? "image") as string,
+        });
       }
       return [reply];
     });
@@ -82,12 +106,9 @@ export const postForumReply = async (
       description: insertedForumReply.description,
       createdAt: insertedForumReply.createdAt,
       updatedAt: insertedForumReply.updatedAt,
-      username: username.firstName + " " + username.lastName,
-      profileImage: username.profileImage,
-      media: newReplyMedia.map((m) => ({
-        url: m.url,
-        type: m.mediaType,
-      })),
+      username: `${username?.firstName ?? ""} ${username?.lastName ?? ""}`.trim(),
+      profileImage: username?.profileImage ?? undefined,
+      media: newReplyMedia.map((m) => ({ url: m.url, type: m.mediaType })),
     };
 
     let { currentReplyAmount, lastPage } = JSON.parse(
@@ -129,7 +150,7 @@ export const postForumReply = async (
       data: {
         success: true,
         reply: insertedForumReply,
-        newReplyMedia,
+        newReplyMedia: newReplyMedia.map((m) => ({ url: m.url, type: m.mediaType })),
       },
     });
   } catch (error) {

@@ -4,13 +4,57 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
-import {
-  uploadImageToCloudflare,
-  deleteFromCloudflare,
-} from "@/db/cloudflare/cloudflareFunction.js";
+import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+const ForumMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
+
+export const MeUpdateForumParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeUpdateForumParams");
+
+export const MeUpdateForumBodySchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    type: z.string().nullable().optional(),
+    topic: z.string().nullable().optional(),
+    mediaKeys: z.array(ForumMediaKeySchema).optional().default([]),
+    photosToRemove: z
+      .union([
+        z.string(),
+        z.array(
+          z.object({
+            url: z.string(),
+          })
+        ),
+      ])
+      .optional(),
+  })
+  .openapi("MeUpdateForumBody");
+
+export const MeUpdateForumResponseSchema = z
+  .object({
+    data: z.object({
+      updateForum: z.any(),
+      newForumMedia: z.array(
+        z.object({
+          id: z.number(),
+          url: z.string(),
+          mediaType: z.string(),
+        })
+      ),
+    }),
+  })
+  .openapi("MeUpdateForumResponse");
 
 export const updateForum = async (
   req: AuthenticatedRequest,
@@ -19,8 +63,20 @@ export const updateForum = async (
   try {
     const userId = req.user.userId;
     const { id } = req.params;
-    const { title, description, type, topic, photosToRemove } = req.body;
-    const files = req.files as Express.Multer.File[] | undefined;
+    const body = req.body ?? {};
+    const title = body.title;
+    const description = body.description;
+    const type = body.type;
+    const topic = body.topic;
+    const mediaKeys: { key: string; url: string; mediaType: string }[] = Array.isArray(body.mediaKeys) ? body.mediaKeys : [];
+    let photosToRemoveParse: { url: string }[] = [];
+    if (body.photosToRemove) {
+      try {
+        photosToRemoveParse = typeof body.photosToRemove === "string" ? JSON.parse(body.photosToRemove) : body.photosToRemove;
+      } catch {
+        throw new ResponseError("Invalid photosToRemove format", 400);
+      }
+    }
 
     const doesUserOwnThisForum = await db
       .select()
@@ -31,49 +87,43 @@ export const updateForum = async (
       throw new ResponseError("Forum not found", 404);
     }
 
-    let photosToRemoveParse: { url: string }[] = [];
-    if (photosToRemove) {
-      try {
-        photosToRemoveParse = JSON.parse(photosToRemove);
-      } catch (err) {
-        throw new ResponseError("Invalid photosToRemove format", 400);
+    if (photosToRemoveParse.length > 0) {
+      for (const photoToRemove of photosToRemoveParse) {
+        const [urlForDeletionRow] = await db
+          .select({ urlForDeletion: forumMedias.urlForDeletion })
+          .from(forumMedias)
+          .where(
+            and(
+              eq(forumMedias.forumId, Number(id)),
+              eq(forumMedias.url, photoToRemove.url)
+            )
+          );
+        if (urlForDeletionRow?.urlForDeletion) {
+          await deleteFromCloudflare("komplex-image", urlForDeletionRow.urlForDeletion);
+        }
       }
     }
 
-    const urlsToInsert: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        urlsToInsert.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    let newForumMedia: any[] = [];
-    let deleteMedia: any[] = [];
-    const [updateForum] = await db.transaction(async (tx) => {
-      for (const { url, uniqueKey, mimetype } of urlsToInsert) {
+    const newForumMedia: { id: number; url: string; mediaType: string }[] = [];
+    const [updateForumRow] = await db.transaction(async (tx) => {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumMedias)
           .values({
             forumId: Number(id),
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType: mediaType === "video" ? "video" : "image",
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newForumMedia.push(media);
+        newForumMedia.push({ id: media.id, url: media.url ?? '', mediaType: (media.mediaType ?? "image") });
       }
 
-      if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+      if (photosToRemoveParse.length > 0) {
         for (const photoToRemove of photosToRemoveParse) {
-          const [urlForDeletionRow] = await tx
+          const [urlRow] = await tx
             .select({ urlForDeletion: forumMedias.urlForDeletion })
             .from(forumMedias)
             .where(
@@ -82,21 +132,15 @@ export const updateForum = async (
                 eq(forumMedias.url, photoToRemove.url)
               )
             );
-          if (urlForDeletionRow?.urlForDeletion) {
-            await deleteFromCloudflare(
-              "komplex-image",
-              urlForDeletionRow.urlForDeletion
-            );
-            const deleted = await tx
+          if (urlRow?.urlForDeletion) {
+            await tx
               .delete(forumMedias)
               .where(
                 and(
                   eq(forumMedias.forumId, Number(id)),
-                  eq(forumMedias.urlForDeletion, urlForDeletionRow.urlForDeletion)
+                  eq(forumMedias.urlForDeletion, urlRow.urlForDeletion)
                 )
-              )
-              .returning();
-            deleteMedia = deleteMedia.concat(deleted);
+              );
           }
         }
       }
@@ -146,10 +190,7 @@ export const updateForum = async (
       username: forum[0]?.username,
       media: forum
         .filter((b) => b.mediaUrl)
-        .map((b) => ({
-          url: b.mediaUrl,
-          type: b.mediaType,
-        })),
+        .map((b) => ({ url: b.mediaUrl ?? "", type: b.mediaType ?? "image" })),
     };
 
     const meilisearchData = {
@@ -165,13 +206,12 @@ export const updateForum = async (
     const myForumKeys: string[] = await redis.keys(
       `userForums:${userId}:type:*:topic:*:page:*`
     );
-
     if (myForumKeys.length > 0) {
       await redis.del(myForumKeys);
     }
 
     return res.status(200).json({
-      data: { updateForum, newForumMedia, deleteMedia },
+      data: { updateForum: updateForumRow, newForumMedia },
     });
   } catch (error) {
     return sendResponseError(res, error);

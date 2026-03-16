@@ -10,6 +10,39 @@ import {
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeUpdateVideoCommentParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeUpdateVideoCommentParams");
+
+export const MeUpdateVideoCommentBodySchema = z
+  .object({
+    description: z.string(),
+    mediasToRemove: z
+      .union([
+        z.string(),
+        z.array(
+          z.object({
+            url: z.string(),
+          })
+        ),
+      ])
+      .optional(),
+  })
+  .openapi("MeUpdateVideoCommentBody");
+
+export const MeUpdateVideoCommentResponseSchema = z
+  .object({
+    data: z.object({
+      updateComment: z.any(),
+      newCommentMedia: z.array(z.any()),
+      deleteMedia: z.array(z.any()),
+    }),
+  })
+  .openapi("MeUpdateVideoCommentResponse");
 
 export const updateVideoComment = async (
   req: AuthenticatedRequest,

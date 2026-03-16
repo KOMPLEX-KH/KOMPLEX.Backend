@@ -7,6 +7,29 @@ import { videoReplies, videoReplyMedias, users } from "@/db/drizzle/schema.js";
 import { uploadVideoToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostVideoReplyParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MePostVideoReplyParams");
+
+export const MePostVideoReplyBodySchema = z
+  .object({
+    description: z.string(),
+  })
+  .openapi("MePostVideoReplyBody");
+
+export const MePostVideoReplyResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+      reply: z.any(),
+      newVideoReplyMedia: z.array(z.any()),
+    }),
+  })
+  .openapi("MePostVideoReplyResponse");
 
 export const postVideoReply = async (
   req: AuthenticatedRequest,

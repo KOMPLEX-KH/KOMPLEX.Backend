@@ -7,6 +7,29 @@ import { videoComments, videoCommentMedias, users } from "@/db/drizzle/schema.js
 import { uploadVideoToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MePostVideoCommentParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MePostVideoCommentParams");
+
+export const MePostVideoCommentBodySchema = z
+  .object({
+    description: z.string(),
+  })
+  .openapi("MePostVideoCommentBody");
+
+export const MePostVideoCommentResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+      comment: z.any(),
+      newCommentMedia: z.array(z.any()),
+    }),
+  })
+  .openapi("MePostVideoCommentResponse");
 
 export const postVideoComment = async (
   req: AuthenticatedRequest,
@@ -14,8 +37,8 @@ export const postVideoComment = async (
 ) => {
   try {
     const userId = req.user.userId;
-    const { description } = req.body;
-    const { id } = req.params;
+    const { id } = await MePostVideoCommentParamsSchema.parseAsync(req.params);
+    const { description } = await MePostVideoCommentBodySchema.parseAsync(req.body ?? {});
     const files = req.files as Express.Multer.File[] | undefined;
 
     if (!userId || !id || !description) {
