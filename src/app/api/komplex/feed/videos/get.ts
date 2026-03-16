@@ -133,8 +133,6 @@ export const getAllVideos = async (
           type: videos.type,
           topic: videos.topic,
           thumbnailUrl: videos.thumbnailUrl,
-          videoUrlForDeletion: videos.videoUrlForDeletion,
-          thumbnailUrlForDeletion: videos.thumbnailUrlForDeletion,
           viewCount: videos.viewCount,
           createdAt: videos.createdAt,
           updatedAt: videos.updatedAt,
@@ -235,7 +233,6 @@ export const getAllVideos = async (
     }));
 
     const responseBody = FeedVideoItemSchema.array().parse(videosWithMediaAndIsFollowing);
-    console.log("Response Body Video:", responseBody);
 
     return sendResponseSuccess(res, responseBody, "Videos fetched successfully", allVideos.length === limit);
   } catch (error) {

@@ -4,12 +4,52 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumReplies, forumReplyMedias } from "@/db/drizzle/schema.js";
-import {
-  uploadImageToCloudflare,
-  deleteFromCloudflare,
-} from "@/db/cloudflare/cloudflareFunction.js";
+import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+const ForumReplyMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
+
+export const MeUpdateForumReplyParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeUpdateForumReplyParams");
+
+export const MeUpdateForumReplyBodySchema = z
+  .object({
+    description: z.string(),
+    mediaKeys: z.array(ForumReplyMediaKeySchema).optional().default([]),
+    photosToRemove: z
+      .union([
+        z.string(),
+        z.array(
+          z.object({
+            url: z.string(),
+          })
+        ),
+      ])
+      .optional(),
+  })
+  .openapi("MeUpdateForumReplyBody");
+
+export const MeUpdateForumReplyResponseSchema = z
+  .object({
+    data: z.object({
+      updateReply: z.any(),
+      newReplyMedia: z.array(
+        z.object({
+          url: z.string(),
+          mediaType: z.string(),
+        })
+      ),
+    }),
+  })
+  .openapi("MeUpdateForumReplyResponse");
 
 export const updateForumReply = async (
   req: AuthenticatedRequest,
@@ -18,8 +58,17 @@ export const updateForumReply = async (
   try {
     const userId = req.user.userId;
     const { id } = req.params;
-    const { description, photosToRemove } = req.body;
-    const files = req.files as Express.Multer.File[] | undefined;
+    const body = req.body ?? {};
+    const description = body.description;
+    const mediaKeys: { key: string; url: string; mediaType: string }[] = Array.isArray(body.mediaKeys) ? body.mediaKeys : [];
+    let photosToRemoveParse: { url: string }[] = [];
+    if (body.photosToRemove) {
+      try {
+        photosToRemoveParse = typeof body.photosToRemove === "string" ? JSON.parse(body.photosToRemove) : body.photosToRemove;
+      } catch {
+        throw new ResponseError("Invalid photosToRemove format", 400);
+      }
+    }
 
     const doesUserOwnThisReply = await db
       .select()
@@ -36,29 +85,7 @@ export const updateForumReply = async (
       throw new ResponseError("Reply not found", 404);
     }
 
-    let photosToRemoveParse: { url: string }[] = [];
-    if (photosToRemove) {
-      try {
-        photosToRemoveParse = JSON.parse(photosToRemove);
-      } catch (err) {
-        throw new ResponseError("Invalid photosToRemove format", 400);
-      }
-    }
-
-    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+    if (photosToRemoveParse.length > 0) {
       for (const photoToRemove of photosToRemoveParse) {
         const [row] = await db
           .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
@@ -70,25 +97,27 @@ export const updateForumReply = async (
       }
     }
 
-    let newReplyMedia: any[] = [];
-    let deleteMedia: any[] = [];
+    let newReplyMedia: { url: string; mediaType: string }[] = [];
     const [updateReply] = await db.transaction(async (tx) => {
-      for (const { url, uniqueKey, mimetype } of uploads) {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumReplyMedias)
           .values({
             forumReplyId: Number(id),
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType: mediaType === "video" ? "video" : "image",
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newReplyMedia.push(media);
+        newReplyMedia.push({
+          url: media.url ?? "",
+          mediaType: (media.mediaType ?? "image") as string,
+        });
       }
 
-      if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+      if (photosToRemoveParse.length > 0) {
         for (const photoToRemove of photosToRemoveParse) {
           const [urlRow] = await tx
             .select({ urlForDeletion: forumReplyMedias.urlForDeletion })
@@ -100,16 +129,14 @@ export const updateForumReply = async (
               )
             );
           if (urlRow?.urlForDeletion) {
-            const deleted = await tx
+            await tx
               .delete(forumReplyMedias)
               .where(
                 and(
                   eq(forumReplyMedias.forumReplyId, Number(id)),
                   eq(forumReplyMedias.urlForDeletion, urlRow.urlForDeletion)
                 )
-              )
-              .returning();
-            deleteMedia = deleteMedia.concat(deleted);
+              );
           }
         }
       }
@@ -146,7 +173,7 @@ export const updateForumReply = async (
     );
 
     return res.status(200).json({
-      data: { updateReply, newReplyMedia, deleteMedia },
+      data: { updateReply, newReplyMedia },
     });
   } catch (error) {
     return sendResponseError(res, error);

@@ -12,17 +12,17 @@ import {
 } from "@/middleware/rateLimiter.js";
 import { getAllMyVideos, MeGetMyVideosQuerySchema, MeGetMyVideosResponseSchema } from "../../me/videos/get.js";
 import { postVideo, MePostVideoBodySchema, MePostVideoResponseSchema } from "../../me/videos/post.js";
-import { updateVideo } from "../../me/videos/[id]/put.js";
+import { updateVideo, MeUpdateVideoBodySchema, MeUpdateVideoResponseSchema } from "../../me/videos/[id]/put.js";
 import { deleteVideo, MeDeleteVideoParamsSchema, MeDeleteVideoResponseSchema } from "../../me/videos/[id]/delete.js";
 import { likeVideo } from "../../me/videos/[id]/like/patch.js";
 import { unlikeVideo } from "../../me/videos/[id]/unlike/patch.js";
-import { postVideoComment } from "../../me/videos/[id]/comments/post.js";
-import { updateVideoComment } from "../../me/videos/[id]/comments/[id]/put.js";
+import { postVideoComment, MePostVideoCommentBodySchema, MePostVideoCommentResponseSchema } from "../../me/videos/[id]/comments/post.js";
+import { updateVideoComment, MeUpdateVideoCommentBodySchema, MeUpdateVideoCommentResponseSchema } from "../../me/videos/[id]/comments/[id]/put.js";
 import { deleteVideoComment } from "../../me/videos/[id]/comments/[id]/delete.js";
 import { likeVideoComment } from "../../me/videos/[id]/comments/[id]/like/patch.js";
 import { unlikeVideoComment } from "../../me/videos/[id]/comments/[id]/unlike/patch.js";
-import { postVideoReply } from "../../me/videos/[id]/comments/[id]/replies/post.js";
-import { updateVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/put.js";
+import { postVideoReply, MePostVideoReplyBodySchema, MePostVideoReplyResponseSchema } from "../../me/videos/[id]/comments/[id]/replies/post.js";
+import { updateVideoReply, MeUpdateVideoReplyBodySchema, MeUpdateVideoReplyResponseSchema } from "../../me/videos/[id]/comments/[id]/replies/[id]/put.js";
 import { deleteVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/delete.js";
 import { likeVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/like/patch.js";
 import { unlikeVideoReply } from "../../me/videos/[id]/comments/[id]/replies/[id]/unlike/patch.js";
@@ -143,10 +143,11 @@ registerOpenApiRoute({
     path: "/komplex/me/videos/:id",
     summary: "Update a video",
     tag: "Me",
+    body: MeUpdateVideoBodySchema,
     responses: {
         200: {
             description: "Video updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateVideoResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -211,10 +212,11 @@ registerOpenApiRoute({
     path: "/komplex/me/videos/:id/comments",
     summary: "Post a video comment",
     tag: "Me",
+    body: MePostVideoCommentBodySchema,
     responses: {
         201: {
             description: "Comment posted successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MePostVideoCommentResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -228,10 +230,11 @@ registerOpenApiRoute({
     path: "/komplex/me/videos/:id/comments/:id",
     summary: "Update a video comment",
     tag: "Me",
+    body: MeUpdateVideoCommentBodySchema,
     responses: {
         200: {
             description: "Comment updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateVideoCommentResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -296,10 +299,11 @@ registerOpenApiRoute({
     path: "/komplex/me/videos/:id/comments/:id/replies",
     summary: "Post a video comment reply",
     tag: "Me",
+    body: MePostVideoReplyBodySchema,
     responses: {
         201: {
             description: "Reply posted successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MePostVideoReplyResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -313,10 +317,11 @@ registerOpenApiRoute({
     path: "/komplex/me/videos/:id/comments/:id/replies/:id",
     summary: "Update a video comment reply",
     tag: "Me",
+    body: MeUpdateVideoReplyBodySchema,
     responses: {
         200: {
             description: "Reply updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateVideoReplyResponseSchema),
         },
         400: {
             description: "Invalid input",

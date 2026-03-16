@@ -4,12 +4,52 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumComments, forumCommentMedias } from "@/db/drizzle/schema.js";
-import {
-  uploadImageToCloudflare,
-  deleteFromCloudflare,
-} from "@/db/cloudflare/cloudflareFunction.js";
+import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
+import { z } from "@/config/openapi/openapi.js";
+
+const ForumCommentMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
+
+export const MeUpdateForumCommentParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeUpdateForumCommentParams");
+
+export const MeUpdateForumCommentBodySchema = z
+  .object({
+    description: z.string(),
+    mediaKeys: z.array(ForumCommentMediaKeySchema).optional().default([]),
+    photosToRemove: z
+      .union([
+        z.string(),
+        z.array(
+          z.object({
+            url: z.string(),
+          })
+        ),
+      ])
+      .optional(),
+  })
+  .openapi("MeUpdateForumCommentBody");
+
+export const MeUpdateForumCommentResponseSchema = z
+  .object({
+    data: z.object({
+      updateComment: z.any(),
+      newCommentMedia: z.array(
+        z.object({
+          url: z.string(),
+          mediaType: z.string(),
+        })
+      ),
+    }),
+  })
+  .openapi("MeUpdateForumCommentResponse");
 
 export const updateForumComment = async (
   req: AuthenticatedRequest,
@@ -18,8 +58,17 @@ export const updateForumComment = async (
   try {
     const userId = req.user.userId;
     const { id } = req.params;
-    const { description, photosToRemove } = req.body;
-    const files = req.files as Express.Multer.File[] | undefined;
+    const body = req.body ?? {};
+    const description = body.description;
+    const mediaKeys: { key: string; url: string; mediaType: string }[] = Array.isArray(body.mediaKeys) ? body.mediaKeys : [];
+    let photosToRemoveParse: { url: string }[] = [];
+    if (body.photosToRemove) {
+      try {
+        photosToRemoveParse = typeof body.photosToRemove === "string" ? JSON.parse(body.photosToRemove) : body.photosToRemove;
+      } catch {
+        throw new ResponseError("Invalid photosToRemove format", 400);
+      }
+    }
 
     const doesUserOwnThisComment = await db
       .select()
@@ -36,29 +85,7 @@ export const updateForumComment = async (
       throw new ResponseError("Comment not found", 404);
     }
 
-    let photosToRemoveParse: { url: string }[] = [];
-    if (photosToRemove) {
-      try {
-        photosToRemoveParse = JSON.parse(photosToRemove);
-      } catch (err) {
-        throw new ResponseError("Invalid photosToRemove format", 400);
-      }
-    }
-
-    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${id}-${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+    if (photosToRemoveParse.length > 0) {
       for (const photoToRemove of photosToRemoveParse) {
         const [row] = await db
           .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
@@ -70,25 +97,27 @@ export const updateForumComment = async (
       }
     }
 
-    let newCommentMedia: any[] = [];
-    let deleteMedia: any[] = [];
+    let newCommentMedia: { url: string; mediaType: string }[] = [];
     const [updateComment] = await db.transaction(async (tx) => {
-      for (const { url, uniqueKey, mimetype } of uploads) {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumCommentMedias)
           .values({
             forumCommentId: Number(id),
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType: mediaType === "video" ? "video" : "image",
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newCommentMedia.push(media);
+        newCommentMedia.push({
+          url: media.url ?? "",
+          mediaType: (media.mediaType ?? "image") as string,
+        });
       }
 
-      if (photosToRemoveParse && photosToRemoveParse.length > 0) {
+      if (photosToRemoveParse.length > 0) {
         for (const photoToRemove of photosToRemoveParse) {
           const [urlRow] = await tx
             .select({ urlForDeletion: forumCommentMedias.urlForDeletion })
@@ -100,16 +129,14 @@ export const updateForumComment = async (
               )
             );
           if (urlRow?.urlForDeletion) {
-            const deleted = await tx
+            await tx
               .delete(forumCommentMedias)
               .where(
                 and(
                   eq(forumCommentMedias.forumCommentId, Number(id)),
                   eq(forumCommentMedias.urlForDeletion, urlRow.urlForDeletion)
                 )
-              )
-              .returning();
-            deleteMedia = deleteMedia.concat(deleted);
+              );
           }
         }
       }
@@ -144,7 +171,7 @@ export const updateForumComment = async (
     await redis.del(`forumComments:forum:${updateComment.forumId}:lastPage`);
 
     return res.status(200).json({
-      data: { updateComment, newCommentMedia, deleteMedia },
+      data: { updateComment, newCommentMedia },
     });
   } catch (error) {
     return sendResponseError(res, error);

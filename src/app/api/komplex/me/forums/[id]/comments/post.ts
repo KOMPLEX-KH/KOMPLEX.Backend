@@ -4,10 +4,14 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forumComments, forumCommentMedias, users } from "@/db/drizzle/schema.js";
-import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
+
+const ForumMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
 
 export const MePostForumCommentParamsSchema = z
   .object({
@@ -18,6 +22,7 @@ export const MePostForumCommentParamsSchema = z
 export const MePostForumCommentBodySchema = z
   .object({
     description: z.string(),
+    mediaKeys: z.array(ForumMediaKeySchema).optional().default([]),
   })
   .openapi("MePostForumCommentBody");
 
@@ -50,30 +55,16 @@ export const postForumComment = async (
   try {
     const userId = req.user.userId;
     const { id } = await MePostForumCommentParamsSchema.parseAsync(req.params);
-    const { description } = await MePostForumCommentBodySchema.parseAsync(
-      req.body
+    const { description, mediaKeys } = await MePostForumCommentBodySchema.parseAsync(
+      req.body ?? {}
     );
-    const files = req.files as Express.Multer.File[] | undefined;
     const limit = 40;
 
     if (!userId) {
       throw new ResponseError("Missing required user", 400);
     }
 
-    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    let newCommentMedia: any[] = [];
+    const newCommentMedia: { url: string; mediaType: string }[] = [];
     const [newForumComment] = await db.transaction(async (tx) => {
       const [comment] = await tx
         .insert(forumComments)
@@ -86,19 +77,19 @@ export const postForumComment = async (
         })
         .returning();
 
-      for (const { url, uniqueKey, mimetype } of uploads) {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumCommentMedias)
           .values({
             forumCommentId: comment.id,
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType,
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newCommentMedia.push(media);
+        newCommentMedia.push({ url: media.url ?? '', mediaType: (media.mediaType ?? "image") });
       }
       return [comment];
     });
@@ -118,13 +109,10 @@ export const postForumComment = async (
       description: newForumComment.description,
       createdAt: newForumComment.createdAt,
       updatedAt: newForumComment.updatedAt,
-      username: username.firstName + " " + username.lastName,
-      profileImage: username.profileImage,
+      username: `${username?.firstName ?? ""} ${username?.lastName ?? ""}`.trim(),
+      profileImage: username?.profileImage ?? undefined,
       isSave: false,
-      media: newCommentMedia.map((m) => ({
-        url: m.url,
-        type: m.mediaType,
-      })),
+      media: newCommentMedia.map((m) => ({ url: m.url, type: m.mediaType })),
     };
 
     let { currentCommentAmount, lastPage } = JSON.parse(

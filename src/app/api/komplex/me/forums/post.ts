@@ -4,11 +4,15 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
-import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
-import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
+
+const ForumMediaKeySchema = z.object({
+  key: z.string(),
+  url: z.string(),
+  mediaType: z.enum(["image", "video"]),
+});
 
 export const MePostForumBodySchema = z
   .object({
@@ -16,6 +20,7 @@ export const MePostForumBodySchema = z
     description: z.string(),
     type: z.string().optional(),
     topic: z.string().optional(),
+    mediaKeys: z.array(ForumMediaKeySchema).optional().default([]),
   })
   .openapi("MePostForumBody");
 
@@ -25,35 +30,14 @@ export const postForum = async (
 ) => {
   try {
     const userId = req.user.userId;
-    // Form data: multer puts text fields in req.body; ensure we don't destructure undefined
-    const body = req.body ?? {};
-    const { title, description, type, topic } = await MePostForumBodySchema.parseAsync({
-      title: body.title,
-      description: body.description,
-      type: body.type,
-      topic: body.topic,
-    });
-    const files = req.files as Express.Multer.File[] | undefined;
+    const { title, description, type, topic, mediaKeys } = await MePostForumBodySchema.parseAsync(req.body ?? {});
 
     if (!userId) {
       sendResponseError(res, new ResponseError("Missing required user", 400));
       return;
     }
 
-    const uploads: { url: string; uniqueKey: string; mimetype: string }[] = [];
-    if (files) {
-      for (const file of files) {
-        const uniqueKey = `${crypto.randomUUID()}-${file.originalname}`;
-        const url = await uploadImageToCloudflare(
-          uniqueKey,
-          file.buffer,
-          file.mimetype
-        );
-        uploads.push({ url, uniqueKey, mimetype: file.mimetype });
-      }
-    }
-
-    let newForumMedia: any[] = [];
+    const newForumMedia: { id: number; url: string; mediaType: string }[] = [];
     const [newForum] = await db.transaction(async (tx) => {
       const [forum] = await tx
         .insert(forums)
@@ -69,19 +53,19 @@ export const postForum = async (
         })
         .returning();
 
-      for (const { url, uniqueKey, mimetype } of uploads) {
+      for (const { key, url, mediaType } of mediaKeys) {
         const [media] = await tx
           .insert(forumMedias)
           .values({
             forumId: forum.id,
             url,
-            urlForDeletion: uniqueKey,
-            mediaType: mimetype.startsWith("video") ? "video" : "image",
+            urlForDeletion: key,
+            mediaType,
             createdAt: new Date(),
             updatedAt: new Date(),
           })
           .returning();
-        newForumMedia.push(media);
+        newForumMedia.push({ id: media.id, url: media.url ?? '', mediaType: (media.mediaType ?? "image") as string });
       }
       return [forum];
     });
@@ -101,12 +85,9 @@ export const postForum = async (
       viewCount: newForum.viewCount,
       createdAt: newForum.createdAt,
       updatedAt: newForum.updatedAt,
-      username: username.firstName + " " + username.lastName,
+      username: username ? `${username.firstName ?? ""} ${username.lastName ?? ""}`.trim() : "",
       isSave: false,
-      media: newForumMedia.map((m) => ({
-        url: m.url,
-        type: m.mediaType,
-      })),
+      media: newForumMedia.map((m) => ({ url: m.url, type: m.mediaType })),
     };
 
     const redisKey = `forums:${newForum.id}`;

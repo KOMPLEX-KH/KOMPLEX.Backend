@@ -15,6 +15,47 @@ import {
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
 import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
+import { z } from "@/config/openapi/openapi.js";
+
+export const MeUpdateVideoParamsSchema = z
+  .object({
+    id: z.string(),
+  })
+  .openapi("MeUpdateVideoParams");
+
+export const MeUpdateVideoChoiceSchema = z
+  .object({
+    id: z.number().optional(),
+    text: z.string(),
+    isCorrect: z.boolean(),
+  })
+  .openapi("MeUpdateVideoChoice");
+
+export const MeUpdateVideoQuestionSchema = z
+  .object({
+    id: z.number().optional(),
+    title: z.string(),
+    choices: z.array(MeUpdateVideoChoiceSchema),
+  })
+  .openapi("MeUpdateVideoQuestion");
+
+export const MeUpdateVideoBodySchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    videoKey: z.string().optional(),
+    thumbnailKey: z.string().optional(),
+    questions: z.array(MeUpdateVideoQuestionSchema).optional(),
+  })
+  .openapi("MeUpdateVideoBody");
+
+export const MeUpdateVideoResponseSchema = z
+  .object({
+    data: z.object({
+      success: z.literal(true),
+    }),
+  })
+  .openapi("MeUpdateVideoResponse");
 
 export const updateVideo = async (
   req: AuthenticatedRequest,
@@ -186,8 +227,6 @@ export const updateVideo = async (
         duration: videos.duration,
         videoUrl: videos.videoUrl,
         thumbnailUrl: videos.thumbnailUrl,
-        videoUrlForDeletion: videos.videoUrlForDeletion,
-        thumbnailUrlForDeletion: videos.thumbnailUrlForDeletion,
         viewCount: videos.viewCount,
         createdAt: videos.createdAt,
         updatedAt: videos.updatedAt,

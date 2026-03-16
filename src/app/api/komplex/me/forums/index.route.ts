@@ -1,6 +1,5 @@
 import Router from "express";
 import { verifyFirebaseToken } from "@/middleware/auth.js";
-import { uploadImages } from "@/middleware/upload.js";
 import {
     getBigContentRateLimiter,
     postBigRateLimiter,
@@ -10,17 +9,17 @@ import {
 } from "@/middleware/rateLimiter.js";
 import { getAllForums as getAllMyForums, MeGetForumsQuerySchema } from "../../me/forums/get.js";
 import { postForum, MePostForumBodySchema } from "../../me/forums/post.js";
-import { updateForum } from "../../me/forums/[id]/put.js";
+import { updateForum, MeUpdateForumBodySchema, MeUpdateForumResponseSchema } from "../../me/forums/[id]/put.js";
 import { deleteForum } from "../../me/forums/[id]/delete.js";
 import { likeForum } from "../../me/forums/[id]/like/patch.js";
 import { unlikeForum } from "../../me/forums/[id]/unlike/patch.js";
 import { postForumComment, MePostForumCommentBodySchema } from "../../me/forums/[id]/comments/post.js";
-import { updateForumComment } from "../../me/forums/[id]/comments/[id]/put.js";
+import { updateForumComment, MeUpdateForumCommentBodySchema, MeUpdateForumCommentResponseSchema } from "../../me/forums/[id]/comments/[id]/put.js";
 import { deleteForumComment } from "../../me/forums/[id]/comments/[id]/delete.js";
 import { likeForumComment } from "../../me/forums/[id]/comments/[id]/like/patch.js";
 import { unlikeForumComment } from "../../me/forums/[id]/comments/[id]/unlike/patch.js";
-import { postForumReply } from "../../me/forums/[id]/comments/[id]/replies/post.js";
-import { updateForumReply } from "../../me/forums/[id]/comments/[id]/replies/[id]/put.js";
+import { postForumReply, MePostForumReplyBodySchema, MePostForumReplyResponseSchema } from "../../me/forums/[id]/comments/[id]/replies/post.js";
+import { updateForumReply, MeUpdateForumReplyBodySchema, MeUpdateForumReplyResponseSchema } from "../../me/forums/[id]/comments/[id]/replies/[id]/put.js";
 import { deleteForumReply } from "../../me/forums/[id]/comments/[id]/replies/[id]/delete.js";
 import { likeForumReply } from "../../me/forums/[id]/comments/[id]/replies/[id]/like/patch.js";
 import { unlikeForumReply } from "../../me/forums/[id]/comments/[id]/replies/[id]/unlike/patch.js";
@@ -34,7 +33,7 @@ const router = Router();
 // Me Forums Routes
 // ============================================================================
 router.get("", verifyFirebaseToken as any, getBigContentRateLimiter, getAllMyForums as any);
-router.post("", verifyFirebaseToken as any, postBigRateLimiter, uploadImages.any(), postForum as any);
+router.post("", verifyFirebaseToken as any, postBigRateLimiter, postForum as any);
 router.put("/:id", verifyFirebaseToken as any, updateBigRateLimiter, updateForum as any);
 router.delete("/:id", verifyFirebaseToken as any, deleteBigRateLimiter, deleteForum as any);
 router.patch("/:id/like", verifyFirebaseToken as any, updateSmallRateLimiter, likeForum as any);
@@ -141,10 +140,11 @@ registerOpenApiRoute({
     path: "/komplex/me/forums/:id",
     summary: "Update a forum",
     tag: "Me",
+    body: MeUpdateForumBodySchema,
     responses: {
         200: {
             description: "Forum updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateForumResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -227,10 +227,11 @@ registerOpenApiRoute({
     path: "/komplex/me/forums/:id/comments/:id",
     summary: "Update a forum comment",
     tag: "Me",
+    body: MeUpdateForumCommentBodySchema,
     responses: {
         200: {
             description: "Comment updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateForumCommentResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -295,10 +296,11 @@ registerOpenApiRoute({
     path: "/komplex/me/forums/:id/comments/:id/replies",
     summary: "Post a forum comment reply",
     tag: "Me",
+    body: MePostForumReplyBodySchema,
     responses: {
         201: {
             description: "Reply posted successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MePostForumReplyResponseSchema),
         },
         400: {
             description: "Invalid input",
@@ -312,10 +314,11 @@ registerOpenApiRoute({
     path: "/komplex/me/forums/:id/comments/:id/replies/:id",
     summary: "Update a forum comment reply",
     tag: "Me",
+    body: MeUpdateForumReplyBodySchema,
     responses: {
         200: {
             description: "Reply updated successfully",
-            schema: getResponseSuccessSchema(z.any()),
+            schema: getResponseSuccessSchema(MeUpdateForumReplyResponseSchema),
         },
         400: {
             description: "Invalid input",
