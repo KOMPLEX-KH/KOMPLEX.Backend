@@ -8,7 +8,8 @@ import { eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { z } from "@/config/openapi/openapi.js";
-import { grpcClient } from "@/server.js";
+import { grpcClient } from "@/config/grpc.js";
+import type { AiResponse, TopicRequest } from "@/types/grpc.js";
 
 export const MeCallAiTopicParamsSchema = z
   .object({
@@ -90,16 +91,18 @@ export const callAiTopicAndWriteToTopicHistory = async (
         return topicContent + historyContext;
       });
 
-    const response: Promise<any> = new Promise((resolve, reject) => {
+    const requestPayload: TopicRequest = {
+      prompt,
+      topic_content: topicContent,
+      previous_context: previousContext,
+      response_type: responseType,
+      api_key: process.env.INTERNAL_API_KEY ?? "",
+    };
+
+    const response: Promise<AiResponse> = new Promise((resolve, reject) => {
       grpcClient.ExplainTopic(
-        {
-          prompt,
-          topic_content: topicContent,
-          previous_context: previousContext,
-          response_type: responseType,
-          api_key: process.env.INTERNAL_API_KEY
-        },
-        (err: Error | null, resp: any) => {
+        requestPayload,
+        (err: Error | null, resp: AiResponse) => {
           if (err) return reject(err);
           resolve(resp);
         }

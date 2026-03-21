@@ -9,7 +9,8 @@ import { and, eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { z } from "@/config/openapi/openapi.js";
-import { grpcClient } from "@/server.js";
+import { grpcClient } from "@/config/grpc.js";
+import type { AiResponse, GeminiRequest } from "@/types/grpc.js";
 
 export const MePostAiGeneralParamsSchema = z
   .object({
@@ -104,15 +105,17 @@ const callAiGeneralServiceInternal = async (
         EX: 60 * 60 * 24,
       });
     }
-    const response: Promise<any> = new Promise((resolve, reject) => {
+    const requestPayload: GeminiRequest = {
+      prompt,
+      previous_context: JSON.stringify(previousContext ?? ""),
+      response_type: responseType,
+      api_key: process.env.INTERNAL_API_KEY ?? "",
+    };
+
+    const response: Promise<AiResponse> = new Promise((resolve, reject) => {
       grpcClient.ExplainGemini(
-        {
-          prompt,
-          previous_context: previousContext,
-          response_type: responseType,
-          api_key: process.env.INTERNAL_API_KEY,
-        },
-        (err: Error | null, resp: any) => {
+        requestPayload,
+        (err: Error | null, resp: AiResponse) => {
           if (err) return reject(err);
           resolve(resp);
         }
