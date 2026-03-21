@@ -72,6 +72,6 @@ if (!grpcObject.ai?.AIService) {
 }
 
 export const grpcClient = new grpcObject.ai.AIService(
-  "localhost:50051",
+  process.env.DARA_GRPC_URL ?? 'localhost:50051',
   grpc.credentials.createInsecure()
 );
