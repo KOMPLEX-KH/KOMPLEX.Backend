@@ -1,8 +1,16 @@
 import dotenv from "dotenv";
 import { redis } from "./db/redis/redis.js";
 import { createApp } from "./app.js";
+import path from "path";
+import { fileURLToPath } from "url";
+// top of index.mjs
+import grpc from "@grpc/grpc-js";
+import protoLoader from "@grpc/proto-loader";
 
 dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const protoPath = path.join(__dirname, "../ai.proto");
 
 try {
   await redis.connect();
@@ -40,3 +48,30 @@ process.on("SIGINT", () => {
   console.log(" SIGINT received, shutting down gracefully");
   process.exit(0);
 });
+
+
+
+type AiGrpcDefinition = grpc.GrpcObject & {
+  ai: grpc.GrpcObject & {
+    AIService: grpc.ServiceClientConstructor;
+  };
+};
+
+const packageDef = protoLoader.loadSync(protoPath, {
+  keepCase: true,
+  longs: String,
+  enums: String,
+  defaults: true,
+  oneofs: true,
+});
+
+const grpcObject = grpc.loadPackageDefinition(packageDef) as AiGrpcDefinition;
+
+if (!grpcObject.ai?.AIService) {
+  throw new Error("AIService not found in loaded gRPC package definition");
+}
+
+export const grpcClient = new grpcObject.ai.AIService(
+  "localhost:50051",
+  grpc.credentials.createInsecure()
+);

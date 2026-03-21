@@ -9,6 +9,7 @@ import { and, eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
 import { z } from "@/config/openapi/openapi.js";
+import { grpcClient } from "@/server.js";
 
 export const MePostAiGeneralParamsSchema = z
   .object({
@@ -103,21 +104,21 @@ const callAiGeneralServiceInternal = async (
         EX: 60 * 60 * 24,
       });
     }
-    const response = await axios.post(
-      `${process.env.DARA_ENDPOINT}/gemini`,
-      {
-        prompt,
-        responseType,
-        previousContext,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.INTERNAL_API_KEY,
+    const response: Promise<any> = new Promise((resolve, reject) => {
+      grpcClient.ExplainGemini(
+        {
+          prompt,
+          previous_context: previousContext,
+          response_type: responseType,
+          api_key: process.env.INTERNAL_API_KEY,
         },
-      }
-    );
-    const result = response.data;
+        (err: Error | null, resp: any) => {
+          if (err) return reject(err);
+          resolve(resp);
+        }
+      );
+    });
+    const result = await response;
     const aiResult = cleanKomplexResponse(
       result.result,
       responseType as "normal" | "komplex"
