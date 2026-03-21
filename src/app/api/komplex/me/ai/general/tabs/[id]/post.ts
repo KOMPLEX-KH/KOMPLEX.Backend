@@ -4,7 +4,6 @@ import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/r
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { userAIHistory } from "@/db/drizzle/schema.js";
-import { userAiTabs } from "@/db/drizzle/models/user_ai_tabs.js";
 import { and, eq, desc } from "drizzle-orm";
 import axios from "axios";
 import { cleanKomplexResponse } from "@/utils/cleanKomplexResponse.js";
@@ -26,7 +25,7 @@ export const MePostAiGeneralBodySchema = z
 export const MePostAiGeneralResponseSchema = z
   .object({
     prompt: z.string(),
-    aiResult: z.string(),
+    aiResult: z.string().nullable(),
     responseType: z.string(),
     id: z.number().optional(),
   })
@@ -104,11 +103,11 @@ const callAiGeneralServiceInternal = async (
       });
     }
     const response = await axios.post(
-      `${process.env.DARA_ENDPOINT}/gemini`,
+      `${process.env.DARA_ENDPOINT}/ask`,
       {
         prompt,
-        responseType,
-        previousContext,
+        response_type: responseType,
+        previous_context: previousContext,
       },
       {
         headers: {
@@ -118,6 +117,9 @@ const callAiGeneralServiceInternal = async (
       }
     );
     const result = response.data;
+    if (result.error) {
+      throw new ResponseError(result.error, 500);
+    }
     const aiResult = cleanKomplexResponse(
       result.result,
       responseType as "normal" | "komplex"
