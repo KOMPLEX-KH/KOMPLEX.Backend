@@ -10,7 +10,6 @@ import {
   questions as questionsTable,
   choices,
 } from "@/db/drizzle/schema.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -156,12 +155,6 @@ export const postVideo = async (
     };
     const redisKey = `videos:${newVideo[0].id}`;
 
-    const meilisearchData = {
-      id: videoWithMedia.id,
-      title: videoWithMedia.title,
-      description: videoWithMedia.description,
-    };
-    await meilisearch.index("videos").addDocuments([meilisearchData]);
 
     if (questions && questions.length > 0) {
       let exercise = {

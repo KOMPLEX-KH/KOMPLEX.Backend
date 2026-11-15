@@ -5,7 +5,6 @@ import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { forums, forumMedias, users } from "@/db/drizzle/schema.js";
 import { uploadImageToCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, sendResponseSuccess, ResponseError } from "@/utils/response.js";
 import crypto from "crypto";
 import { z } from "@/config/openapi/openapi.js";
@@ -110,13 +109,7 @@ export const postForum = async (
     };
 
     const redisKey = `forums:${newForum.id}`;
-    const meilisearchData = {
-      id: forumWithMedia.id,
-      title: forumWithMedia.title,
-      description: forumWithMedia.description,
-    };
 
-    await meilisearch.index("forums").addDocuments([meilisearchData]);
     await redis.set(redisKey, JSON.stringify(forumWithMedia), { EX: 600 });
     await redis.del(`dashboardData:${userId}`);
 

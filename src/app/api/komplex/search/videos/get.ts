@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle/index.js";
 import { videos } from "@/db/drizzle/models/videos.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers, users, userSavedVideos, videoLikes } from "@/db/drizzle/schema.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
+import { searchIds } from "@/db/search/searchIds.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -41,7 +41,7 @@ export const searchVideos = async (
       return sendResponseError(res, new ResponseError("Query parameter is required", 400));
     }
 
-    const searchResults = await meilisearch.index("videos").search(query as string, {
+    const searchResults = await searchIds(videos, query as string, {
       limit: Number(limit),
       offset: Number(offset),
     });

@@ -34,7 +34,7 @@ Built with the philosophy of platforms like **W3Schools**, we believe learning s
 - **Media**: File upload and management system
 
 ### 🔍 Advanced Search
-- **Lightning Fast**: Powered by Meilisearch
+- **Search**: Plain PostgreSQL text search (no extra search server)
 - **Full-Text Search**: Search across blogs, forums, and videos
 - **Intelligent Indexing**: Smart content discovery
 
@@ -92,7 +92,6 @@ Komplex_Backend/
     │           ├── dashboard.route.ts
     │           └── ...       # Other admin routes
     ├── config/
-    │   ├── meilisearchConfig.ts     # Meilisearch setup
     │   ├── swagger.ts               # Swagger/OpenAPI config
     │   └── firebase/admin.ts        # Firebase admin SDK
     ├── db/
@@ -214,31 +213,15 @@ FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----\n"
 
 
-# Option 1: If using hosted Meilisearch
-MEILI_HOST_URL=https://your-meilisearch-host.com
-
-# Option 2: If using local Meilisearch
-MEILI_HOST_URL=http://localhost:7700
 ```
 
 ---
 
 ## 🛠️ Database Setup
 
-### 1. Set up Meilisearch
+### 1. Seed the Database
 
-```bash
-docker run -d \
-  --name meilisearch \
-  -p 7700:7700 \
-  -v $(pwd)/meili_data:/meili_data \
-  getmeili/meilisearch:v1.5 \
-  meilisearch --db-path /meili_data --master-key=your-master-key
-```
-
-### 2. Seed the Database
-
-Once your server is running, initialize the database and search index:
+Once your server is running, seed the database:
 
 #### Using Thunder Client or Postman
 
@@ -246,17 +229,11 @@ Once your server is running, initialize the database and search index:
    - Method: `GET`
    - URL: `http://localhost:3000/seedDb`
 
-2. **Seed Search Index**:
-   - Method: `GET`
-   - URL: `http://localhost:3000/seedSearch`
 
 #### Using cURL
 ```bash
 # Seed the database
 curl -X GET "http://localhost:3000/seedDb"
-
-# Seed the search engine
-curl -X GET "http://localhost:3000/seedSearch"
 ```
 
 ---
@@ -437,10 +414,9 @@ curl -X GET "http://localhost:3000/seedSearch"
 
 1. **PostgreSQL Database** (NeonDB recommended for production)
 2. **Redis** (for caching and rate limiting)
-3. **Meilisearch** (for search functionality)
-4. **Firebase** (for authentication)
-5. **Cloudflare R2** (for media storage)
-6. **[Komplex AI](https://github.com/salxz696969/Komplex_Ai)** (for AI-powered features)
+3. **Firebase** (for authentication)
+4. **Cloudflare R2** (for media storage)
+5. **[Komplex AI](https://github.com/salxz696969/Komplex_Ai)** (for AI-powered features)
 
 ---
 

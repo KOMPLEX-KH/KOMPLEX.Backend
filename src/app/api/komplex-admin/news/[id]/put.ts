@@ -9,7 +9,6 @@ import {
   deleteFromCloudflare,
 } from "@/db/cloudflare/cloudflareFunction.js";
 import { redis } from "@/db/redis/redis.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import crypto from "crypto";
 
 import { z } from "@/config/openapi/openapi.js";
@@ -174,14 +173,6 @@ export const updateNews = async (req: AuthenticatedRequest, res: Response) => {
     await redis.set(`news:${id}`, JSON.stringify(newsWithMedia), { EX: 600 });
     await redis.del(`dashboardData:${userId}`);
 
-    const meilisearchData = {
-      id: newsWithMedia.id,
-      title: newsWithMedia.title,
-      description: newsWithMedia.description,
-      type: newsWithMedia.type,
-      topic: newsWithMedia.topic,
-    };
-    await meilisearch.index("news").addDocuments([meilisearchData]);
 
     const responseBody = AdminUpdateNewsResponseSchema.parse(updatedNews);
 

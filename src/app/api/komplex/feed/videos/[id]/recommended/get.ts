@@ -4,7 +4,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/drizzle/index.js";
 import { redis } from "@/db/redis/redis.js";
 import { videos, users, userSavedVideos, videoLikes } from "@/db/drizzle/schema.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
+import { searchIds } from "@/db/search/searchIds.js";
 import { sendResponseError, sendResponseSuccess } from "@/utils/response.js";
 import { z } from "@/config/openapi/openapi.js";
 
@@ -72,7 +72,7 @@ export const getRecommendedVideos = async (
       await redis.set(cacheVideoKey, JSON.stringify(videoRow), { EX: 600 });
     }
 
-    const searchResults = await meilisearch.index("videos").search(query, {
+    const searchResults = await searchIds(videos, query, {
       limit: limitNum,
       offset: offsetNum,
     });

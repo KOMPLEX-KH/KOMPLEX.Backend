@@ -6,7 +6,7 @@ import { newsMedia } from "@/db/drizzle/models/news_medias.js";
 import { news } from "@/db/drizzle/models/news.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers, users, userSavedNews } from "@/db/drizzle/schema.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
+import { searchIds } from "@/db/search/searchIds.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
@@ -39,7 +39,7 @@ export const searchNews = async (
       return sendResponseError(res, new ResponseError("Query parameter is required", 400));
     }
 
-    const searchResults = await meilisearch.index("news").search(query as string, {
+    const searchResults = await searchIds(news, query as string, {
       limit: Number(limit),
       offset: Number(offset),
     });

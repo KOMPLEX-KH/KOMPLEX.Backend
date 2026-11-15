@@ -1,4 +1,3 @@
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { db } from "@/db/drizzle/index.js";
 import {
   newsMedia,
@@ -26,50 +25,6 @@ import {
 } from "./data.js";
 import { faker } from "@faker-js/faker";
 import { Response, Request } from "express";
-
-export const seedSearchTask = async () => {
-  // const videosFromDb = await db
-  //   .select({
-  //     id: videos.id,
-  //     title: videos.title,
-  //     description: videos.description,
-  //   })
-  //   .from(videos);
-
-  // const forumsFromDb = await db
-  //   .select({
-  //     id: forums.id,
-  //     title: forums.title,
-  //     description: forums.description,
-  //   })
-  //   .from(forums);
-
-  // await meilisearch.index("videos").addDocuments(videosFromDb);
-  // await meilisearch.index("forums").addDocuments(forumsFromDb);
-
-  const newsFromDb = await db
-    .select({
-      id: news.id,
-      title: news.title,
-      description: news.description,
-    })
-    .from(news);
-  await meilisearch.index("news").addDocuments(newsFromDb);
-  return {
-    newsIndexed: newsFromDb.length,
-  };
-};
-
-export const seedSearch = async (req: Request, res: Response) => {
-  try {
-    const result = await seedSearchTask();
-    res
-      .status(200)
-      .json({ message: "Meilisearch seeded successfully", ...result });
-  } catch (error) {
-    res.status(500).json({ message: "Error seeding Meilisearch", error });
-  }
-};
 
 export const seedDb = async (req: Request, res: Response) => {
   try {

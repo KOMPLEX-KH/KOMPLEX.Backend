@@ -13,7 +13,6 @@ import {
   choices,
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 
 export const updateVideo = async (
@@ -225,12 +224,6 @@ export const updateVideo = async (
       );
     const cacheVideoKey = `video:${videoRow.id}`;
     await redis.set(cacheVideoKey, JSON.stringify(videoRow), { EX: 600 });
-    const meilisearchData = {
-      id: videoRow.id,
-      title: videoRow.title,
-      description: videoRow.description,
-    };
-    await meilisearch.index("videos").addDocuments([meilisearchData]);
 
     if (Array.isArray(questionsPayload) && questionsPayload.length > 0) {
       const videoExercisesRows = await db

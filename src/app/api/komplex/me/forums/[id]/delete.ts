@@ -10,7 +10,6 @@ import {
   forumReplies,
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { deleteReply } from "./comments/[id]/replies/[id]/delete.js";
 import { deleteComment } from "./comments/[id]/delete.js";
@@ -106,7 +105,6 @@ export const deleteForum = async (
     }
     await redis.del(`dashboardData:${userId}`);
 
-    await meilisearch.index("forums").deleteDocument(String(id));
 
     const responseBody = MeDeleteForumResponseSchema.parse({
       data: {

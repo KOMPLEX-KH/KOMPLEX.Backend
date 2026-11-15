@@ -14,7 +14,6 @@ import {
   userVideoHistory,
 } from "@/db/drizzle/schema.js";
 import { deleteFromCloudflare } from "@/db/cloudflare/cloudflareFunction.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
 import { sendResponseError, ResponseError } from "@/utils/response.js";
 import { deleteVideoCommentInternal } from "./comments/[id]/delete.js";
 import { z } from "@/config/openapi/openapi.js";
@@ -148,7 +147,6 @@ export const deleteVideo = async (
     }
     await redis.del(`dashboardData:${userId}`);
 
-    await meilisearch.index("videos").deleteDocument(String(id));
 
     const responseBody = MeDeleteVideoResponseSchema.parse({
       data: deletedVideo,

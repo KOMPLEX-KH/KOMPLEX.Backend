@@ -6,7 +6,7 @@ import { forumMedias } from "@/db/drizzle/models/forum_medias.js";
 import { forums } from "@/db/drizzle/models/forums.js";
 import { redis } from "@/db/redis/redis.js";
 import { followers, forumLikes, users } from "@/db/drizzle/schema.js";
-import { meilisearch } from "@/config/meilisearch/meilisearchConfig.js";
+import { searchIds } from "@/db/search/searchIds.js";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "@/config/openapi/openapi.js";
 import { MediaSchema } from "@/types/zod/media.schema.js";
@@ -36,7 +36,7 @@ export const searchForums = async (req: AuthenticatedRequest, res: Response) => 
       return sendResponseError(res, new ResponseError("Query parameter is required", 400));
     }
 
-    const searchResults = await meilisearch.index("forums").search(query as string, {
+    const searchResults = await searchIds(forums, query as string, {
       limit: Number(limit),
       offset: Number(offset),
     });
