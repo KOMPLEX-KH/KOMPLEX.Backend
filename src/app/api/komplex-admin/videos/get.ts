@@ -33,8 +33,8 @@ export const AdminVideoWithStatsSchema = z
     replyCount: z.number(),
     saveCount: z.number(),
     username: z.string().nullable().optional(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
   })
   .openapi("AdminVideoWithStatsItem");
 

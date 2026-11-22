@@ -11,7 +11,7 @@ import { FeedNewsItemSchema } from "../get.js";
 import { z } from "@/config/openapi/openapi.js";
 
 export const GetNewsByIdParamsSchema = z.object({
-  id: z.number(),
+  id: z.coerce.number(),
 }).openapi("GetNewsByIdParams");
 
 export const getNewsById = async (

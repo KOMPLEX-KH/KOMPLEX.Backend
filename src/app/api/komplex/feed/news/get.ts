@@ -193,14 +193,13 @@ export const getAllNews = async (
             : sql`false`,
       })
       .from(news)
+      // Guests (userId 0) match no saved rows; the join still needs an ON clause.
       .leftJoin(
         userSavedNews,
-        userId && Number(userId) > 0
-          ? and(
-            eq(userSavedNews.newsId, news.id),
-            eq(userSavedNews.userId, Number(userId))
-          )
-          : undefined
+        and(
+          eq(userSavedNews.newsId, news.id),
+          eq(userSavedNews.userId, Number(userId) || 0)
+        )
       )
       .where(
         inArray(

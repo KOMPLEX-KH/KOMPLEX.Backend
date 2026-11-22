@@ -15,9 +15,9 @@ export const NoteItemSchema = z.object({
   tags: z.any().nullable().optional(),
   isArchived: z.boolean(),
   isPinned: z.boolean(),
-  reminderAt: z.date().nullable().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  reminderAt: z.coerce.date().nullable().optional(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const MeNotesResponseSchema = z
