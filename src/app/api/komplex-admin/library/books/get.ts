@@ -15,8 +15,8 @@ export const AdminBookItemSchema = z.object({
   coverKey: z.string().nullable().optional(),
   subjectId: z.number().nullable().optional(),
   lessonId: z.number().nullable().optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const AdminBooksResponseSchema = z

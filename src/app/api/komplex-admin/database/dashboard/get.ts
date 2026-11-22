@@ -17,7 +17,7 @@ export const DatabaseDashboardResponseSchema = z.object({
     usename: z.string(),
     ip: z.string(),
     status: z.string(),
-    backend_start: z.date(),
+    backend_start: z.coerce.date(),
   })),
 }).openapi("DatabaseDashboardResponse");
 

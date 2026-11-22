@@ -135,12 +135,15 @@ export const getVideoById = async (
           throw new ResponseError("Failed to update user last video", 500);
         }
       }
-      await db.insert(userVideoHistory).values({
-        userId: Number(userId),
-        videoId: videoId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      // Only signed-in users have a history (userId 0 = guest, no such user row).
+      if (userId !== 0) {
+        await db.insert(userVideoHistory).values({
+          userId: Number(userId),
+          videoId: videoId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
 
       // return getResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, exercises, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
       return sendResponseSuccess(res, FeedVideoItemSchema.parse({ ...video, isFollowing: isFollowing.length > 0 }), "Video fetched successfully");
@@ -269,12 +272,15 @@ export const getVideoById = async (
       .where(eq(videos.id, videoId));
 
     // insert into history
-    await db.insert(userVideoHistory).values({
-      userId: Number(userId),
-      videoId: videoId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    // Only signed-in users have a history (userId 0 = guest, no such user row).
+    if (userId !== 0) {
+      await db.insert(userVideoHistory).values({
+        userId: Number(userId),
+        videoId: videoId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
 
     // await redis.set(cacheExercisesKey, JSON.stringify(videoExercises), {
     //   EX: 600,

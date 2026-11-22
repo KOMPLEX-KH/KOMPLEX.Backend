@@ -16,7 +16,7 @@ const DashboardStatsSchema = z.object({
 
 const DashboardActivityItemSchema = z.object({
   title: z.string(),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
   contentType: z.enum(["news", "video", "exercise", "forum"]),
 });
 

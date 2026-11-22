@@ -12,8 +12,8 @@ export const GeneralAiResponseByIdResponseSchema = z.object({
   response: z.string(),
   rating: z.number().nullable(),
   ratingFeedback: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 }).openapi("GeneralAiResponseByIdResponse");
 
 export const getGeneralAiResponseById = async (req: Request, res: Response) => {

@@ -9,8 +9,8 @@ import { z } from "@/config/openapi/openapi.js";
 export const VideoHistoryItemSchema = z.object({
   id: z.number(),
   videoId: z.number(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   title: z.string().nullable().optional(),
   thumbnailUrl: z.string().nullable().optional(),
 });

@@ -18,8 +18,8 @@ export const UserVideoItemSchema = z.object({
   videoUrl: z.string(),
   thumbnailUrl: z.string().nullable().optional(),
   viewCount: z.number(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   userFirstName: z.string(),
   userLastName: z.string(),
 });

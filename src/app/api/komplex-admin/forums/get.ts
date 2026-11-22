@@ -32,8 +32,8 @@ export const AdminForumItemSchema = z.object({
   likeCount: z.number(),
   commentCount: z.number(),
   replyCount: z.number(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   username: z.string().nullable().optional(),
   media: z.array(
     z.object({
